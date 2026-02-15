@@ -14,6 +14,134 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          acao: string
+          created_at: string
+          dados: Json | null
+          id: string
+          registro_id: string | null
+          tabela: string
+          unidade_id: string | null
+          user_id: string
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          dados?: Json | null
+          id?: string
+          registro_id?: string | null
+          tabela: string
+          unidade_id?: string | null
+          user_id: string
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          dados?: Json | null
+          id?: string
+          registro_id?: string | null
+          tabela?: string
+          unidade_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fornecedores: {
+        Row: {
+          ativo: boolean
+          cnpj: string | null
+          contato: string | null
+          created_at: string
+          email: string | null
+          id: string
+          nome: string
+          telefone: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          cnpj?: string | null
+          contato?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          cnpj?: string | null
+          contato?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+        }
+        Relationships: []
+      }
+      lotes: {
+        Row: {
+          codigo: string | null
+          created_at: string
+          id: string
+          product_id: string
+          quantidade: number
+          recebido_em: string
+          status: string
+          unidade_id: string
+          updated_at: string
+          validade: string
+        }
+        Insert: {
+          codigo?: string | null
+          created_at?: string
+          id?: string
+          product_id: string
+          quantidade?: number
+          recebido_em?: string
+          status?: string
+          unidade_id: string
+          updated_at?: string
+          validade: string
+        }
+        Update: {
+          codigo?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantidade?: number
+          recebido_em?: string
+          status?: string
+          unidade_id?: string
+          updated_at?: string
+          validade?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lotes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lotes_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menus: {
         Row: {
           created_at: string
@@ -100,6 +228,77 @@ export type Database = {
           },
         ]
       }
+      product_fornecedores: {
+        Row: {
+          created_at: string
+          fornecedor_id: string
+          id: string
+          preco_referencia: number | null
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          fornecedor_id: string
+          id?: string
+          preco_referencia?: number | null
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          fornecedor_id?: string
+          id?: string
+          preco_referencia?: number | null
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_fornecedores_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_fornecedores_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_purchase_units: {
+        Row: {
+          created_at: string
+          fator_conversao: number
+          id: string
+          nome: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          fator_conversao?: number
+          id?: string
+          nome: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          fator_conversao?: number
+          id?: string
+          nome?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_purchase_units_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           categoria: string | null
@@ -109,10 +308,12 @@ export type Database = {
           estoque_minimo: number
           id: string
           nome: string
+          proteina_por_100g: number | null
           unidade_id: string
           unidade_medida: string
           updated_at: string
           validade: string | null
+          validade_minima_dias: number | null
         }
         Insert: {
           categoria?: string | null
@@ -122,10 +323,12 @@ export type Database = {
           estoque_minimo?: number
           id?: string
           nome: string
+          proteina_por_100g?: number | null
           unidade_id: string
           unidade_medida?: string
           updated_at?: string
           validade?: string | null
+          validade_minima_dias?: number | null
         }
         Update: {
           categoria?: string | null
@@ -135,10 +338,12 @@ export type Database = {
           estoque_minimo?: number
           id?: string
           nome?: string
+          proteina_por_100g?: number | null
           unidade_id?: string
           unidade_medida?: string
           updated_at?: string
           validade?: string | null
+          validade_minima_dias?: number | null
         }
         Relationships: [
           {
@@ -274,6 +479,80 @@ export type Database = {
           {
             foreignKeyName: "purchase_orders_unidade_id_fkey"
             columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transferencias: {
+        Row: {
+          aprovado_por: string | null
+          created_at: string
+          id: string
+          lote_id: string | null
+          motivo_rejeicao: string | null
+          product_id: string
+          quantidade: number
+          solicitado_por: string
+          status: string
+          unidade_destino_id: string
+          unidade_origem_id: string
+          updated_at: string
+        }
+        Insert: {
+          aprovado_por?: string | null
+          created_at?: string
+          id?: string
+          lote_id?: string | null
+          motivo_rejeicao?: string | null
+          product_id: string
+          quantidade: number
+          solicitado_por: string
+          status?: string
+          unidade_destino_id: string
+          unidade_origem_id: string
+          updated_at?: string
+        }
+        Update: {
+          aprovado_por?: string | null
+          created_at?: string
+          id?: string
+          lote_id?: string | null
+          motivo_rejeicao?: string | null
+          product_id?: string
+          quantidade?: number
+          solicitado_por?: string
+          status?: string
+          unidade_destino_id?: string
+          unidade_origem_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transferencias_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_unidade_destino_id_fkey"
+            columns: ["unidade_destino_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_unidade_origem_id_fkey"
+            columns: ["unidade_origem_id"]
             isOneToOne: false
             referencedRelation: "units"
             referencedColumns: ["id"]
@@ -421,6 +700,8 @@ export type Database = {
         Returns: boolean
       }
       is_ceo: { Args: never; Returns: boolean }
+      is_comprador: { Args: never; Returns: boolean }
+      is_estoquista: { Args: never; Returns: boolean }
       user_can_approve: { Args: never; Returns: boolean }
       user_can_manage: { Args: never; Returns: boolean }
       user_can_see_costs: { Args: never; Returns: boolean }
