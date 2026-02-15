@@ -5,6 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const VALID_ROLES = ["ceo", "gerente_operacional", "gerente_financeiro", "nutricionista", "estoquista", "comprador"];
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -16,7 +18,6 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Validate caller authorization
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
@@ -39,7 +40,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check caller has permission (ceo or gerente_operacional only)
     const { data: callerRole } = await supabaseAdmin
       .from("user_roles")
       .select("role")
@@ -55,7 +55,13 @@ Deno.serve(async (req) => {
 
     const { email, password, full_name, cargo, unidade_id, unidade_ids } = await req.json();
 
-    // Create user in auth
+    if (!VALID_ROLES.includes(cargo)) {
+      return new Response(JSON.stringify({ error: `Cargo inválido: ${cargo}` }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -72,7 +78,6 @@ Deno.serve(async (req) => {
 
     const userId = userData.user.id;
 
-    // Update profile
     const primaryUnit = unidade_ids?.[0] || unidade_id || null;
     await supabaseAdmin.from("profiles").update({
       full_name,
@@ -80,13 +85,11 @@ Deno.serve(async (req) => {
       unidade_id: primaryUnit,
     }).eq("user_id", userId);
 
-    // Assign role (upsert)
     await supabaseAdmin.from("user_roles").upsert({
       user_id: userId,
       role: cargo,
     }, { onConflict: "user_id" });
 
-    // Assign unit links
     const unitIds: string[] = unidade_ids || (unidade_id ? [unidade_id] : []);
     if (unitIds.length > 0) {
       const links = unitIds.map((uid: string) => ({

@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
-type AppRole = "ceo" | "gerente_financeiro" | "gerente_operacional" | "nutricionista" | "funcionario" | "estoquista" | "comprador";
+type AppRole = "ceo" | "gerente_financeiro" | "gerente_operacional" | "nutricionista" | "estoquista" | "comprador";
 
 interface Profile {
   id: string;
@@ -24,12 +24,15 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   isCeo: boolean;
+  isGerenteOperacional: boolean;
+  isGerenteFinanceiro: boolean;
+  isNutricionista: boolean;
+  isEstoquista: boolean;
+  isComprador: boolean;
   canSeeCosts: boolean;
   canManage: boolean;
   canManageUsers: boolean;
   canApprove: boolean;
-  isEstoquista: boolean;
-  isComprador: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -97,16 +100,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const isCeo = role === "ceo";
+  const isGerenteOperacional = role === "gerente_operacional";
+  const isGerenteFinanceiro = role === "gerente_financeiro";
+  const isNutricionista = role === "nutricionista";
+  const isEstoquista = role === "ceo" || role === "gerente_operacional" || role === "estoquista";
+  const isComprador = role === "ceo" || role === "gerente_operacional" || role === "comprador";
   const canSeeCosts = role === "ceo" || role === "gerente_financeiro";
   const canManage = role === "ceo" || role === "gerente_financeiro" || role === "gerente_operacional";
   const canManageUsers = role === "ceo" || role === "gerente_operacional";
   const canApprove = role === "ceo" || role === "gerente_financeiro";
-  const isEstoquista = role === "ceo" || role === "gerente_operacional" || role === "estoquista";
-  const isComprador = role === "ceo" || role === "gerente_operacional" || role === "comprador";
 
   return (
     <AuthContext.Provider
-      value={{ user, session, profile, role, loading, signIn, signOut, isCeo, canSeeCosts, canManage, canManageUsers, canApprove, isEstoquista, isComprador }}
+      value={{
+        user, session, profile, role, loading, signIn, signOut,
+        isCeo, isGerenteOperacional, isGerenteFinanceiro, isNutricionista,
+        isEstoquista, isComprador, canSeeCosts, canManage, canManageUsers, canApprove,
+      }}
     >
       {children}
     </AuthContext.Provider>
