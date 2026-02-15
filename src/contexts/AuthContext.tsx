@@ -26,6 +26,7 @@ interface AuthContextType {
   isCeo: boolean;
   canSeeCosts: boolean;
   canManage: boolean;
+  canManageUsers: boolean;
   canApprove: boolean;
 }
 
@@ -96,11 +97,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isCeo = role === "ceo";
   const canSeeCosts = role === "ceo" || role === "gerente_financeiro";
   const canManage = role === "ceo" || role === "gerente_financeiro" || role === "gerente_operacional";
+  const canManageUsers = role === "ceo" || role === "gerente_operacional";
   const canApprove = role === "ceo" || role === "gerente_financeiro";
 
   return (
     <AuthContext.Provider
-      value={{ user, session, profile, role, loading, signIn, signOut, isCeo, canSeeCosts, canManage, canApprove }}
+      value={{ user, session, profile, role, loading, signIn, signOut, isCeo, canSeeCosts, canManage, canManageUsers, canApprove }}
     >
       {children}
     </AuthContext.Provider>
