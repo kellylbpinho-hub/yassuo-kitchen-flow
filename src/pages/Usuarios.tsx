@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { UserPlus, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,6 +25,7 @@ interface ProfileUser {
 }
 
 interface Unit { id: string; name: string; }
+interface UserUnidade { user_id: string; unidade_id: string; }
 
 const roleLabels: Record<string, string> = {
   ceo: "CEO",
@@ -34,29 +36,31 @@ const roleLabels: Record<string, string> = {
 };
 
 export default function Usuarios() {
-  const { canManage, isCeo } = useAuth();
+  const { canManageUsers, isCeo } = useAuth();
   const [users, setUsers] = useState<ProfileUser[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [userUnidades, setUserUnidades] = useState<UserUnidade[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
 
   const [form, setForm] = useState({
-    full_name: "", email: "", password: "", cargo: "funcionario", unidade_id: "",
+    full_name: "", email: "", password: "", cargo: "funcionario", unidade_ids: [] as string[],
   });
 
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     setLoading(true);
-    const [{ data: p }, { data: u }] = await Promise.all([
+    const [{ data: p }, { data: u }, { data: uu }] = await Promise.all([
       supabase.from("profiles").select("*").order("full_name"),
       supabase.from("units").select("id, name"),
+      supabase.from("user_unidades").select("user_id, unidade_id"),
     ]);
     setUsers((p || []) as ProfileUser[]);
     setUnits((u || []) as Unit[]);
-    if (u && u.length > 0 && !form.unidade_id) setForm((f) => ({ ...f, unidade_id: u[0].id }));
+    setUserUnidades((uu || []) as UserUnidade[]);
     setLoading(false);
   };
 
@@ -75,7 +79,7 @@ export default function Usuarios() {
           password: form.password,
           full_name: form.full_name,
           cargo: form.cargo,
-          unidade_id: form.unidade_id || null,
+          unidade_ids: form.unidade_ids,
         },
       });
 
@@ -87,7 +91,7 @@ export default function Usuarios() {
 
       toast.success("Usuário criado com sucesso!");
       setAddOpen(false);
-      setForm({ full_name: "", email: "", password: "", cargo: "funcionario", unidade_id: units[0]?.id || "" });
+      setForm({ full_name: "", email: "", password: "", cargo: "funcionario", unidade_ids: [] });
       loadData();
     } catch (err: any) {
       setError("Erro: " + err.message);
@@ -102,7 +106,20 @@ export default function Usuarios() {
     else loadData();
   };
 
-  const getUnitName = (id: string | null) => (id ? units.find((u) => u.id === id)?.name : null) || "—";
+  const getUserUnits = (userId: string) =>
+    userUnidades
+      .filter((uu) => uu.user_id === userId)
+      .map((uu) => units.find((u) => u.id === uu.unidade_id)?.name)
+      .filter(Boolean);
+
+  const toggleUnit = (unitId: string) => {
+    setForm((f) => ({
+      ...f,
+      unidade_ids: f.unidade_ids.includes(unitId)
+        ? f.unidade_ids.filter((id) => id !== unitId)
+        : [...f.unidade_ids, unitId],
+    }));
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -112,7 +129,7 @@ export default function Usuarios() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold text-foreground">Usuários</h1>
-        {canManage && (
+        {canManageUsers && (
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
               <Button><UserPlus className="h-4 w-4 mr-2" />Novo Usuário</Button>
@@ -136,7 +153,7 @@ export default function Usuarios() {
                   <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="bg-input border-border" />
                 </div>
                 <div>
-                  <Label>Senha *</Label>
+                  <Label>Senha Provisória *</Label>
                   <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="bg-input border-border" />
                 </div>
                 <div>
@@ -151,11 +168,22 @@ export default function Usuarios() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Unidade</Label>
-                  <Select value={form.unidade_id} onValueChange={(v) => setForm({ ...form, unidade_id: v })}>
-                    <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
-                    <SelectContent>{units.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <Label>Unidades</Label>
+                  <div className="space-y-2 mt-1 p-3 rounded-lg bg-input border border-border max-h-40 overflow-y-auto">
+                    {units.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Nenhuma unidade cadastrada.</p>
+                    ) : (
+                      units.map((u) => (
+                        <label key={u.id} className="flex items-center gap-2 cursor-pointer">
+                          <Checkbox
+                            checked={form.unidade_ids.includes(u.id)}
+                            onCheckedChange={() => toggleUnit(u.id)}
+                          />
+                          <span className="text-sm">{u.name}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
                 </div>
                 <Button onClick={createUser} className="w-full" disabled={creating}>
                   {creating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
@@ -175,7 +203,7 @@ export default function Usuarios() {
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Cargo</TableHead>
-                <TableHead>Unidade</TableHead>
+                <TableHead>Unidades</TableHead>
                 <TableHead>Ativo</TableHead>
               </TableRow>
             </TableHeader>
@@ -183,30 +211,37 @@ export default function Usuarios() {
               {users.length === 0 ? (
                 <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum usuário.</TableCell></TableRow>
               ) : (
-                users.map((u) => (
-                  <TableRow key={u.id} className="border-border">
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-semibold">
-                          {u.full_name.charAt(0).toUpperCase()}
+                users.map((u) => {
+                  const unitNames = getUserUnits(u.user_id);
+                  return (
+                    <TableRow key={u.id} className="border-border">
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-semibold">
+                            {u.full_name.charAt(0).toUpperCase()}
+                          </div>
+                          {u.full_name}
                         </div>
-                        {u.full_name}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{u.email}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="text-xs">{roleLabels[u.cargo] || u.cargo}</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{getUnitName(u.unidade_id)}</TableCell>
-                    <TableCell>
-                      {canManage ? (
-                        <Switch checked={u.ativo} onCheckedChange={() => toggleActive(u)} />
-                      ) : (
-                        <Badge variant={u.ativo ? "default" : "secondary"}>{u.ativo ? "Sim" : "Não"}</Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">{roleLabels[u.cargo] || u.cargo}</Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {unitNames.length > 0
+                          ? unitNames.map((n) => <Badge key={n} variant="outline" className="mr-1 text-xs">{n}</Badge>)
+                          : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {canManageUsers ? (
+                          <Switch checked={u.ativo} onCheckedChange={() => toggleActive(u)} />
+                        ) : (
+                          <Badge variant={u.ativo ? "default" : "secondary"}>{u.ativo ? "Sim" : "Não"}</Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

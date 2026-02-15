@@ -319,6 +319,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_unidades: {
+        Row: {
+          created_at: string
+          id: string
+          unidade_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          unidade_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          unidade_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_unidades_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       waste_logs: {
         Row: {
           created_at: string

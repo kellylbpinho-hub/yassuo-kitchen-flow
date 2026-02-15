@@ -15,18 +15,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const navItems = [
+const baseNavItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/estoque", icon: Package, label: "Estoque" },
   { to: "/compras", icon: ShoppingCart, label: "Compras" },
   { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
-  { to: "/usuarios", icon: Users, label: "Usuários" },
 ];
 
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { profile, role, signOut } = useAuth();
+  const { profile, role, signOut, canManageUsers } = useAuth();
   const navigate = useNavigate();
+
+  const navItems = [
+    ...baseNavItems,
+    ...(canManageUsers ? [{ to: "/usuarios", icon: Users, label: "Usuários" }] : []),
+  ];
 
   const handleSignOut = async () => {
     await signOut();
