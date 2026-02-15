@@ -13,6 +13,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { UserPlus, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
+import iconCeo from "@/assets/icon-ceo.png";
+import iconGerenteOp from "@/assets/icon-gerente-operacional.png";
+import iconGerenteFin from "@/assets/icon-gerente-financeiro.png";
+import iconNutricionista from "@/assets/icon-nutricionista.png";
+import iconEstoquista from "@/assets/icon-estoquista.png";
+import iconComprador from "@/assets/icon-comprador.png";
+
 interface ProfileUser {
   id: string;
   user_id: string;
@@ -32,9 +39,17 @@ const roleLabels: Record<string, string> = {
   gerente_financeiro: "Gerente Financeiro",
   gerente_operacional: "Gerente Operacional",
   nutricionista: "Nutricionista",
-  funcionario: "Funcionário",
   estoquista: "Estoquista",
   comprador: "Comprador",
+};
+
+const roleIcons: Record<string, string> = {
+  ceo: iconCeo,
+  gerente_operacional: iconGerenteOp,
+  gerente_financeiro: iconGerenteFin,
+  nutricionista: iconNutricionista,
+  estoquista: iconEstoquista,
+  comprador: iconComprador,
 };
 
 export default function Usuarios() {
@@ -48,7 +63,7 @@ export default function Usuarios() {
   const [creating, setCreating] = useState(false);
 
   const [form, setForm] = useState({
-    full_name: "", email: "", password: "", cargo: "funcionario", unidade_ids: [] as string[],
+    full_name: "", email: "", password: "", cargo: "estoquista", unidade_ids: [] as string[],
   });
 
   useEffect(() => { loadData(); }, []);
@@ -93,7 +108,7 @@ export default function Usuarios() {
 
       toast.success("Usuário criado com sucesso!");
       setAddOpen(false);
-      setForm({ full_name: "", email: "", password: "", cargo: "funcionario", unidade_ids: [] });
+      setForm({ full_name: "", email: "", password: "", cargo: "estoquista", unidade_ids: [] });
       loadData();
     } catch (err: any) {
       setError("Erro: " + err.message);
@@ -215,13 +230,18 @@ export default function Usuarios() {
               ) : (
                 users.map((u) => {
                   const unitNames = getUserUnits(u.user_id);
+                  const icon = roleIcons[u.cargo];
                   return (
                     <TableRow key={u.id} className="border-border">
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-semibold">
-                            {u.full_name.charAt(0).toUpperCase()}
-                          </div>
+                          {icon ? (
+                            <img src={icon} alt={u.cargo} className="h-8 w-8 rounded-full object-cover" />
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-semibold">
+                              {u.full_name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
                           {u.full_name}
                         </div>
                       </TableCell>
