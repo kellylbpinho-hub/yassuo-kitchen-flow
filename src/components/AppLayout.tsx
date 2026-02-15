@@ -43,6 +43,8 @@ export function AppLayout() {
     gerente_operacional: "Gerente Operacional",
     nutricionista: "Nutricionista",
     funcionario: "Funcionário",
+    estoquista: "Estoquista",
+    comprador: "Comprador",
   };
 
   return (

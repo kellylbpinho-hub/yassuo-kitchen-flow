@@ -33,6 +33,8 @@ const roleLabels: Record<string, string> = {
   gerente_operacional: "Gerente Operacional",
   nutricionista: "Nutricionista",
   funcionario: "Funcionário",
+  estoquista: "Estoquista",
+  comprador: "Comprador",
 };
 
 export default function Usuarios() {

@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
-type AppRole = "ceo" | "gerente_financeiro" | "gerente_operacional" | "nutricionista" | "funcionario";
+type AppRole = "ceo" | "gerente_financeiro" | "gerente_operacional" | "nutricionista" | "funcionario" | "estoquista" | "comprador";
 
 interface Profile {
   id: string;
@@ -28,6 +28,8 @@ interface AuthContextType {
   canManage: boolean;
   canManageUsers: boolean;
   canApprove: boolean;
+  isEstoquista: boolean;
+  isComprador: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -99,10 +101,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const canManage = role === "ceo" || role === "gerente_financeiro" || role === "gerente_operacional";
   const canManageUsers = role === "ceo" || role === "gerente_operacional";
   const canApprove = role === "ceo" || role === "gerente_financeiro";
+  const isEstoquista = role === "ceo" || role === "gerente_operacional" || role === "estoquista";
+  const isComprador = role === "ceo" || role === "gerente_operacional" || role === "comprador";
 
   return (
     <AuthContext.Provider
-      value={{ user, session, profile, role, loading, signIn, signOut, isCeo, canSeeCosts, canManage, canManageUsers, canApprove }}
+      value={{ user, session, profile, role, loading, signIn, signOut, isCeo, canSeeCosts, canManage, canManageUsers, canApprove, isEstoquista, isComprador }}
     >
       {children}
     </AuthContext.Provider>
