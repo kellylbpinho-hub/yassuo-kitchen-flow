@@ -8,6 +8,7 @@ import {
   Trash2,
   Users,
   Building2,
+  Tag,
   LogOut,
   Menu,
   X,
@@ -30,6 +31,7 @@ export function AppLayout() {
 
   const navItems = [
     ...baseNavItems,
+    { to: "/categorias", icon: Tag, label: "Categorias" },
     ...(canManageUsers ? [
       { to: "/usuarios", icon: Users, label: "Usuários" },
       { to: "/unidades", icon: Building2, label: "Unidades" },

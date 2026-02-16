@@ -9,19 +9,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, ArrowDown, ArrowUp, RefreshCw, Search, Loader2, AlertTriangle } from "lucide-react";
+import { Plus, RefreshCw, Search, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+
+interface Category {
+  id: string;
+  name: string;
+}
 
 interface Product {
   id: string;
   nome: string;
   categoria: string | null;
+  category_id: string | null;
   unidade_medida: string;
   estoque_atual: number;
   estoque_minimo: number;
   custo_unitario: number;
   validade: string | null;
   unidade_id: string;
+  product_categories?: { name: string } | null;
 }
 
 interface Unit {
@@ -30,36 +38,36 @@ interface Unit {
 }
 
 export default function Estoque() {
-  const { user, canSeeCosts, profile } = useAuth();
+  const { user, canSeeCosts, profile, canManage } = useAuth();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [movOpen, setMovOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // New product form
   const [form, setForm] = useState({
-    nome: "", categoria: "", unidade_medida: "kg", estoque_atual: "0",
+    nome: "", category_id: "", unidade_medida: "kg", estoque_atual: "0",
     estoque_minimo: "0", custo_unitario: "0", validade: "", unidade_id: "",
   });
 
-  // Movement form
   const [movForm, setMovForm] = useState({ tipo: "entrada", quantidade: "", motivo: "" });
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     setLoading(true);
-    const [{ data: prods }, { data: u }] = await Promise.all([
-      supabase.from("products").select("*").order("nome"),
+    const [{ data: prods }, { data: u }, { data: cats }] = await Promise.all([
+      supabase.from("products").select("*, product_categories(name)").order("nome"),
       supabase.from("units").select("id, name"),
+      supabase.from("product_categories").select("id, name").order("name"),
     ]);
     setProducts((prods || []) as Product[]);
     setUnits((u || []) as Unit[]);
+    setCategories((cats || []) as Category[]);
     if (u && u.length > 0 && !form.unidade_id) {
       setForm((f) => ({ ...f, unidade_id: profile?.unidade_id || u[0].id }));
     }
@@ -71,9 +79,14 @@ export default function Estoque() {
       toast.error("Preencha nome e unidade.");
       return;
     }
+    if (categories.length > 0 && !form.category_id) {
+      toast.error("Selecione uma categoria.");
+      return;
+    }
     const { error } = await supabase.from("products").insert({
       nome: form.nome,
-      categoria: form.categoria || null,
+      category_id: form.category_id || null,
+      categoria: null,
       unidade_medida: form.unidade_medida,
       estoque_atual: Number(form.estoque_atual),
       estoque_minimo: Number(form.estoque_minimo),
@@ -87,7 +100,7 @@ export default function Estoque() {
     } else {
       toast.success("Produto adicionado!");
       setAddOpen(false);
-      setForm({ nome: "", categoria: "", unidade_medida: "kg", estoque_atual: "0", estoque_minimo: "0", custo_unitario: "0", validade: "", unidade_id: form.unidade_id });
+      setForm({ nome: "", category_id: "", unidade_medida: "kg", estoque_atual: "0", estoque_minimo: "0", custo_unitario: "0", validade: "", unidade_id: form.unidade_id });
       loadData();
     }
   };
@@ -115,7 +128,6 @@ export default function Estoque() {
       return;
     }
 
-    // Update stock
     let newStock = selectedProduct.estoque_atual;
     if (movForm.tipo === "entrada") newStock += qty;
     else if (["saida", "consumo", "perda"].includes(movForm.tipo)) newStock -= qty;
@@ -134,6 +146,7 @@ export default function Estoque() {
   );
 
   const getUnitName = (id: string) => units.find((u) => u.id === id)?.name || "—";
+  const getCategoryName = (p: Product) => p.product_categories?.name || p.categoria || "—";
 
   if (loading) {
     return (
@@ -171,8 +184,30 @@ export default function Estoque() {
                   <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="bg-input border-border" />
                 </div>
                 <div>
-                  <Label>Categoria</Label>
-                  <Input value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} className="bg-input border-border" />
+                  <Label>Categoria {categories.length > 0 ? "*" : ""}</Label>
+                  {categories.length > 0 ? (
+                    <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
+                      <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>
+                        {categories.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="text-sm text-muted-foreground py-2">
+                      Nenhuma categoria cadastrada.{" "}
+                      {canManage && (
+                        <button
+                          type="button"
+                          className="text-primary underline underline-offset-2 hover:text-primary/80"
+                          onClick={() => navigate("/categorias")}
+                        >
+                          Criar categoria
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -286,7 +321,7 @@ export default function Estoque() {
                 filtered.map((p) => (
                   <TableRow key={p.id} className="border-border">
                     <TableCell className="font-medium">{p.nome}</TableCell>
-                    <TableCell className="text-muted-foreground">{p.categoria || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{getCategoryName(p)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {p.estoque_atual}
