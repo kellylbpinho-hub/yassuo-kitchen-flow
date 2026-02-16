@@ -303,6 +303,35 @@ export type Database = {
           },
         ]
       }
+      product_categories: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_categories_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_fornecedores: {
         Row: {
           company_id: string
@@ -397,6 +426,7 @@ export type Database = {
       products: {
         Row: {
           categoria: string | null
+          category_id: string | null
           company_id: string
           created_at: string
           custo_unitario: number | null
@@ -413,6 +443,7 @@ export type Database = {
         }
         Insert: {
           categoria?: string | null
+          category_id?: string | null
           company_id: string
           created_at?: string
           custo_unitario?: number | null
@@ -429,6 +460,7 @@ export type Database = {
         }
         Update: {
           categoria?: string | null
+          category_id?: string | null
           company_id?: string
           created_at?: string
           custo_unitario?: number | null
@@ -444,6 +476,13 @@ export type Database = {
           validade_minima_dias?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_company_id_fkey"
             columns: ["company_id"]
