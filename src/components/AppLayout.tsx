@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   Trash2,
   Users,
+  Building2,
   LogOut,
   Menu,
   X,
@@ -29,7 +30,10 @@ export function AppLayout() {
 
   const navItems = [
     ...baseNavItems,
-    ...(canManageUsers ? [{ to: "/usuarios", icon: Users, label: "Usuários" }] : []),
+    ...(canManageUsers ? [
+      { to: "/usuarios", icon: Users, label: "Usuários" },
+      { to: "/unidades", icon: Building2, label: "Unidades" },
+    ] : []),
   ];
 
   const handleSignOut = async () => {

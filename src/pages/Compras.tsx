@@ -19,7 +19,7 @@ interface PurchaseOrder {
   created_by: string;
 }
 
-interface Unit { id: string; name: string; }
+interface Unit { id: string; name: string; type: string; }
 
 const statusColors: Record<string, string> = {
   rascunho: "bg-muted text-muted-foreground",
@@ -49,7 +49,7 @@ export default function Compras() {
     setLoading(true);
     const [{ data: o }, { data: u }] = await Promise.all([
       supabase.from("purchase_orders").select("*").order("created_at", { ascending: false }),
-      supabase.from("units").select("id, name"),
+      supabase.from("units").select("id, name, type"),
     ]);
     setOrders((o || []) as PurchaseOrder[]);
     setUnits((u || []) as Unit[]);
@@ -160,7 +160,19 @@ export default function Compras() {
                           </Button>
                         )}
                         {o.status === "aprovado" && (
-                          <Button size="sm" variant="ghost" onClick={() => updateStatus(o.id, "recebido")} title="Recebido">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              const unit = units.find((u) => u.id === o.unidade_id);
+                              if (unit?.type !== "cd") {
+                                toast.error("Recebimento só pode ocorrer em unidades do tipo CD (Centro de Distribuição).");
+                                return;
+                              }
+                              updateStatus(o.id, "recebido");
+                            }}
+                            title="Recebido"
+                          >
                             <Package className="h-4 w-4 text-success" />
                           </Button>
                         )}
