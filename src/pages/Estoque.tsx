@@ -80,6 +80,7 @@ export default function Estoque() {
       custo_unitario: Number(form.custo_unitario),
       validade: form.validade || null,
       unidade_id: form.unidade_id,
+      company_id: profile!.company_id,
     });
     if (error) {
       toast.error("Erro ao adicionar produto: " + error.message);
@@ -106,6 +107,7 @@ export default function Estoque() {
       motivo: movForm.motivo || null,
       user_id: user!.id,
       unidade_id: selectedProduct.unidade_id,
+      company_id: profile!.company_id,
     });
 
     if (movErr) {

@@ -13,6 +13,7 @@ interface Profile {
   unidade_id: string | null;
   avatar_url: string | null;
   ativo: boolean;
+  company_id: string;
 }
 
 interface AuthContextType {

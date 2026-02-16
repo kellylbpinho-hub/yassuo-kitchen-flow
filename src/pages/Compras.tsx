@@ -63,6 +63,7 @@ export default function Compras() {
       status: "rascunho",
       unidade_id: selectedUnit,
       created_by: user!.id,
+      company_id: profile!.company_id,
     });
     if (error) {
       toast.error("Erro: " + error.message);
