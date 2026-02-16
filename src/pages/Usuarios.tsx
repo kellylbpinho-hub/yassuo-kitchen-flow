@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { UserPlus, Loader2, AlertCircle, Briefcase, Settings, DollarSign, Leaf, Archive, ShoppingCart, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
+import avatarCeoCaio from "@/assets/avatar-ceo-caio.png";
 
 interface ProfileUser {
   id: string;
@@ -227,7 +228,9 @@ export default function Usuarios() {
                     <TableRow key={u.id} className="border-border">
                       <TableCell className="font-medium">
                       <div className="flex items-center gap-3">
-                          {(() => {
+                          {u.cargo === "ceo" ? (
+                            <img src={avatarCeoCaio} alt="CEO" className="h-8 w-8 rounded-full object-cover shrink-0" />
+                          ) : (() => {
                             const IconComp = roleIcons[u.cargo];
                             return (
                               <div className="h-8 w-8 rounded-full bg-[#D90429] flex items-center justify-center shrink-0">
