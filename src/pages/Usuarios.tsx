@@ -10,15 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UserPlus, Loader2, AlertCircle } from "lucide-react";
+import { UserPlus, Loader2, AlertCircle, Briefcase, Settings, DollarSign, Leaf, Archive, ShoppingCart, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
-
-import iconCeo from "@/assets/icon-ceo.png";
-import iconGerenteOp from "@/assets/icon-gerente-operacional.png";
-import iconGerenteFin from "@/assets/icon-gerente-financeiro.png";
-import iconNutricionista from "@/assets/icon-nutricionista.png";
-import iconEstoquista from "@/assets/icon-estoquista.png";
-import iconComprador from "@/assets/icon-comprador.png";
 
 interface ProfileUser {
   id: string;
@@ -43,13 +36,13 @@ const roleLabels: Record<string, string> = {
   comprador: "Comprador",
 };
 
-const roleIcons: Record<string, string> = {
-  ceo: iconCeo,
-  gerente_operacional: iconGerenteOp,
-  gerente_financeiro: iconGerenteFin,
-  nutricionista: iconNutricionista,
-  estoquista: iconEstoquista,
-  comprador: iconComprador,
+const roleIcons: Record<string, LucideIcon> = {
+  ceo: Briefcase,
+  gerente_operacional: Settings,
+  gerente_financeiro: DollarSign,
+  nutricionista: Leaf,
+  estoquista: Archive,
+  comprador: ShoppingCart,
 };
 
 export default function Usuarios() {
@@ -230,18 +223,18 @@ export default function Usuarios() {
               ) : (
                 users.map((u) => {
                   const unitNames = getUserUnits(u.user_id);
-                  const icon = roleIcons[u.cargo];
                   return (
                     <TableRow key={u.id} className="border-border">
                       <TableCell className="font-medium">
-                        <div className="flex items-center gap-3">
-                          {icon ? (
-                            <img src={icon} alt={u.cargo} className="h-8 w-8 rounded-full object-cover" />
-                          ) : (
-                            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-semibold">
-                              {u.full_name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
+                      <div className="flex items-center gap-3">
+                          {(() => {
+                            const IconComp = roleIcons[u.cargo];
+                            return (
+                              <div className="h-8 w-8 rounded-full bg-[#D90429] flex items-center justify-center shrink-0">
+                                {IconComp ? <IconComp className="h-4 w-4 text-white" /> : <Briefcase className="h-4 w-4 text-white" />}
+                              </div>
+                            );
+                          })()}
                           {u.full_name}
                         </div>
                       </TableCell>
