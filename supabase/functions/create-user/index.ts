@@ -53,7 +53,24 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, full_name, cargo, unidade_id, unidade_ids } = await req.json();
+    const { email, password, full_name, cargo, unidade_id, unidade_ids, company_id } = await req.json();
+
+    // Resolve company_id: use provided or get from caller's profile
+    let resolvedCompanyId = company_id;
+    if (!resolvedCompanyId) {
+      const { data: callerProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("company_id")
+        .eq("user_id", caller.id)
+        .maybeSingle();
+      resolvedCompanyId = callerProfile?.company_id;
+    }
+    if (!resolvedCompanyId) {
+      return new Response(JSON.stringify({ error: "company_id não encontrado" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!VALID_ROLES.includes(cargo)) {
       return new Response(JSON.stringify({ error: `Cargo inválido: ${cargo}` }), {
@@ -66,7 +83,7 @@ Deno.serve(async (req) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { full_name, cargo },
+      user_metadata: { full_name, cargo, company_id: resolvedCompanyId },
     });
 
     if (userError) {
@@ -83,11 +100,13 @@ Deno.serve(async (req) => {
       full_name,
       cargo,
       unidade_id: primaryUnit,
+      company_id: resolvedCompanyId,
     }).eq("user_id", userId);
 
     await supabaseAdmin.from("user_roles").upsert({
       user_id: userId,
       role: cargo,
+      company_id: resolvedCompanyId,
     }, { onConflict: "user_id" });
 
     const unitIds: string[] = unidade_ids || (unidade_id ? [unidade_id] : []);
@@ -95,6 +114,7 @@ Deno.serve(async (req) => {
       const links = unitIds.map((uid: string) => ({
         user_id: userId,
         unidade_id: uid,
+        company_id: resolvedCompanyId,
       }));
       await supabaseAdmin.from("user_unidades").insert(links);
     }

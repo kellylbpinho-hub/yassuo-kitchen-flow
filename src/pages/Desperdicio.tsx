@@ -70,6 +70,7 @@ export default function Desperdicio() {
       descricao: menuForm.descricao || null,
       unidade_id: menuForm.unidade_id,
       created_by: user!.id,
+      company_id: profile!.company_id,
     });
     if (error) toast.error("Erro: " + error.message);
     else { toast.success("Cardápio criado!"); setMenuOpen(false); loadData(); }
@@ -90,6 +91,7 @@ export default function Desperdicio() {
       menu_id: form.menu_id || null,
       user_id: user!.id,
       unidade_id: form.unidade_id,
+      company_id: profile!.company_id,
     });
     if (error) { toast.error("Erro: " + error.message); return; }
 
@@ -101,6 +103,7 @@ export default function Desperdicio() {
       motivo: "Desperdício registrado" + (form.observacao ? `: ${form.observacao}` : ""),
       user_id: user!.id,
       unidade_id: form.unidade_id,
+      company_id: profile!.company_id,
     });
 
     // Update stock
