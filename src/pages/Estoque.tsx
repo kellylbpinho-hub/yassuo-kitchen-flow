@@ -35,6 +35,13 @@ interface Product {
 interface Unit {
   id: string;
   name: string;
+  type: string;
+}
+
+interface StockByUnit {
+  product_id: string;
+  unidade_id: string;
+  saldo: number;
 }
 
 export default function Estoque() {
@@ -43,8 +50,10 @@ export default function Estoque() {
   const [products, setProducts] = useState<Product[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [stockByUnit, setStockByUnit] = useState<StockByUnit[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [filterUnit, setFilterUnit] = useState("all");
   const [addOpen, setAddOpen] = useState(false);
   const [movOpen, setMovOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -60,18 +69,25 @@ export default function Estoque() {
 
   const loadData = async () => {
     setLoading(true);
-    const [{ data: prods }, { data: u }, { data: cats }] = await Promise.all([
+    const [{ data: prods }, { data: u }, { data: cats }, { data: sbu }] = await Promise.all([
       supabase.from("products").select("*, product_categories(name)").order("nome"),
-      supabase.from("units").select("id, name"),
+      supabase.from("units").select("id, name, type"),
       supabase.from("product_categories").select("id, name").order("name"),
+      supabase.from("v_estoque_por_unidade").select("product_id, unidade_id, saldo"),
     ]);
     setProducts((prods || []) as Product[]);
     setUnits((u || []) as Unit[]);
     setCategories((cats || []) as Category[]);
+    setStockByUnit((sbu || []) as StockByUnit[]);
     if (u && u.length > 0 && !form.unidade_id) {
       setForm((f) => ({ ...f, unidade_id: profile?.unidade_id || u[0].id }));
     }
     setLoading(false);
+  };
+
+  const getStockForUnit = (productId: string, unitId: string) => {
+    const entry = stockByUnit.find((s) => s.product_id === productId && s.unidade_id === unitId);
+    return entry?.saldo ?? 0;
   };
 
   const addProduct = async () => {
@@ -173,9 +189,14 @@ export default function Estoque() {
     loadData();
   };
 
-  const filtered = products.filter((p) =>
-    p.nome.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = products.filter((p) => {
+    const matchesSearch = p.nome.toLowerCase().includes(search.toLowerCase());
+    if (filterUnit === "all") return matchesSearch;
+    // Show products that have stock in the selected unit (via view) OR are assigned to that unit
+    const hasStock = stockByUnit.some((s) => s.product_id === p.id && s.unidade_id === filterUnit && s.saldo > 0);
+    const isAssigned = p.unidade_id === filterUnit;
+    return matchesSearch && (hasStock || isAssigned);
+  });
 
   const getUnitName = (id: string) => units.find((u) => u.id === id)?.name || "—";
   const getCategoryName = (p: Product) => p.product_categories?.name || p.categoria || "—";
@@ -192,8 +213,8 @@ export default function Estoque() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-display font-bold text-foreground">Estoque</h1>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
+        <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+          <div className="relative flex-1 sm:w-48">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar produto..."
@@ -202,6 +223,17 @@ export default function Estoque() {
               className="pl-9 bg-input border-border"
             />
           </div>
+          <Select value={filterUnit} onValueChange={setFilterUnit}>
+            <SelectTrigger className="w-40 bg-input border-border">
+              <SelectValue placeholder="Todas unidades" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas unidades</SelectItem>
+              {units.map((u) => (
+                <SelectItem key={u.id} value={u.id}>{u.name} ({u.type.toUpperCase()})</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-2" />Novo</Button>
@@ -335,7 +367,7 @@ export default function Estoque() {
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead>Produto</TableHead>
                 <TableHead>Categoria</TableHead>
-                <TableHead>Estoque</TableHead>
+                <TableHead>{filterUnit !== "all" ? "Saldo Unidade" : "Estoque Geral"}</TableHead>
                 <TableHead>Mínimo</TableHead>
                 {canSeeCosts && <TableHead>Custo</TableHead>}
                 <TableHead>Unidade</TableHead>
@@ -356,7 +388,14 @@ export default function Estoque() {
                     <TableCell className="text-muted-foreground">{getCategoryName(p)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {p.estoque_atual}
+                        {filterUnit !== "all" ? (
+                          <>
+                            <span className="font-semibold">{getStockForUnit(p.id, filterUnit)}</span>
+                            <span className="text-xs text-muted-foreground">/ {p.estoque_atual} total</span>
+                          </>
+                        ) : (
+                          <>{p.estoque_atual}</>
+                        )}
                         <span className="text-xs text-muted-foreground">{p.unidade_medida}</span>
                         {p.estoque_atual < p.estoque_minimo && (
                           <AlertTriangle className="h-4 w-4 text-warning" />
