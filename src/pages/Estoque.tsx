@@ -359,6 +359,39 @@ export default function Estoque() {
         </DialogContent>
       </Dialog>
 
+      {/* Risk of stockout alert */}
+      {(() => {
+        const rupturaItems = filtered.filter((p) =>
+          filterUnit !== "all"
+            ? getStockForUnit(p.id, filterUnit) < p.estoque_minimo
+            : p.estoque_atual < p.estoque_minimo
+        );
+        if (rupturaItems.length === 0) return null;
+        return (
+          <div className="glass-card p-4 border border-destructive/30">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <h2 className="text-sm font-display font-semibold text-destructive">
+                Itens em Risco de Ruptura ({rupturaItems.length})
+              </h2>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {rupturaItems.slice(0, 10).map((p) => {
+                const saldo = filterUnit !== "all" ? getStockForUnit(p.id, filterUnit) : p.estoque_atual;
+                return (
+                  <Badge key={p.id} variant="destructive" className="text-xs gap-1">
+                    {p.nome}: {saldo}/{p.estoque_minimo} {p.unidade_medida}
+                  </Badge>
+                );
+              })}
+              {rupturaItems.length > 10 && (
+                <Badge variant="secondary" className="text-xs">+{rupturaItems.length - 10} mais</Badge>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Table */}
       <div className="glass-card overflow-hidden">
         <div className="overflow-x-auto">
@@ -390,15 +423,24 @@ export default function Estoque() {
                       <div className="flex items-center gap-2">
                         {filterUnit !== "all" ? (
                           <>
-                            <span className="font-semibold">{getStockForUnit(p.id, filterUnit)}</span>
+                            <span className={`font-semibold ${getStockForUnit(p.id, filterUnit) < p.estoque_minimo ? "text-destructive" : ""}`}>
+                              {getStockForUnit(p.id, filterUnit)}
+                            </span>
                             <span className="text-xs text-muted-foreground">/ {p.estoque_atual} total</span>
                           </>
                         ) : (
-                          <>{p.estoque_atual}</>
+                          <span className={p.estoque_atual < p.estoque_minimo ? "text-destructive font-semibold" : ""}>
+                            {p.estoque_atual}
+                          </span>
                         )}
                         <span className="text-xs text-muted-foreground">{p.unidade_medida}</span>
-                        {p.estoque_atual < p.estoque_minimo && (
-                          <AlertTriangle className="h-4 w-4 text-warning" />
+                        {(filterUnit !== "all"
+                          ? getStockForUnit(p.id, filterUnit) < p.estoque_minimo
+                          : p.estoque_atual < p.estoque_minimo
+                        ) && (
+                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                            Ruptura
+                          </Badge>
                         )}
                       </div>
                     </TableCell>

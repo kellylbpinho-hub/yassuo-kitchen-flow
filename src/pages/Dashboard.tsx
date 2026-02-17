@@ -13,6 +13,7 @@ interface DashboardData {
   rankingUnidades: { name: string; desperdicio: number }[];
   alertaDesvio: boolean;
   lotesVencendo: number;
+  lowStockItems: { nome: string; estoque_atual: number; estoque_minimo: number; unidade_medida: string }[];
 }
 
 export default function Dashboard() {
@@ -25,6 +26,7 @@ export default function Dashboard() {
     rankingUnidades: [],
     alertaDesvio: false,
     lotesVencendo: 0,
+    lowStockItems: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -35,7 +37,7 @@ export default function Dashboard() {
   const loadDashboard = async () => {
     try {
       // Items below minimum
-      const { data: allProds } = await supabase.from("products").select("id, estoque_atual, estoque_minimo, custo_unitario, validade_minima_dias");
+      const { data: allProds } = await supabase.from("products").select("id, nome, estoque_atual, estoque_minimo, custo_unitario, validade_minima_dias, unidade_medida");
       const lowStock = (allProds || []).filter((p: any) => Number(p.estoque_atual) < Number(p.estoque_minimo));
 
       // For CEO/financial: total stock value
@@ -103,6 +105,12 @@ export default function Dashboard() {
         rankingUnidades: ranking,
         alertaDesvio: false,
         lotesVencendo,
+        lowStockItems: lowStock.map((p: any) => ({
+          nome: p.nome,
+          estoque_atual: Number(p.estoque_atual),
+          estoque_minimo: Number(p.estoque_minimo),
+          unidade_medida: p.unidade_medida || "kg",
+        })),
       });
     } catch (err) {
       console.error("Dashboard error:", err);
@@ -188,6 +196,42 @@ export default function Dashboard() {
           <p className="text-xs text-muted-foreground mt-1">total cadastrado</p>
         </div>
       </div>
+
+      {/* Low stock items - risk of stockout */}
+      {data.lowStockItems.length > 0 && (
+        <div className="glass-card p-5 border border-destructive/30">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <h2 className="text-base font-display font-semibold text-foreground">
+                Itens em Risco de Ruptura
+              </h2>
+              <Badge variant="destructive" className="text-xs">{data.lowStockItems.length}</Badge>
+            </div>
+            <button
+              onClick={() => navigate("/estoque")}
+              className="text-xs text-primary hover:underline underline-offset-2"
+            >
+              Ver estoque →
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {data.lowStockItems.slice(0, 9).map((item, i) => (
+              <div key={i} className="flex items-center justify-between bg-destructive/10 rounded-lg px-3 py-2">
+                <span className="text-sm font-medium text-foreground truncate mr-2">{item.nome}</span>
+                <span className="text-xs text-destructive font-semibold whitespace-nowrap">
+                  {item.estoque_atual}/{item.estoque_minimo} {item.unidade_medida}
+                </span>
+              </div>
+            ))}
+            {data.lowStockItems.length > 9 && (
+              <div className="flex items-center justify-center bg-muted rounded-lg px-3 py-2">
+                <span className="text-xs text-muted-foreground">+{data.lowStockItems.length - 9} mais</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* CEO-only deviation alert */}
       {isCeo && data.alertaDesvio && (
