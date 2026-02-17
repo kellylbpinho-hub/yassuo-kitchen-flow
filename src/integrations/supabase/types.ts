@@ -932,6 +932,16 @@ export type Database = {
       is_ceo: { Args: never; Returns: boolean }
       is_comprador: { Args: never; Returns: boolean }
       is_estoquista: { Args: never; Returns: boolean }
+      rpc_receive_digital: {
+        Args: {
+          p_lote_codigo: string
+          p_product_id: string
+          p_quantidade: number
+          p_unidade_id: string
+          p_validade: string
+        }
+        Returns: Json
+      }
       user_can_approve: { Args: never; Returns: boolean }
       user_can_manage: { Args: never; Returns: boolean }
       user_can_see_costs: { Args: never; Returns: boolean }

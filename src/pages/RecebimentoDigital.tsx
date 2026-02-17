@@ -135,12 +135,6 @@ export default function RecebimentoDigital() {
       return;
     }
 
-    const unit = units.find((u) => u.id === selectedUnit);
-    if (unit?.type !== "cd") {
-      toast.error("Recebimento permitido apenas em unidades do tipo CD.");
-      return;
-    }
-
     const qty = parseFloat(quantidade);
     if (isNaN(qty) || qty <= 0) {
       toast.error("Quantidade inválida.");
@@ -149,49 +143,28 @@ export default function RecebimentoDigital() {
 
     setLoading(true);
 
-    // 1. Create lote
-    const { error: loteError } = await supabase.from("lotes").insert({
-      product_id: product!.id,
-      unidade_id: selectedUnit,
-      validade,
-      codigo: lote.trim(),
-      quantidade: qty,
-      company_id: profile!.company_id,
+    const { data, error } = await supabase.rpc("rpc_receive_digital", {
+      p_product_id: product!.id,
+      p_unidade_id: selectedUnit,
+      p_validade: validade,
+      p_lote_codigo: lote.trim(),
+      p_quantidade: qty,
     });
-    if (loteError) {
-      toast.error("Erro ao criar lote: " + loteError.message);
-      setLoading(false);
-      return;
-    }
-
-    // 2. Create movement
-    const { error: movError } = await supabase.from("movements").insert({
-      product_id: product!.id,
-      unidade_id: selectedUnit,
-      tipo: "entrada",
-      quantidade: qty,
-      motivo: `Recebimento digital - Lote: ${lote.trim()}`,
-      user_id: user!.id,
-      company_id: profile!.company_id,
-    });
-    if (movError) {
-      toast.error("Erro ao registrar movimento: " + movError.message);
-      setLoading(false);
-      return;
-    }
-
-    // 3. Update product stock
-    const { error: upError } = await supabase
-      .from("products")
-      .update({ estoque_atual: product!.estoque_atual + qty })
-      .eq("id", product!.id);
-    if (upError) {
-      toast.error("Erro ao atualizar estoque: " + upError.message);
-      setLoading(false);
-      return;
-    }
 
     setLoading(false);
+
+    if (error) {
+      // Parse Postgres exception messages for user-friendly display
+      const msg = error.message || "Erro desconhecido";
+      toast.error(msg);
+      return;
+    }
+
+    // Update local product state with new stock from RPC response
+    if (data && product) {
+      setProduct({ ...product, estoque_atual: (data as any).novo_estoque_atual });
+    }
+
     setStep("success");
     toast.success("Recebimento registrado com sucesso!");
   };
