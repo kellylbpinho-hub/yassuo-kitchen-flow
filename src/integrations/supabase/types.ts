@@ -427,6 +427,7 @@ export type Database = {
         Row: {
           categoria: string | null
           category_id: string | null
+          codigo_barras: string | null
           company_id: string
           created_at: string
           custo_unitario: number | null
@@ -444,6 +445,7 @@ export type Database = {
         Insert: {
           categoria?: string | null
           category_id?: string | null
+          codigo_barras?: string | null
           company_id: string
           created_at?: string
           custo_unitario?: number | null
@@ -461,6 +463,7 @@ export type Database = {
         Update: {
           categoria?: string | null
           category_id?: string | null
+          codigo_barras?: string | null
           company_id?: string
           created_at?: string
           custo_unitario?: number | null
