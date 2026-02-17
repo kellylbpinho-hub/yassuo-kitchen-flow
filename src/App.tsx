@@ -18,6 +18,7 @@ import Usuarios from "./pages/Usuarios";
 import Unidades from "./pages/Unidades";
 import Categorias from "./pages/Categorias";
 import RecebimentoDigital from "./pages/RecebimentoDigital";
+import Alertas from "./pages/Alertas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
               <Route path="/usuarios" element={<Usuarios />} />
               <Route path="/unidades" element={<Unidades />} />
               <Route path="/categorias" element={<Categorias />} />
+              <Route path="/alertas" element={<Alertas />} />
               <Route path="/recebimento-digital" element={<RecebimentoDigital />} />
             </Route>
             <Route path="*" element={<NotFound />} />

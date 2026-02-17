@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   ChevronDown,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ const baseNavItems = [
   { to: "/compras", icon: ShoppingCart, label: "Compras" },
   { to: "/recebimento-digital", icon: ScanBarcode, label: "Recebimento" },
   { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
+  { to: "/alertas", icon: Bell, label: "Alertas" },
 ];
 
 export function AppLayout() {

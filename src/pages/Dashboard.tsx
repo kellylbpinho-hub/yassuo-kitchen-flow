@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { Package, AlertTriangle, TrendingDown, DollarSign, ShieldAlert } from "lucide-react";
+import { Package, AlertTriangle, TrendingDown, DollarSign, ShieldAlert, Clock } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 interface DashboardData {
   totalEstoqueValor: number;
@@ -10,16 +12,19 @@ interface DashboardData {
   perdasMes: { kg: number; valor: number };
   rankingUnidades: { name: string; desperdicio: number }[];
   alertaDesvio: boolean;
+  lotesVencendo: number;
 }
 
 export default function Dashboard() {
   const { isCeo, canSeeCosts, role } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState<DashboardData>({
     totalEstoqueValor: 0,
     itensAbaixoMinimo: 0,
     perdasMes: { kg: 0, valor: 0 },
     rankingUnidades: [],
     alertaDesvio: false,
+    lotesVencendo: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -30,8 +35,8 @@ export default function Dashboard() {
   const loadDashboard = async () => {
     try {
       // Items below minimum
-      const { data: allProds } = await supabase.from("products").select("id, estoque_atual, estoque_minimo, custo_unitario");
-      const lowStock = (allProds || []).filter(p => Number(p.estoque_atual) < Number(p.estoque_minimo));
+      const { data: allProds } = await supabase.from("products").select("id, estoque_atual, estoque_minimo, custo_unitario, validade_minima_dias");
+      const lowStock = (allProds || []).filter((p: any) => Number(p.estoque_atual) < Number(p.estoque_minimo));
 
       // For CEO/financial: total stock value
       let totalValue = 0;
@@ -69,12 +74,35 @@ export default function Dashboard() {
         desperdicio: wasteByUnit[u.id] || 0,
       })).sort((a, b) => b.desperdicio - a.desperdicio);
 
+      // Count lots expiring soon
+      const { data: lotesAtivos } = await supabase
+        .from("lotes")
+        .select("id, validade, product_id, status")
+        .eq("status", "ativo")
+        .gt("quantidade", 0);
+
+      let lotesVencendo = 0;
+      if (lotesAtivos && allProds) {
+        const prodMinDias = Object.fromEntries(
+          (allProds).map((p: any) => [p.id, p.validade_minima_dias ?? 30])
+        );
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        for (const lote of lotesAtivos) {
+          const validade = new Date(lote.validade + "T00:00:00");
+          const dias = Math.ceil((validade.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          const limiar = prodMinDias[lote.product_id] ?? 30;
+          if (dias <= limiar) lotesVencendo++;
+        }
+      }
+
       setData({
         totalEstoqueValor: totalValue,
         itensAbaixoMinimo: lowStock?.length || 0,
         perdasMes: { kg: perdasKg, valor: 0 },
         rankingUnidades: ranking,
         alertaDesvio: false,
+        lotesVencendo,
       });
     } catch (err) {
       console.error("Dashboard error:", err);
@@ -128,6 +156,27 @@ export default function Dashboard() {
           <p className="text-2xl font-bold font-display mt-2 text-foreground">
             {data.perdasMes.kg.toFixed(1)} kg
           </p>
+        </div>
+
+        <div
+          className="stat-card cursor-pointer"
+          onClick={() => navigate("/alertas")}
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">Vence em Breve</p>
+            <div className="relative">
+              <Clock className="h-5 w-5 text-warning" />
+              {data.lotesVencendo > 0 && (
+                <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-4 min-w-[16px] flex items-center justify-center px-1">
+                  {data.lotesVencendo}
+                </span>
+              )}
+            </div>
+          </div>
+          <p className="text-2xl font-bold font-display mt-2 text-foreground">
+            {data.lotesVencendo}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">lotes próximos do vencimento</p>
         </div>
 
         <div className="stat-card">
