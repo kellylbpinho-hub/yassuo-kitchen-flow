@@ -954,6 +954,16 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_request_transfer: {
+        Args: {
+          p_motivo?: string
+          p_product_id: string
+          p_quantidade: number
+          p_unidade_destino_id: string
+          p_unidade_origem_id: string
+        }
+        Returns: string
+      }
       user_can_approve: { Args: never; Returns: boolean }
       user_can_manage: { Args: never; Returns: boolean }
       user_can_see_costs: { Args: never; Returns: boolean }
