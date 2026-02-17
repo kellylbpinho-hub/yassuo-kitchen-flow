@@ -82,34 +82,24 @@ export default function Desperdicio() {
       return;
     }
     const qty = Number(form.quantidade);
+    if (isNaN(qty) || qty <= 0) {
+      toast.error("Quantidade inválida.");
+      return;
+    }
 
-    // Create waste log
-    const { error } = await supabase.from("waste_logs").insert({
-      product_id: form.product_id,
-      quantidade: qty,
-      observacao: form.observacao || null,
-      menu_id: form.menu_id || null,
-      user_id: user!.id,
-      unidade_id: form.unidade_id,
-      company_id: profile!.company_id,
-    });
-    if (error) { toast.error("Erro: " + error.message); return; }
-
-    // Auto movement (perda)
-    await supabase.from("movements").insert({
-      product_id: form.product_id,
-      tipo: "perda",
-      quantidade: qty,
-      motivo: "Desperdício registrado" + (form.observacao ? `: ${form.observacao}` : ""),
-      user_id: user!.id,
-      unidade_id: form.unidade_id,
-      company_id: profile!.company_id,
+    const { data, error } = await supabase.rpc("rpc_consume_fefo", {
+      p_product_id: form.product_id,
+      p_unidade_id: form.unidade_id,
+      p_quantidade: qty,
+      p_tipo: "desperdicio",
+      p_motivo: "Desperdício registrado" + (form.observacao ? `: ${form.observacao}` : ""),
+      p_menu_id: form.menu_id || null,
+      p_observacao: form.observacao || null,
     });
 
-    // Update stock
-    const prod = products.find((p) => p.id === form.product_id);
-    if (prod) {
-      await supabase.from("products").update({ estoque_atual: Math.max(0, prod.estoque_atual - qty) }).eq("id", prod.id);
+    if (error) {
+      toast.error(error.message);
+      return;
     }
 
     toast.success("Desperdício registrado!");
