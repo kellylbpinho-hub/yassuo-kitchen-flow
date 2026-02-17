@@ -107,33 +107,65 @@ export default function Estoque() {
 
   const addMovement = async () => {
     if (!selectedProduct || !movForm.quantidade) return;
-    if (movForm.tipo === "ajuste" && !movForm.motivo) {
-      toast.error("Motivo é obrigatório para ajustes.");
-      return;
-    }
-
     const qty = Number(movForm.quantidade);
-    const { error: movErr } = await supabase.from("movements").insert({
-      product_id: selectedProduct.id,
-      tipo: movForm.tipo,
-      quantidade: qty,
-      motivo: movForm.motivo || null,
-      user_id: user!.id,
-      unidade_id: selectedProduct.unidade_id,
-      company_id: profile!.company_id,
-    });
-
-    if (movErr) {
-      toast.error("Erro ao registrar movimentação: " + movErr.message);
+    if (isNaN(qty) || qty <= 0) {
+      toast.error("Quantidade inválida.");
       return;
     }
 
-    let newStock = selectedProduct.estoque_atual;
-    if (movForm.tipo === "entrada") newStock += qty;
-    else if (["saida", "consumo", "perda"].includes(movForm.tipo)) newStock -= qty;
-    else if (movForm.tipo === "ajuste") newStock = qty;
+    // Types that consume stock use the FEFO RPC
+    if (["saida", "consumo", "perda"].includes(movForm.tipo)) {
+      const { error } = await supabase.rpc("rpc_consume_fefo", {
+        p_product_id: selectedProduct.id,
+        p_unidade_id: selectedProduct.unidade_id,
+        p_quantidade: qty,
+        p_tipo: movForm.tipo,
+        p_motivo: movForm.motivo || null,
+      });
 
-    await supabase.from("products").update({ estoque_atual: newStock }).eq("id", selectedProduct.id);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+    } else if (movForm.tipo === "ajuste") {
+      if (!movForm.motivo) {
+        toast.error("Motivo é obrigatório para ajustes.");
+        return;
+      }
+      // Ajuste sets absolute value — keep direct write (no FEFO)
+      const { error: movErr } = await supabase.from("movements").insert({
+        product_id: selectedProduct.id,
+        tipo: "ajuste",
+        quantidade: qty,
+        motivo: movForm.motivo,
+        user_id: user!.id,
+        unidade_id: selectedProduct.unidade_id,
+        company_id: profile!.company_id,
+      });
+      if (movErr) {
+        toast.error("Erro: " + movErr.message);
+        return;
+      }
+      await supabase.from("products").update({ estoque_atual: qty }).eq("id", selectedProduct.id);
+    } else if (movForm.tipo === "entrada") {
+      // Entrada without lot — keep direct write (use recebimento digital for full flow)
+      const { error: movErr } = await supabase.from("movements").insert({
+        product_id: selectedProduct.id,
+        tipo: "entrada",
+        quantidade: qty,
+        motivo: movForm.motivo || "Entrada manual",
+        user_id: user!.id,
+        unidade_id: selectedProduct.unidade_id,
+        company_id: profile!.company_id,
+      });
+      if (movErr) {
+        toast.error("Erro: " + movErr.message);
+        return;
+      }
+      await supabase.from("products")
+        .update({ estoque_atual: selectedProduct.estoque_atual + qty })
+        .eq("id", selectedProduct.id);
+    }
 
     toast.success("Movimentação registrada!");
     setMovOpen(false);
