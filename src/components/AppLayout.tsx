@@ -9,6 +9,7 @@ import {
   Users,
   Building2,
   Tag,
+  ScanBarcode,
   LogOut,
   Menu,
   X,
@@ -21,6 +22,7 @@ const baseNavItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/estoque", icon: Package, label: "Estoque" },
   { to: "/compras", icon: ShoppingCart, label: "Compras" },
+  { to: "/recebimento-digital", icon: ScanBarcode, label: "Recebimento" },
   { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
 ];
 
