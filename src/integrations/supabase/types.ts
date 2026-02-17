@@ -913,7 +913,37 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_estoque_por_unidade: {
+        Row: {
+          company_id: string | null
+          product_id: string | null
+          saldo: number | null
+          unidade_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lotes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lotes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lotes_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       current_company_id: { Args: never; Returns: string }
