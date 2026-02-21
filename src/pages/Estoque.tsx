@@ -99,17 +99,11 @@ export default function Estoque() {
       toast.error("Selecione uma categoria.");
       return;
     }
-    const { error } = await supabase.from("products").insert({
-      nome: form.nome,
-      category_id: form.category_id || null,
-      categoria: null,
-      unidade_medida: form.unidade_medida,
-      estoque_atual: Number(form.estoque_atual),
-      estoque_minimo: Number(form.estoque_minimo),
-      custo_unitario: Number(form.custo_unitario),
-      validade: form.validade || null,
-      unidade_id: form.unidade_id,
-      company_id: profile!.company_id,
+    const { data, error } = await supabase.rpc("rpc_create_product", {
+      p_unidade_id: form.unidade_id,
+      p_nome: form.nome,
+      p_unidade_medida: form.unidade_medida,
+      p_category_id: form.category_id || null,
     });
     if (error) {
       toast.error("Erro ao adicionar produto: " + error.message);

@@ -974,6 +974,16 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_create_product: {
+        Args: {
+          p_category_id?: string
+          p_codigo_barras?: string
+          p_nome: string
+          p_unidade_id: string
+          p_unidade_medida?: string
+        }
+        Returns: Json
+      }
       rpc_ensure_profile: { Args: never; Returns: Json }
       rpc_receive_digital: {
         Args: {

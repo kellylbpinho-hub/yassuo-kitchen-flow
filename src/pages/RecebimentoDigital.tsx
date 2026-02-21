@@ -106,24 +106,19 @@ export default function RecebimentoDigital() {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
-      .from("products")
-      .insert({
-        nome: newName.trim(),
-        unidade_medida: newUnidadeMedida,
-        codigo_barras: barcode,
-        unidade_id: newUnit,
-        company_id: profile!.company_id,
-      })
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc("rpc_create_product", {
+      p_unidade_id: newUnit,
+      p_nome: newName.trim(),
+      p_unidade_medida: newUnidadeMedida,
+      p_codigo_barras: barcode,
+    });
 
     if (error) {
       toast.error("Erro ao cadastrar: " + error.message);
       setLoading(false);
       return;
     }
-    setProduct(data as Product);
+    setProduct(data as unknown as Product);
     setStep("receipt");
     setLoading(false);
     toast.success("Produto cadastrado!");
