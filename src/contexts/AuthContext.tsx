@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 type AppRole = "ceo" | "gerente_financeiro" | "gerente_operacional" | "nutricionista" | "estoquista" | "comprador";
 
@@ -46,11 +47,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
+    // Ensure profile exists (creates one if missing, using company from user_roles)
+    const { data: ensuredProfile, error: ensureError } = await supabase.rpc("rpc_ensure_profile");
+
+    if (ensureError) {
+      const msg = ensureError.message || "";
+      if (msg.includes("sem empresa vinculada")) {
+        console.error("Usuário sem empresa vinculada.");
+        setProfile(null);
+        setRole(null);
+        // Sign out so the user sees the error on login
+        await supabase.auth.signOut();
+        toast.error("Usuário sem empresa vinculada. Contate o administrador.");
+        return;
+      }
+      // Non-critical: fall through to direct query
+      console.warn("rpc_ensure_profile warning:", msg);
+    }
+
+    if (ensuredProfile) {
+      setProfile(ensuredProfile as unknown as Profile);
+    } else {
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+      setProfile(profileData as Profile | null);
+    }
 
     const { data: roleData } = await supabase
       .from("user_roles")
@@ -58,7 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("user_id", userId)
       .maybeSingle();
 
-    setProfile(profileData as Profile | null);
     setRole((roleData?.role as AppRole) || null);
   };
 
