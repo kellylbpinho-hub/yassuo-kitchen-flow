@@ -20,6 +20,7 @@ import Categorias from "./pages/Categorias";
 import RecebimentoDigital from "./pages/RecebimentoDigital";
 import Alertas from "./pages/Alertas";
 import QA from "./pages/QA";
+import PedidoInterno from "./pages/PedidoInterno";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/alertas" element={<Alertas />} />
               <Route path="/qa" element={<QA />} />
               <Route path="/recebimento-digital" element={<RecebimentoDigital />} />
+              <Route path="/pedido-interno" element={<PedidoInterno />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
