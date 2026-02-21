@@ -15,6 +15,7 @@ import {
   X,
   ChevronDown,
   Bell,
+  ClipboardList,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,11 +31,14 @@ const baseNavItems = [
 
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { profile, role, signOut, canManageUsers } = useAuth();
+  const { profile, role, signOut, canManageUsers, isNutricionista, isGerenteOperacional, isCeo } = useAuth();
   const navigate = useNavigate();
+
+  const showPedidoInterno = isNutricionista || isGerenteOperacional || isCeo;
 
   const navItems = [
     ...baseNavItems,
+    ...(showPedidoInterno ? [{ to: "/pedido-interno", icon: ClipboardList, label: "Pedido Interno" }] : []),
     { to: "/categorias", icon: Tag, label: "Categorias" },
     ...(canManageUsers ? [
       { to: "/usuarios", icon: Users, label: "Usuários" },
