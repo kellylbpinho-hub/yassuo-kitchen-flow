@@ -974,6 +974,7 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_ensure_profile: { Args: never; Returns: Json }
       rpc_receive_digital: {
         Args: {
           p_lote_codigo: string
