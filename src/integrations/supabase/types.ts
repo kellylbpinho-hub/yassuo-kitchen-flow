@@ -425,6 +425,7 @@ export type Database = {
       }
       products: {
         Row: {
+          ativo: boolean
           categoria: string | null
           category_id: string | null
           codigo_barras: string | null
@@ -443,6 +444,7 @@ export type Database = {
           validade_minima_dias: number | null
         }
         Insert: {
+          ativo?: boolean
           categoria?: string | null
           category_id?: string | null
           codigo_barras?: string | null
@@ -461,6 +463,7 @@ export type Database = {
           validade_minima_dias?: number | null
         }
         Update: {
+          ativo?: boolean
           categoria?: string | null
           category_id?: string | null
           codigo_barras?: string | null
