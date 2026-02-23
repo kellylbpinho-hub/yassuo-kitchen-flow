@@ -9,10 +9,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, RefreshCw, Search, Loader2, AlertTriangle, Eye } from "lucide-react";
+import { Plus, RefreshCw, Search, Loader2, AlertTriangle, Eye, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { ProductDetailDrawer } from "@/components/ProductDetailDrawer";
+import { EditProductDialog } from "@/components/EditProductDialog";
 
 interface Category {
   id: string;
@@ -59,6 +60,7 @@ export default function Estoque() {
   const [movOpen, setMovOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
 
   const [form, setForm] = useState({
     nome: "", category_id: "", unidade_medida: "kg", estoque_atual: "0",
@@ -72,7 +74,7 @@ export default function Estoque() {
   const loadData = async () => {
     setLoading(true);
     const [{ data: prods }, { data: u }, { data: cats }, { data: sbu }] = await Promise.all([
-      supabase.from("products").select("*, product_categories(name)").order("nome"),
+      supabase.from("products").select("*, product_categories(name)").eq("ativo", true).order("nome"),
       supabase.from("units").select("id, name, type"),
       supabase.from("product_categories").select("id, name").order("name"),
       supabase.from("v_estoque_por_unidade").select("product_id, unidade_id, saldo"),
@@ -461,14 +463,24 @@ export default function Estoque() {
                         <Eye className="h-4 w-4" />
                       </Button>
                       {!isFinanceiro && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => { setSelectedProduct(p); setMovOpen(true); }}
-                          title="Movimentação"
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditProduct(p)}
+                            title="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { setSelectedProduct(p); setMovOpen(true); }}
+                            title="Movimentação"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                        </>
                       )}
                     </TableCell>
                   </TableRow>
@@ -486,6 +498,14 @@ export default function Estoque() {
         filterUnitId={filterUnit}
         open={!!detailProduct}
         onClose={() => setDetailProduct(null)}
+      />
+
+      {/* Edit product dialog */}
+      <EditProductDialog
+        product={editProduct}
+        open={!!editProduct}
+        onClose={() => setEditProduct(null)}
+        onSaved={loadData}
       />
     </div>
   );

@@ -45,7 +45,7 @@ export default function Desperdicio() {
     setLoading(true);
     const [{ data: w }, { data: p }, { data: m }, { data: u }] = await Promise.all([
       supabase.from("waste_logs").select("*").order("created_at", { ascending: false }).limit(50),
-      supabase.from("products").select("id, nome, unidade_medida, unidade_id, estoque_atual"),
+      supabase.from("products").select("id, nome, unidade_medida, unidade_id, estoque_atual").eq("ativo", true),
       supabase.from("menus").select("id, nome, data").order("data", { ascending: false }),
       supabase.from("units").select("id, name"),
     ]);
