@@ -17,7 +17,8 @@ interface Category {
 }
 
 export default function Categorias() {
-  const { profile, canManage } = useAuth();
+  const { profile, canManage, isFinanceiro } = useAuth();
+  const canEditCategories = canManage && !isFinanceiro;
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
@@ -79,7 +80,7 @@ export default function Categorias() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold text-foreground">Categorias de Produtos</h1>
-        {canManage && (
+        {canEditCategories && (
           <Dialog open={createOpen} onOpenChange={(open) => { setCreateOpen(open); if (!open) setName(""); }}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-2" />Nova Categoria</Button>
@@ -122,7 +123,7 @@ export default function Categorias() {
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead>Categoria</TableHead>
-                {canManage && <TableHead className="w-28">Ações</TableHead>}
+                {canEditCategories && <TableHead className="w-28">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -137,7 +138,7 @@ export default function Categorias() {
                         {cat.name}
                       </div>
                     </TableCell>
-                    {canManage && (
+                    {canEditCategories && (
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="sm" onClick={() => { setEditCat(cat); setName(cat.name); }}>

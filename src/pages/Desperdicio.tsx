@@ -27,7 +27,7 @@ interface Menu { id: string; nome: string; data: string; }
 interface Unit { id: string; name: string; }
 
 export default function Desperdicio() {
-  const { user, profile } = useAuth();
+  const { user, profile, isFinanceiro } = useAuth();
   const [logs, setLogs] = useState<WasteLog[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
@@ -121,68 +121,72 @@ export default function Desperdicio() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-display font-bold text-foreground">Desperdício</h1>
         <div className="flex gap-2">
-          <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
-            <DialogTrigger asChild>
-              <Button variant="secondary"><Plus className="h-4 w-4 mr-2" />Cardápio</Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card border-border max-w-sm">
-              <DialogHeader><DialogTitle className="font-display">Novo Cardápio</DialogTitle></DialogHeader>
-              <div className="space-y-3">
-                <div><Label>Nome</Label><Input value={menuForm.nome} onChange={(e) => setMenuForm({ ...menuForm, nome: e.target.value })} className="bg-input border-border" /></div>
-                <div><Label>Data</Label><Input type="date" value={menuForm.data} onChange={(e) => setMenuForm({ ...menuForm, data: e.target.value })} className="bg-input border-border" /></div>
-                <div>
-                  <Label>Unidade</Label>
-                  <Select value={menuForm.unidade_id} onValueChange={(v) => setMenuForm({ ...menuForm, unidade_id: v })}>
-                    <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
-                    <SelectContent>{units.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div><Label>Descrição</Label><Textarea value={menuForm.descricao} onChange={(e) => setMenuForm({ ...menuForm, descricao: e.target.value })} className="bg-input border-border" /></div>
-                <Button onClick={addMenu} className="w-full">Criar Cardápio</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          {!isFinanceiro && (
+            <>
+              <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="secondary"><Plus className="h-4 w-4 mr-2" />Cardápio</Button>
+                </DialogTrigger>
+                <DialogContent className="bg-card border-border max-w-sm">
+                  <DialogHeader><DialogTitle className="font-display">Novo Cardápio</DialogTitle></DialogHeader>
+                  <div className="space-y-3">
+                    <div><Label>Nome</Label><Input value={menuForm.nome} onChange={(e) => setMenuForm({ ...menuForm, nome: e.target.value })} className="bg-input border-border" /></div>
+                    <div><Label>Data</Label><Input type="date" value={menuForm.data} onChange={(e) => setMenuForm({ ...menuForm, data: e.target.value })} className="bg-input border-border" /></div>
+                    <div>
+                      <Label>Unidade</Label>
+                      <Select value={menuForm.unidade_id} onValueChange={(v) => setMenuForm({ ...menuForm, unidade_id: v })}>
+                        <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                        <SelectContent>{units.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div><Label>Descrição</Label><Textarea value={menuForm.descricao} onChange={(e) => setMenuForm({ ...menuForm, descricao: e.target.value })} className="bg-input border-border" /></div>
+                    <Button onClick={addMenu} className="w-full">Criar Cardápio</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
-          <Dialog open={addOpen} onOpenChange={setAddOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" />Registrar Perda</Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card border-border max-w-sm">
-              <DialogHeader><DialogTitle className="font-display">Registrar Desperdício</DialogTitle></DialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <Label>Cardápio (opcional)</Label>
-                  <Select value={form.menu_id} onValueChange={(v) => setForm({ ...form, menu_id: v })}>
-                    <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                    <SelectContent>{menus.map((m) => <SelectItem key={m.id} value={m.id}>{m.nome} ({m.data})</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Produto *</Label>
-                  <Select value={form.product_id} onValueChange={(v) => setForm({ ...form, product_id: v })}>
-                    <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                    <SelectContent>{products.map((p) => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Quantidade *</Label>
-                  <Input type="number" value={form.quantidade} onChange={(e) => setForm({ ...form, quantidade: e.target.value })} className="bg-input border-border" />
-                </div>
-                <div>
-                  <Label>Unidade</Label>
-                  <Select value={form.unidade_id} onValueChange={(v) => setForm({ ...form, unidade_id: v })}>
-                    <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
-                    <SelectContent>{units.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Observação</Label>
-                  <Textarea value={form.observacao} onChange={(e) => setForm({ ...form, observacao: e.target.value })} className="bg-input border-border" />
-                </div>
-                <Button onClick={addWaste} className="w-full">Registrar</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              <Dialog open={addOpen} onOpenChange={setAddOpen}>
+                <DialogTrigger asChild>
+                  <Button><Plus className="h-4 w-4 mr-2" />Registrar Perda</Button>
+                </DialogTrigger>
+                <DialogContent className="bg-card border-border max-w-sm">
+                  <DialogHeader><DialogTitle className="font-display">Registrar Desperdício</DialogTitle></DialogHeader>
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Cardápio (opcional)</Label>
+                      <Select value={form.menu_id} onValueChange={(v) => setForm({ ...form, menu_id: v })}>
+                        <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                        <SelectContent>{menus.map((m) => <SelectItem key={m.id} value={m.id}>{m.nome} ({m.data})</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Produto *</Label>
+                      <Select value={form.product_id} onValueChange={(v) => setForm({ ...form, product_id: v })}>
+                        <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                        <SelectContent>{products.map((p) => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Quantidade *</Label>
+                      <Input type="number" value={form.quantidade} onChange={(e) => setForm({ ...form, quantidade: e.target.value })} className="bg-input border-border" />
+                    </div>
+                    <div>
+                      <Label>Unidade</Label>
+                      <Select value={form.unidade_id} onValueChange={(v) => setForm({ ...form, unidade_id: v })}>
+                        <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                        <SelectContent>{units.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Observação</Label>
+                      <Textarea value={form.observacao} onChange={(e) => setForm({ ...form, observacao: e.target.value })} className="bg-input border-border" />
+                    </div>
+                    <Button onClick={addWaste} className="w-full">Registrar</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
         </div>
       </div>
 
