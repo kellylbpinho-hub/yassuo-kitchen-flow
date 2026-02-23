@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Bell,
   ClipboardList,
+  ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,14 +32,16 @@ const baseNavItems = [
 
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { profile, role, signOut, canManageUsers, isNutricionista, isGerenteOperacional, isCeo } = useAuth();
+  const { profile, role, signOut, canManageUsers, isNutricionista, isGerenteOperacional, isCeo, isEstoquista, canManage } = useAuth();
   const navigate = useNavigate();
 
   const showPedidoInterno = isNutricionista || isGerenteOperacional || isCeo;
+  const showAprovacoes = canManage; // CEO, gerente_operacional, gerente_financeiro
 
   const navItems = [
     ...baseNavItems,
     ...(showPedidoInterno ? [{ to: "/pedido-interno", icon: ClipboardList, label: "Pedido Interno" }] : []),
+    ...(showAprovacoes ? [{ to: "/aprovacoes-cd", icon: ClipboardCheck, label: "Aprovações CD" }] : []),
     { to: "/categorias", icon: Tag, label: "Categorias" },
     ...(canManageUsers ? [
       { to: "/usuarios", icon: Users, label: "Usuários" },

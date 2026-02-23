@@ -69,13 +69,19 @@ export default function RecebimentoDigital() {
     }
   };
 
+  // Normalize barcode: strip non-digits + trim
+  const normalizeBarcode = (raw: string) => raw.replace(/[^0-9]/g, "").trim() || "";
+
   const lookupBarcode = async (code: string) => {
-    setBarcode(code);
+    const normalized = normalizeBarcode(code);
+    setBarcode(normalized);
     setLoading(true);
+
+    // Search by normalized barcode within user's company (RLS handles company filtering)
     const { data } = await supabase
       .from("products")
       .select("*")
-      .eq("codigo_barras", code)
+      .eq("codigo_barras", normalized)
       .maybeSingle();
 
     setLoading(false);
@@ -110,7 +116,7 @@ export default function RecebimentoDigital() {
       p_unidade_id: newUnit,
       p_nome: newName.trim(),
       p_unidade_medida: newUnidadeMedida,
-      p_codigo_barras: barcode,
+      p_codigo_barras: barcode, // already normalized by lookupBarcode
     });
 
     if (error) {
@@ -118,10 +124,15 @@ export default function RecebimentoDigital() {
       setLoading(false);
       return;
     }
-    setProduct(data as unknown as Product);
+    const result = data as any;
+    setProduct(result as Product);
     setStep("receipt");
     setLoading(false);
-    toast.success("Produto cadastrado!");
+    if (result.already_existed) {
+      toast.info("Produto já existente encontrado. Prossiga com o recebimento.");
+    } else {
+      toast.success("Produto cadastrado!");
+    }
   };
 
   const handleReceipt = async () => {
@@ -279,6 +290,10 @@ export default function RecebimentoDigital() {
             Código: <Badge variant="secondary">{barcode}</Badge>
           </p>
           <div className="space-y-3">
+            <div>
+              <Label>Código de barras</Label>
+              <Input value={barcode} readOnly className="bg-muted" />
+            </div>
             <div>
               <Label>Nome do produto *</Label>
               <Input value={newName} onChange={(e) => setNewName(e.target.value)} autoFocus />
