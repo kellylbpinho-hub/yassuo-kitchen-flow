@@ -36,7 +36,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function Compras() {
-  const { user, canApprove, profile } = useAuth();
+  const { user, canApprove, profile, isFinanceiro } = useAuth();
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,28 +97,30 @@ export default function Compras() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold text-foreground">Compras</h1>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Novo Pedido</Button>
-          </DialogTrigger>
-          <DialogContent className="bg-card border-border max-w-sm">
-            <DialogHeader>
-              <DialogTitle className="font-display">Novo Pedido de Compra</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label>Unidade</Label>
-                <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-                  <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {units.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+        {!isFinanceiro && (
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogTrigger asChild>
+              <Button><Plus className="h-4 w-4 mr-2" />Novo Pedido</Button>
+            </DialogTrigger>
+            <DialogContent className="bg-card border-border max-w-sm">
+              <DialogHeader>
+                <DialogTitle className="font-display">Novo Pedido de Compra</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div>
+                  <Label>Unidade</Label>
+                  <Select value={selectedUnit} onValueChange={setSelectedUnit}>
+                    <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {units.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={createOrder} className="w-full">Criar Pedido</Button>
               </div>
-              <Button onClick={createOrder} className="w-full">Criar Pedido</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <div className="glass-card overflow-hidden">
@@ -148,35 +150,37 @@ export default function Compras() {
                       <Badge className={statusColors[o.status]}>{statusLabels[o.status]}</Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
-                        {o.status === "rascunho" && (
-                          <Button size="sm" variant="ghost" onClick={() => updateStatus(o.id, "enviado")} title="Enviar">
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {o.status === "enviado" && canApprove && (
-                          <Button size="sm" variant="ghost" onClick={() => updateStatus(o.id, "aprovado")} title="Aprovar">
-                            <Check className="h-4 w-4 text-success" />
-                          </Button>
-                        )}
-                        {o.status === "aprovado" && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              const unit = units.find((u) => u.id === o.unidade_id);
-                              if (unit?.type !== "cd") {
-                                toast.error("Recebimento só pode ocorrer em unidades do tipo CD (Centro de Distribuição).");
-                                return;
-                              }
-                              updateStatus(o.id, "recebido");
-                            }}
-                            title="Recebido"
-                          >
-                            <Package className="h-4 w-4 text-success" />
-                          </Button>
-                        )}
-                      </div>
+                      {!isFinanceiro && (
+                        <div className="flex gap-1">
+                          {o.status === "rascunho" && (
+                            <Button size="sm" variant="ghost" onClick={() => updateStatus(o.id, "enviado")} title="Enviar">
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {o.status === "enviado" && canApprove && (
+                            <Button size="sm" variant="ghost" onClick={() => updateStatus(o.id, "aprovado")} title="Aprovar">
+                              <Check className="h-4 w-4 text-success" />
+                            </Button>
+                          )}
+                          {o.status === "aprovado" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                const unit = units.find((u) => u.id === o.unidade_id);
+                                if (unit?.type !== "cd") {
+                                  toast.error("Recebimento só pode ocorrer em unidades do tipo CD (Centro de Distribuição).");
+                                  return;
+                                }
+                                updateStatus(o.id, "recebido");
+                              }}
+                              title="Recebido"
+                            >
+                              <Package className="h-4 w-4 text-success" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

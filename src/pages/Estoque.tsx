@@ -46,7 +46,7 @@ interface StockByUnit {
 }
 
 export default function Estoque() {
-  const { user, canSeeCosts, profile, canManage } = useAuth();
+  const { user, canSeeCosts, profile, canManage, isFinanceiro } = useAuth();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -230,93 +230,95 @@ export default function Estoque() {
               ))}
             </SelectContent>
           </Select>
-          <Dialog open={addOpen} onOpenChange={setAddOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" />Novo</Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card border-border max-w-md">
-              <DialogHeader>
-                <DialogTitle className="font-display">Novo Produto</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <Label>Nome *</Label>
-                  <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="bg-input border-border" />
-                </div>
-                <div>
-                  <Label>Categoria {categories.length > 0 ? "*" : ""}</Label>
-                  {categories.length > 0 ? (
-                    <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
-                      <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                      <SelectContent>
-                        {categories.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="text-sm text-muted-foreground py-2">
-                      Nenhuma categoria cadastrada.{" "}
-                      {canManage && (
-                        <button
-                          type="button"
-                          className="text-primary underline underline-offset-2 hover:text-primary/80"
-                          onClick={() => navigate("/categorias")}
-                        >
-                          Criar categoria
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
+          {!isFinanceiro && (
+            <Dialog open={addOpen} onOpenChange={setAddOpen}>
+              <DialogTrigger asChild>
+                <Button><Plus className="h-4 w-4 mr-2" />Novo</Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="font-display">Novo Produto</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
                   <div>
-                    <Label>Unid. Medida</Label>
-                    <Select value={form.unidade_medida} onValueChange={(v) => setForm({ ...form, unidade_medida: v })}>
-                      <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {["kg", "L", "un", "caixa", "fardo"].map((u) => (
-                          <SelectItem key={u} value={u}>{u}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label>Nome *</Label>
+                    <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="bg-input border-border" />
                   </div>
                   <div>
-                    <Label>Unidade</Label>
-                    <Select value={form.unidade_id} onValueChange={(v) => setForm({ ...form, unidade_id: v })}>
-                      <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {units.map((u) => (
-                          <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label>Categoria {categories.length > 0 ? "*" : ""}</Label>
+                    {categories.length > 0 ? (
+                      <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
+                        <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                        <SelectContent>
+                          {categories.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="text-sm text-muted-foreground py-2">
+                        Nenhuma categoria cadastrada.{" "}
+                        {canManage && (
+                          <button
+                            type="button"
+                            className="text-primary underline underline-offset-2 hover:text-primary/80"
+                            onClick={() => navigate("/categorias")}
+                          >
+                            Criar categoria
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <Label>Estoque Atual</Label>
-                    <Input type="number" value={form.estoque_atual} onChange={(e) => setForm({ ...form, estoque_atual: e.target.value })} className="bg-input border-border" />
-                  </div>
-                  <div>
-                    <Label>Mínimo</Label>
-                    <Input type="number" value={form.estoque_minimo} onChange={(e) => setForm({ ...form, estoque_minimo: e.target.value })} className="bg-input border-border" />
-                  </div>
-                  {canSeeCosts && (
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label>Custo (R$)</Label>
-                      <Input type="number" value={form.custo_unitario} onChange={(e) => setForm({ ...form, custo_unitario: e.target.value })} className="bg-input border-border" />
+                      <Label>Unid. Medida</Label>
+                      <Select value={form.unidade_medida} onValueChange={(v) => setForm({ ...form, unidade_medida: v })}>
+                        <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {["kg", "L", "un", "caixa", "fardo"].map((u) => (
+                            <SelectItem key={u} value={u}>{u}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  )}
+                    <div>
+                      <Label>Unidade</Label>
+                      <Select value={form.unidade_id} onValueChange={(v) => setForm({ ...form, unidade_id: v })}>
+                        <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {units.map((u) => (
+                            <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label>Estoque Atual</Label>
+                      <Input type="number" value={form.estoque_atual} onChange={(e) => setForm({ ...form, estoque_atual: e.target.value })} className="bg-input border-border" />
+                    </div>
+                    <div>
+                      <Label>Mínimo</Label>
+                      <Input type="number" value={form.estoque_minimo} onChange={(e) => setForm({ ...form, estoque_minimo: e.target.value })} className="bg-input border-border" />
+                    </div>
+                    {canSeeCosts && (
+                      <div>
+                        <Label>Custo (R$)</Label>
+                        <Input type="number" value={form.custo_unitario} onChange={(e) => setForm({ ...form, custo_unitario: e.target.value })} className="bg-input border-border" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Validade</Label>
+                    <Input type="date" value={form.validade} onChange={(e) => setForm({ ...form, validade: e.target.value })} className="bg-input border-border" />
+                  </div>
+                  <Button onClick={addProduct} className="w-full">Adicionar Produto</Button>
                 </div>
-                <div>
-                  <Label>Validade</Label>
-                  <Input type="date" value={form.validade} onChange={(e) => setForm({ ...form, validade: e.target.value })} className="bg-input border-border" />
-                </div>
-                <Button onClick={addProduct} className="w-full">Adicionar Produto</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
 
@@ -458,14 +460,16 @@ export default function Estoque() {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => { setSelectedProduct(p); setMovOpen(true); }}
-                        title="Movimentação"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
+                      {!isFinanceiro && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => { setSelectedProduct(p); setMovOpen(true); }}
+                          title="Movimentação"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

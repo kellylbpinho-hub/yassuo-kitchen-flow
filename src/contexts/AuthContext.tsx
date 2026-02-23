@@ -3,7 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
-type AppRole = "ceo" | "gerente_financeiro" | "gerente_operacional" | "nutricionista" | "estoquista" | "comprador";
+type AppRole = "ceo" | "gerente_financeiro" | "gerente_operacional" | "nutricionista" | "estoquista" | "comprador" | "funcionario";
 
 interface Profile {
   id: string;
@@ -35,6 +35,9 @@ interface AuthContextType {
   canManage: boolean;
   canManageUsers: boolean;
   canApprove: boolean;
+  isFinanceiro: boolean;
+  canWrite: boolean;
+  canAccessRecebimento: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -126,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isCeo = role === "ceo";
   const isGerenteOperacional = role === "gerente_operacional";
   const isGerenteFinanceiro = role === "gerente_financeiro";
+  const isFinanceiro = role === "gerente_financeiro";
   const isNutricionista = role === "nutricionista";
   const isEstoquista = role === "ceo" || role === "gerente_operacional" || role === "estoquista";
   const isComprador = role === "ceo" || role === "gerente_operacional" || role === "comprador";
@@ -133,6 +137,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const canManage = role === "ceo" || role === "gerente_financeiro" || role === "gerente_operacional";
   const canManageUsers = role === "ceo" || role === "gerente_operacional";
   const canApprove = role === "ceo" || role === "gerente_financeiro";
+  const canWrite = !!role && role !== "gerente_financeiro";
+  const canAccessRecebimento = role === "ceo" || role === "gerente_operacional" || role === "estoquista";
 
   return (
     <AuthContext.Provider
@@ -140,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user, session, profile, role, loading, signIn, signOut,
         isCeo, isGerenteOperacional, isGerenteFinanceiro, isNutricionista,
         isEstoquista, isComprador, canSeeCosts, canManage, canManageUsers, canApprove,
+        isFinanceiro, canWrite, canAccessRecebimento,
       }}
     >
       {children}

@@ -1,9 +1,25 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, ShieldAlert } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
+
+const FINANCEIRO_BLOCKED_ROUTES = [
+  "/recebimento-digital",
+  "/pedido-interno",
+  "/aprovacoes-cd",
+  "/usuarios",
+  "/unidades",
+];
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, role, profile, loading } = useAuth();
+  const { user, role, profile, loading, isFinanceiro } = useAuth();
+  const location = useLocation();
+  const toastShown = useRef(false);
+
+  useEffect(() => {
+    toastShown.current = false;
+  }, [location.pathname]);
 
   if (loading) {
     return (
@@ -44,6 +60,15 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
         </div>
       </div>
     );
+  }
+
+  // Block financeiro from restricted routes
+  if (isFinanceiro && FINANCEIRO_BLOCKED_ROUTES.includes(location.pathname)) {
+    if (!toastShown.current) {
+      toastShown.current = true;
+      setTimeout(() => toast.error("Acesso restrito. Perfil somente leitura."), 0);
+    }
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
