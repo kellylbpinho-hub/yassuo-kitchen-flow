@@ -93,6 +93,7 @@ export default function PedidoInterno() {
       supabase
         .from("products")
         .select("id, nome, unidade_medida, product_categories(name)")
+        .eq("ativo", true)
         .order("nome"),
       supabase.from("units").select("id, name, type"),
       transfersQuery,

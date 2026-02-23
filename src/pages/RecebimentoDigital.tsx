@@ -82,6 +82,7 @@ export default function RecebimentoDigital() {
       .from("products")
       .select("*")
       .eq("codigo_barras", normalized)
+      .eq("ativo", true)
       .maybeSingle();
 
     setLoading(false);
