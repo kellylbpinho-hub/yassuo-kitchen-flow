@@ -962,6 +962,11 @@ export type Database = {
       is_ceo: { Args: never; Returns: boolean }
       is_comprador: { Args: never; Returns: boolean }
       is_estoquista: { Args: never; Returns: boolean }
+      normalize_barcode: { Args: { raw: string }; Returns: string }
+      rpc_approve_transfer: {
+        Args: { p_decision: string; p_reason?: string; p_transfer_id: string }
+        Returns: Json
+      }
       rpc_consume_fefo: {
         Args: {
           p_menu_id?: string
