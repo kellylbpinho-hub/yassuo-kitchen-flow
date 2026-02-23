@@ -32,6 +32,7 @@ interface Transfer {
   status: string;
   created_at: string;
   unidade_origem_name: string;
+  unidade_destino_name?: string;
 }
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -41,7 +42,7 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
 };
 
 export default function PedidoInterno() {
-  const { profile } = useAuth();
+  const { profile, isCeo, isGerenteOperacional } = useAuth();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -53,10 +54,14 @@ export default function PedidoInterno() {
   const [search, setSearch] = useState("");
   const [selectedProductId, setSelectedProductId] = useState("");
   const [selectedCdId, setSelectedCdId] = useState("");
+  const [selectedKitchenId, setSelectedKitchenId] = useState("");
   const [quantidade, setQuantidade] = useState("");
   const [observacao, setObservacao] = useState("");
 
+  // CEO/Ger.Op don't need a unit linked — they can select destination
+  const isAdmin = isCeo || isGerenteOperacional;
   const kitchenUnitId = profile?.unidade_id;
+  const needsUnit = !isAdmin;
 
   useEffect(() => {
     loadData();
@@ -64,20 +69,33 @@ export default function PedidoInterno() {
 
   const loadData = async () => {
     setLoading(true);
+
+    // Build transfers query: admins see all, others see only their unit
+    let transfersQuery;
+    if (isAdmin) {
+      transfersQuery = supabase
+        .from("transferencias")
+        .select("id, product_id, quantidade, status, created_at, unidade_origem_id, unidade_destino_id")
+        .order("created_at", { ascending: false })
+        .limit(50);
+    } else if (kitchenUnitId) {
+      transfersQuery = supabase
+        .from("transferencias")
+        .select("id, product_id, quantidade, status, created_at, unidade_origem_id, unidade_destino_id")
+        .eq("unidade_destino_id", kitchenUnitId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+    } else {
+      transfersQuery = Promise.resolve({ data: [] });
+    }
+
     const [productsRes, unitsRes, transfersRes] = await Promise.all([
       supabase
         .from("products")
         .select("id, nome, unidade_medida, product_categories(name)")
         .order("nome"),
       supabase.from("units").select("id, name, type"),
-      kitchenUnitId
-        ? supabase
-            .from("transferencias")
-            .select("id, product_id, quantidade, status, created_at, unidade_origem_id")
-            .eq("unidade_destino_id", kitchenUnitId)
-            .order("created_at", { ascending: false })
-            .limit(50)
-        : Promise.resolve({ data: [] }),
+      transfersQuery,
     ]);
 
     const prods = (productsRes.data || []).map((p: any) => ({
@@ -92,9 +110,9 @@ export default function PedidoInterno() {
     setUnits(allUnits);
 
     // Default CD
-    const cdUnits = allUnits.filter((u) => u.type === "cd");
-    if (cdUnits.length === 1) {
-      setSelectedCdId(cdUnits[0].id);
+    const cdUnitsArr = allUnits.filter((u) => u.type === "cd");
+    if (cdUnitsArr.length === 1) {
+      setSelectedCdId(cdUnitsArr[0].id);
     }
 
     // Enrich transfers with product and unit names
@@ -102,6 +120,7 @@ export default function PedidoInterno() {
     const enriched: Transfer[] = transferData.map((t) => {
       const prod = prods.find((p: Product) => p.id === t.product_id);
       const origin = allUnits.find((u) => u.id === t.unidade_origem_id);
+      const dest = allUnits.find((u) => u.id === t.unidade_destino_id);
       return {
         id: t.id,
         product_id: t.product_id,
@@ -110,6 +129,7 @@ export default function PedidoInterno() {
         status: t.status,
         created_at: t.created_at,
         unidade_origem_name: origin?.name || "CD",
+        unidade_destino_name: dest?.name || "Cozinha",
       };
     });
     setTransfers(enriched);
@@ -117,6 +137,7 @@ export default function PedidoInterno() {
   };
 
   const cdUnits = useMemo(() => units.filter((u) => u.type === "cd"), [units]);
+  const kitchenUnits = useMemo(() => units.filter((u) => u.type === "kitchen"), [units]);
 
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return products.slice(0, 20);
@@ -139,8 +160,15 @@ export default function PedidoInterno() {
       toast.error("Selecione o CD de origem.");
       return;
     }
-    if (!kitchenUnitId) {
-      toast.error("Sua unidade (cozinha) não está configurada. Contate o administrador.");
+
+    // Resolve destination: admin selects, others use their linked unit
+    const destinationId = isAdmin ? selectedKitchenId : kitchenUnitId;
+    if (!destinationId) {
+      toast.error(
+        isAdmin
+          ? "Selecione a cozinha de destino."
+          : "Sua unidade (cozinha) não está configurada. Contate o administrador."
+      );
       return;
     }
 
@@ -154,7 +182,7 @@ export default function PedidoInterno() {
     const { error } = await supabase.rpc("rpc_request_transfer", {
       p_product_id: selectedProductId,
       p_unidade_origem_id: selectedCdId,
-      p_unidade_destino_id: kitchenUnitId,
+      p_unidade_destino_id: destinationId,
       p_quantidade: qty,
       p_motivo: observacao.trim() || null,
     });
@@ -171,6 +199,7 @@ export default function PedidoInterno() {
     setQuantidade("");
     setObservacao("");
     setSearch("");
+    setSelectedKitchenId("");
     loadData();
   };
 
@@ -182,10 +211,11 @@ export default function PedidoInterno() {
     );
   }
 
-  if (!kitchenUnitId) {
+  // Only block if non-admin AND no unit linked
+  if (needsUnit && !kitchenUnitId) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <h1 className="text-2xl font-display font-bold text-foreground">Pedido Interno</h1>
+        <h1 className="text-2xl font-display font-bold text-foreground">Transferência Interna</h1>
         <div className="glass-card p-6 max-w-md">
           <p className="text-muted-foreground">
             Você não está vinculado a nenhuma unidade (cozinha). Contate o administrador para ser associado.
@@ -200,7 +230,7 @@ export default function PedidoInterno() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h1 className="text-2xl font-display font-bold text-foreground">Pedido Interno</h1>
+      <h1 className="text-2xl font-display font-bold text-foreground">Transferência Interna</h1>
 
       {/* Request form */}
       <div className="glass-card p-6 max-w-lg space-y-4">
@@ -271,6 +301,25 @@ export default function PedidoInterno() {
           </div>
         )}
 
+        {/* Kitchen destination — only shown for admin users */}
+        {isAdmin && (
+          <div className="space-y-2">
+            <Label>Cozinha de destino *</Label>
+            <Select value={selectedKitchenId} onValueChange={setSelectedKitchenId}>
+              <SelectTrigger className="bg-input border-border">
+                <SelectValue placeholder="Selecione a cozinha" />
+              </SelectTrigger>
+              <SelectContent>
+                {kitchenUnits.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {/* Quantity */}
         <div className="space-y-2">
           <Label>Quantidade *</Label>
@@ -306,7 +355,7 @@ export default function PedidoInterno() {
         <div className="space-y-3">
           <h2 className="font-display font-bold text-foreground flex items-center gap-2">
             <Clock className="h-5 w-5 text-warning" />
-            Meus Pedidos Pendentes ({pendingTransfers.length})
+            {isAdmin ? "Pedidos Pendentes" : "Meus Pedidos Pendentes"} ({pendingTransfers.length})
           </h2>
           <div className="grid gap-2">
             {pendingTransfers.map((t) => (
@@ -314,7 +363,9 @@ export default function PedidoInterno() {
                 <div>
                   <p className="text-sm font-medium text-foreground">{t.product_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {t.quantidade} · de {t.unidade_origem_name} ·{" "}
+                    {t.quantidade} · de {t.unidade_origem_name}
+                    {isAdmin && t.unidade_destino_name && ` → ${t.unidade_destino_name}`}
+                    {" · "}
                     {format(new Date(t.created_at), "dd/MM/yyyy HH:mm")}
                   </p>
                 </div>
@@ -337,7 +388,10 @@ export default function PedidoInterno() {
                 <div>
                   <p className="text-sm font-medium text-foreground">{t.product_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {t.quantidade} · {format(new Date(t.created_at), "dd/MM/yyyy HH:mm")}
+                    {t.quantidade}
+                    {isAdmin && t.unidade_destino_name && ` → ${t.unidade_destino_name}`}
+                    {" · "}
+                    {format(new Date(t.created_at), "dd/MM/yyyy HH:mm")}
                   </p>
                 </div>
                 <Badge variant={statusConfig[t.status]?.variant || "secondary"}>
