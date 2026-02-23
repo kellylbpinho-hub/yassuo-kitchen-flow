@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 const baseNavItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/estoque", icon: Package, label: "Estoque" },
-  { to: "/compras", icon: ShoppingCart, label: "Compras" },
+  { to: "/compras", icon: ShoppingCart, label: "Compras Fornecedor" },
   { to: "/recebimento-digital", icon: ScanBarcode, label: "Recebimento" },
   { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
   { to: "/alertas", icon: Bell, label: "Alertas" },
@@ -36,11 +36,11 @@ export function AppLayout() {
   const navigate = useNavigate();
 
   const showPedidoInterno = isNutricionista || isGerenteOperacional || isCeo;
-  const showAprovacoes = canManage; // CEO, gerente_operacional, gerente_financeiro
+  const showAprovacoes = isCeo || isGerenteOperacional; // Financeiro blocked
 
   const navItems = [
     ...baseNavItems,
-    ...(showPedidoInterno ? [{ to: "/pedido-interno", icon: ClipboardList, label: "Pedido Interno" }] : []),
+    ...(showPedidoInterno ? [{ to: "/pedido-interno", icon: ClipboardList, label: "Transferência Interna" }] : []),
     ...(showAprovacoes ? [{ to: "/aprovacoes-cd", icon: ClipboardCheck, label: "Aprovações CD" }] : []),
     { to: "/categorias", icon: Tag, label: "Categorias" },
     ...(canManageUsers ? [
