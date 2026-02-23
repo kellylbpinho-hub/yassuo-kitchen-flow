@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -17,17 +17,15 @@ interface EditProductDialogProps {
 }
 
 export function EditProductDialog({ product, open, onClose, onSaved }: EditProductDialogProps) {
-  const [nome, setNome] = useState(product?.nome || "");
-  const [ativo, setAtivo] = useState(product?.ativo ?? true);
+  const [nome, setNome] = useState("");
+  const [ativo, setAtivo] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Sync state when product changes
-  const [lastId, setLastId] = useState<string | null>(null);
-  if (product && product.id !== lastId) {
-    setLastId(product.id);
-    setNome(product.nome);
+  useEffect(() => {
+    if (!product) return;
+    setNome(product.nome ?? "");
     setAtivo(product.ativo ?? true);
-  }
+  }, [product?.id]);
 
   const handleSave = async () => {
     if (!product) return;
