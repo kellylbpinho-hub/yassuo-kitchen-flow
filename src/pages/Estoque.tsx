@@ -9,9 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, RefreshCw, Search, Loader2, AlertTriangle } from "lucide-react";
+import { Plus, RefreshCw, Search, Loader2, AlertTriangle, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { ProductDetailDrawer } from "@/components/ProductDetailDrawer";
 
 interface Category {
   id: string;
@@ -57,6 +58,7 @@ export default function Estoque() {
   const [addOpen, setAddOpen] = useState(false);
   const [movOpen, setMovOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
 
   const [form, setForm] = useState({
     nome: "", category_id: "", unidade_medida: "kg", estoque_atual: "0",
@@ -447,11 +449,20 @@ export default function Estoque() {
                         {getUnitName(p.unidade_id)}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDetailProduct(p)}
+                        title="Detalhes"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => { setSelectedProduct(p); setMovOpen(true); }}
+                        title="Movimentação"
                       >
                         <RefreshCw className="h-4 w-4" />
                       </Button>
@@ -463,6 +474,15 @@ export default function Estoque() {
           </Table>
         </div>
       </div>
+
+      {/* Product detail drawer */}
+      <ProductDetailDrawer
+        productId={detailProduct?.id || null}
+        productName={detailProduct?.nome || ""}
+        filterUnitId={filterUnit}
+        open={!!detailProduct}
+        onClose={() => setDetailProduct(null)}
+      />
     </div>
   );
 }
