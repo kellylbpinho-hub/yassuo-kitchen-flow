@@ -17,6 +17,7 @@ import {
   Bell,
   ClipboardList,
   ClipboardCheck,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -36,11 +37,13 @@ export function AppLayout() {
   const navigate = useNavigate();
 
   const showPedidoInterno = isNutricionista || isGerenteOperacional || isCeo;
-  const showAprovacoes = isCeo || isGerenteOperacional; // Financeiro blocked
+  const showAprovacoes = isCeo || isGerenteOperacional;
+  const showMeusPedidos = isNutricionista || isGerenteOperacional || isCeo;
 
   const navItems = [
     ...baseNavItems,
     ...(showPedidoInterno ? [{ to: "/pedido-interno", icon: ClipboardList, label: "Transferência Interna" }] : []),
+    ...(showMeusPedidos ? [{ to: "/meus-pedidos", icon: FileText, label: "Meus Pedidos" }] : []),
     ...(showAprovacoes ? [{ to: "/aprovacoes-cd", icon: ClipboardCheck, label: "Aprovações CD" }] : []),
     { to: "/categorias", icon: Tag, label: "Categorias" },
     ...(canManageUsers ? [

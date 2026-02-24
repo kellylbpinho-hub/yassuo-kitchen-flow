@@ -22,6 +22,7 @@ import Alertas from "./pages/Alertas";
 import QA from "./pages/QA";
 import PedidoInterno from "./pages/PedidoInterno";
 import AprovacoesCd from "./pages/AprovacoesCd";
+import MeusPedidos from "./pages/MeusPedidos";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const App = () => (
               <Route path="/recebimento-digital" element={<RecebimentoDigital />} />
               <Route path="/pedido-interno" element={<PedidoInterno />} />
               <Route path="/aprovacoes-cd" element={<AprovacoesCd />} />
+              <Route path="/meus-pedidos" element={<MeusPedidos />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
