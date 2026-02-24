@@ -380,17 +380,17 @@ export default function PedidoInterno() {
             placeholder={selectedProduct ? `Em ${selectedProduct.unidade_medida}` : "0.00"}
           />
           {selectedProductId && selectedCdId && (
-            <p className="text-xs text-muted-foreground">
+            <div className="mt-2 text-sm opacity-80">
               {loadingSaldo ? (
                 "Consultando saldo..."
               ) : saldoCd !== null ? (
                 saldoCd > 0 ? (
-                  <span>Disponível no CD: <span className="font-semibold text-foreground">{saldoCd} {selectedProduct?.unidade_medida || "un"}</span></span>
+                  <>Disponível no CD: <b>{saldoCd}</b> {selectedProduct?.unidade_medida || "un"}</>
                 ) : (
-                  <span className="text-destructive font-medium">Estoque indisponível no CD (saldo zero).</span>
+                  "Estoque indisponível no CD (saldo zero)."
                 )
               ) : null}
-            </p>
+            </div>
           )}
         </div>
 
