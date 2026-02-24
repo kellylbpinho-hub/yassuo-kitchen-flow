@@ -49,6 +49,9 @@ export default function RecebimentoDigital() {
   const [newName, setNewName] = useState("");
   const [newUnidadeMedida, setNewUnidadeMedida] = useState("kg");
   const [newUnit, setNewUnit] = useState("");
+  const [newCategoria, setNewCategoria] = useState("");
+
+  const CATEGORIAS_FIXAS = ["Grãos", "Proteínas", "Laticínios", "Hortifruti", "Bebidas", "Descartáveis", "Limpeza", "Temperos", "Outros"];
 
   useEffect(() => {
     loadUnits();
@@ -112,12 +115,16 @@ export default function RecebimentoDigital() {
       toast.error("Selecione a unidade.");
       return;
     }
+    if (!newCategoria) {
+      toast.error("Selecione a categoria.");
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase.rpc("rpc_create_product", {
       p_unidade_id: newUnit,
       p_nome: newName.trim(),
       p_unidade_medida: newUnidadeMedida,
-      p_codigo_barras: barcode, // already normalized by lookupBarcode
+      p_codigo_barras: barcode,
     });
 
     if (error) {
@@ -126,6 +133,10 @@ export default function RecebimentoDigital() {
       return;
     }
     const result = data as any;
+    // Update categoria text field
+    if (result?.id && !result?.already_existed) {
+      await supabase.from("products").update({ categoria: newCategoria }).eq("id", result.id);
+    }
     setProduct(result as Product);
     setStep("receipt");
     setLoading(false);
@@ -186,6 +197,7 @@ export default function RecebimentoDigital() {
     setQuantidade("");
     setNewName("");
     setNewUnidadeMedida("kg");
+    setNewCategoria("");
   };
 
   // Scanning modal
@@ -311,6 +323,19 @@ export default function RecebimentoDigital() {
                   <SelectItem value="L">L</SelectItem>
                   <SelectItem value="ml">ml</SelectItem>
                   <SelectItem value="un">un</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Categoria *</Label>
+              <Select value={newCategoria} onValueChange={setNewCategoria}>
+                <SelectTrigger className="bg-input border-border">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIAS_FIXAS.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
