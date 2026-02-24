@@ -112,9 +112,9 @@ export default function PedidoInterno() {
     const allUnits = (unitsRes.data || []) as Unit[];
     setUnits(allUnits);
 
-    // Default CD
+    // Always default to the first CD unit of the company
     const cdUnitsArr = allUnits.filter((u) => u.type === "cd");
-    if (cdUnitsArr.length === 1) {
+    if (cdUnitsArr.length > 0) {
       setSelectedCdId(cdUnitsArr[0].id);
     }
 
