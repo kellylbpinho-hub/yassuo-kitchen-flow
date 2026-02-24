@@ -97,7 +97,7 @@ export default function PedidoInterno() {
         .select("id, nome, unidade_medida, product_categories(name)")
         .eq("ativo", true)
         .order("nome"),
-      supabase.from("units").select("id, name, type"),
+      supabase.from("units").select("id, name, type, created_at").order("created_at", { ascending: true }),
       transfersQuery,
     ]);
 
