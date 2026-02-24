@@ -162,16 +162,20 @@ export default function PedidoInterno() {
     }
     let cancelled = false;
     const fetchSaldo = async () => {
-      setLoadingSaldo(true);
-      const { data } = await supabase
-        .from("v_estoque_por_unidade")
-        .select("saldo")
-        .eq("product_id", selectedProductId)
-        .eq("unidade_id", selectedCdId)
-        .maybeSingle();
-      if (!cancelled) {
-        setSaldoCd(data?.saldo ?? 0);
-        setLoadingSaldo(false);
+      try {
+        setLoadingSaldo(true);
+        const { data, error } = await supabase
+          .from("v_estoque_por_unidade")
+          .select("saldo")
+          .eq("product_id", selectedProductId)
+          .eq("unidade_id", selectedCdId)
+          .maybeSingle();
+        if (error) throw error;
+        if (!cancelled) setSaldoCd(Number(data?.saldo ?? 0));
+      } catch (e) {
+        if (!cancelled) setSaldoCd(0);
+      } finally {
+        if (!cancelled) setLoadingSaldo(false);
       }
     };
     fetchSaldo();
