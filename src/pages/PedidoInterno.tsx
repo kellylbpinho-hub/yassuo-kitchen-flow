@@ -203,19 +203,26 @@ export default function PedidoInterno() {
       return;
     }
 
-    const qty = parseFloat(quantidade);
+    const qty = parseFloat(String(quantidade).replace(",", "."));
     if (isNaN(qty) || qty <= 0) {
       toast.error("Quantidade deve ser maior que zero.");
       return;
     }
 
-    if (saldoCd !== null && saldoCd <= 0) {
+    if (saldoCd === null) {
+      toast.error("Aguarde a consulta de saldo do CD.");
+      return;
+    }
+
+    if (saldoCd <= 0) {
       toast.error("Estoque indisponível no CD (saldo zero).");
       return;
     }
 
-    if (saldoCd !== null && qty > saldoCd) {
-      toast.error(`Quantidade solicitada excede o estoque disponível no CD (${saldoCd} ${selectedProduct?.unidade_medida || "un"}).`);
+    if (qty > saldoCd) {
+      toast.error(
+        `Quantidade solicitada excede o estoque disponível no CD (${saldoCd} ${selectedProduct?.unidade_medida || "un"}).`
+      );
       return;
     }
 
