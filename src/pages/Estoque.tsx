@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, RefreshCw, Search, Loader2, AlertTriangle, Eye, Pencil } from "lucide-react";
+import { Plus, RefreshCw, Search, Loader2, AlertTriangle, Eye, Pencil, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { ProductDetailDrawer } from "@/components/ProductDetailDrawer";
@@ -337,7 +338,7 @@ export default function Estoque() {
                 <TableHead>Mínimo</TableHead>
                 {canSeeCosts && <TableHead>Custo</TableHead>}
                 <TableHead>Unidade</TableHead>
-                <TableHead className="w-24">Ações</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -386,35 +387,29 @@ export default function Estoque() {
                         {getUnitName(p.unidade_id)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDetailProduct(p)}
-                        title="Detalhes"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {!isFinanceiro && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditProduct(p)}
-                            title="Editar"
-                          >
-                            <Pencil className="h-4 w-4" />
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreVertical className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => { setSelectedProduct(p); setMovOpen(true); }}
-                            title="Movimentação"
-                          >
-                            <RefreshCw className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setDetailProduct(p)}>
+                            <Eye className="h-4 w-4 mr-2" />Detalhes
+                          </DropdownMenuItem>
+                          {!isFinanceiro && (
+                            <>
+                              <DropdownMenuItem onClick={() => setEditProduct(p)}>
+                                <Pencil className="h-4 w-4 mr-2" />Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => { setSelectedProduct(p); setMovOpen(true); }}>
+                                <RefreshCw className="h-4 w-4 mr-2" />Movimentar
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))
