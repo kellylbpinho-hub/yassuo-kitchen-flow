@@ -154,6 +154,20 @@ export default function PedidoInterno() {
 
   const selectedProduct = products.find((p) => p.id === selectedProductId);
 
+  // DEBUG: log CD selection state
+  useEffect(() => {
+    const cdUnit = units.find((u) => u.type === "cd");
+    console.log("[PedidoInterno DEBUG]", {
+      "profile.unidade_id": profile?.unidade_id,
+      "cdUnit.id": cdUnit?.id,
+      selectedCdId,
+      selectedProductId,
+      saldoCd,
+      unitsCount: units.length,
+      cdUnitsFound: units.filter((u) => u.type === "cd").map((u) => ({ id: u.id, name: u.name })),
+    });
+  }, [selectedCdId, selectedProductId, saldoCd, units, profile]);
+
   // Fetch saldo from CD when product + CD are selected
   useEffect(() => {
     if (!selectedProductId || !selectedCdId) {
@@ -164,14 +178,17 @@ export default function PedidoInterno() {
     const fetchSaldo = async () => {
       try {
         setLoadingSaldo(true);
+        console.log("[PedidoInterno] Fetching CD balance:", { selectedProductId, selectedCdId });
         const { data, error } = await supabase
           .rpc("rpc_get_cd_balance", {
             p_product_id: selectedProductId,
             p_cd_unit_id: selectedCdId,
           });
+        console.log("[PedidoInterno] RPC result:", { data, error });
         if (error) throw error;
         if (!cancelled) setSaldoCd(Number(data ?? 0));
       } catch (e) {
+        console.error("[PedidoInterno] RPC error:", e);
         if (!cancelled) setSaldoCd(0);
       } finally {
         if (!cancelled) setLoadingSaldo(false);
