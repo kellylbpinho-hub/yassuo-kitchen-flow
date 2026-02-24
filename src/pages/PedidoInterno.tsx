@@ -165,13 +165,12 @@ export default function PedidoInterno() {
       try {
         setLoadingSaldo(true);
         const { data, error } = await supabase
-          .from("v_estoque_por_unidade")
-          .select("saldo")
-          .eq("product_id", selectedProductId)
-          .eq("unidade_id", selectedCdId)
-          .maybeSingle();
+          .rpc("rpc_get_cd_balance", {
+            p_product_id: selectedProductId,
+            p_cd_unit_id: selectedCdId,
+          });
         if (error) throw error;
-        if (!cancelled) setSaldoCd(Number(data?.saldo ?? 0));
+        if (!cancelled) setSaldoCd(Number(data ?? 0));
       } catch (e) {
         if (!cancelled) setSaldoCd(0);
       } finally {
