@@ -6,11 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+const CATEGORIAS_FIXAS = ["Grãos", "Proteínas", "Laticínios", "Hortifruti", "Bebidas", "Descartáveis", "Limpeza", "Temperos", "Outros"];
+
 interface EditProductDialogProps {
-  product: { id: string; nome: string; ativo?: boolean; codigo_barras?: string | null } | null;
+  product: { id: string; nome: string; ativo?: boolean; codigo_barras?: string | null; categoria?: string | null } | null;
   open: boolean;
   onClose: () => void;
   onSaved: () => void;
@@ -19,12 +22,14 @@ interface EditProductDialogProps {
 export function EditProductDialog({ product, open, onClose, onSaved }: EditProductDialogProps) {
   const [nome, setNome] = useState("");
   const [ativo, setAtivo] = useState(true);
+  const [categoria, setCategoria] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!product) return;
     setNome(product.nome ?? "");
     setAtivo(product.ativo ?? true);
+    setCategoria(product.categoria ?? "");
   }, [product?.id]);
 
   const handleSave = async () => {
@@ -36,7 +41,7 @@ export function EditProductDialog({ product, open, onClose, onSaved }: EditProdu
     setSaving(true);
     const { error } = await supabase
       .from("products")
-      .update({ nome: nome.trim(), ativo })
+      .update({ nome: nome.trim(), ativo, categoria: categoria || null })
       .eq("id", product.id);
 
     setSaving(false);
@@ -73,6 +78,19 @@ export function EditProductDialog({ product, open, onClose, onSaved }: EditProdu
               className="bg-input border-border"
               autoFocus
             />
+          </div>
+          <div>
+            <Label>Categoria</Label>
+            <Select value={categoria} onValueChange={setCategoria}>
+              <SelectTrigger className="bg-input border-border">
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIAS_FIXAS.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex items-center justify-between">
             <Label>Produto ativo</Label>

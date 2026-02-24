@@ -63,11 +63,10 @@ export default function Estoque() {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
 
   const [form, setForm] = useState({
-    nome: "", category_id: "", unidade_medida: "kg", estoque_atual: "0",
-    estoque_minimo: "0", custo_unitario: "0", validade: "", unidade_id: "",
+    nome: "", categoria: "", unidade_medida: "kg", estoque_minimo: "0", unidade_id: "",
   });
 
-  const [movForm, setMovForm] = useState({ tipo: "entrada", quantidade: "", motivo: "" });
+  const [movForm, setMovForm] = useState({ tipo: "saida", quantidade: "", motivo: "" });
 
   useEffect(() => { loadData(); }, []);
 
@@ -94,12 +93,14 @@ export default function Estoque() {
     return entry?.saldo ?? 0;
   };
 
+  const CATEGORIAS_FIXAS = ["Grãos", "Proteínas", "Laticínios", "Hortifruti", "Bebidas", "Descartáveis", "Limpeza", "Temperos", "Outros"];
+
   const addProduct = async () => {
     if (!form.nome || !form.unidade_id) {
       toast.error("Preencha nome e unidade.");
       return;
     }
-    if (categories.length > 0 && !form.category_id) {
+    if (!form.categoria) {
       toast.error("Selecione uma categoria.");
       return;
     }
@@ -107,14 +108,18 @@ export default function Estoque() {
       p_unidade_id: form.unidade_id,
       p_nome: form.nome,
       p_unidade_medida: form.unidade_medida,
-      p_category_id: form.category_id || null,
     });
     if (error) {
       toast.error("Erro ao adicionar produto: " + error.message);
     } else {
+      const result = data as any;
+      const productId = result?.id;
+      if (productId && !result?.already_existed) {
+        await supabase.from("products").update({ categoria: form.categoria }).eq("id", productId);
+      }
       toast.success("Produto adicionado!");
       setAddOpen(false);
-      setForm({ nome: "", category_id: "", unidade_medida: "kg", estoque_atual: "0", estoque_minimo: "0", custo_unitario: "0", validade: "", unidade_id: form.unidade_id });
+      setForm({ nome: "", categoria: "", unidade_medida: "kg", estoque_minimo: "0", unidade_id: form.unidade_id });
       loadData();
     }
   };
@@ -127,63 +132,23 @@ export default function Estoque() {
       return;
     }
 
-    // Types that consume stock use the FEFO RPC
-    if (["saida", "consumo", "perda"].includes(movForm.tipo)) {
-      const { error } = await supabase.rpc("rpc_consume_fefo", {
-        p_product_id: selectedProduct.id,
-        p_unidade_id: selectedProduct.unidade_id,
-        p_quantidade: qty,
-        p_tipo: movForm.tipo,
-        p_motivo: movForm.motivo || null,
-      });
+    // All movement types now use FEFO RPC (entrada/ajuste removed from UI)
+    const { error } = await supabase.rpc("rpc_consume_fefo", {
+      p_product_id: selectedProduct.id,
+      p_unidade_id: selectedProduct.unidade_id,
+      p_quantidade: qty,
+      p_tipo: movForm.tipo,
+      p_motivo: movForm.motivo || null,
+    });
 
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-    } else if (movForm.tipo === "ajuste") {
-      if (!movForm.motivo) {
-        toast.error("Motivo é obrigatório para ajustes.");
-        return;
-      }
-      // Ajuste sets absolute value — keep direct write (no FEFO)
-      const { error: movErr } = await supabase.from("movements").insert({
-        product_id: selectedProduct.id,
-        tipo: "ajuste",
-        quantidade: qty,
-        motivo: movForm.motivo,
-        user_id: user!.id,
-        unidade_id: selectedProduct.unidade_id,
-        company_id: profile!.company_id,
-      });
-      if (movErr) {
-        toast.error("Erro: " + movErr.message);
-        return;
-      }
-      await supabase.from("products").update({ estoque_atual: qty }).eq("id", selectedProduct.id);
-    } else if (movForm.tipo === "entrada") {
-      // Entrada without lot — keep direct write (use recebimento digital for full flow)
-      const { error: movErr } = await supabase.from("movements").insert({
-        product_id: selectedProduct.id,
-        tipo: "entrada",
-        quantidade: qty,
-        motivo: movForm.motivo || "Entrada manual",
-        user_id: user!.id,
-        unidade_id: selectedProduct.unidade_id,
-        company_id: profile!.company_id,
-      });
-      if (movErr) {
-        toast.error("Erro: " + movErr.message);
-        return;
-      }
-      await supabase.from("products")
-        .update({ estoque_atual: selectedProduct.estoque_atual + qty })
-        .eq("id", selectedProduct.id);
+    if (error) {
+      toast.error(error.message);
+      return;
     }
 
     toast.success("Movimentação registrada!");
     setMovOpen(false);
-    setMovForm({ tipo: "entrada", quantidade: "", motivo: "" });
+    setMovForm({ tipo: "saida", quantidade: "", motivo: "" });
     loadData();
   };
 
@@ -247,30 +212,15 @@ export default function Estoque() {
                     <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="bg-input border-border" />
                   </div>
                   <div>
-                    <Label>Categoria {categories.length > 0 ? "*" : ""}</Label>
-                    {categories.length > 0 ? (
-                      <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
-                        <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                        <SelectContent>
-                          {categories.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div className="text-sm text-muted-foreground py-2">
-                        Nenhuma categoria cadastrada.{" "}
-                        {canManage && (
-                          <button
-                            type="button"
-                            className="text-primary underline underline-offset-2 hover:text-primary/80"
-                            onClick={() => navigate("/categorias")}
-                          >
-                            Criar categoria
-                          </button>
-                        )}
-                      </div>
-                    )}
+                    <Label>Categoria *</Label>
+                    <Select value={form.categoria} onValueChange={(v) => setForm({ ...form, categoria: v })}>
+                      <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIAS_FIXAS.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -278,7 +228,7 @@ export default function Estoque() {
                       <Select value={form.unidade_medida} onValueChange={(v) => setForm({ ...form, unidade_medida: v })}>
                         <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          {["kg", "L", "un", "caixa", "fardo"].map((u) => (
+                          {["kg", "g", "L", "ml", "un"].map((u) => (
                             <SelectItem key={u} value={u}>{u}</SelectItem>
                           ))}
                         </SelectContent>
@@ -296,25 +246,9 @@ export default function Estoque() {
                       </Select>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label>Estoque Atual</Label>
-                      <Input type="number" value={form.estoque_atual} onChange={(e) => setForm({ ...form, estoque_atual: e.target.value })} className="bg-input border-border" />
-                    </div>
-                    <div>
-                      <Label>Mínimo</Label>
-                      <Input type="number" value={form.estoque_minimo} onChange={(e) => setForm({ ...form, estoque_minimo: e.target.value })} className="bg-input border-border" />
-                    </div>
-                    {canSeeCosts && (
-                      <div>
-                        <Label>Custo (R$)</Label>
-                        <Input type="number" value={form.custo_unitario} onChange={(e) => setForm({ ...form, custo_unitario: e.target.value })} className="bg-input border-border" />
-                      </div>
-                    )}
-                  </div>
                   <div>
-                    <Label>Validade</Label>
-                    <Input type="date" value={form.validade} onChange={(e) => setForm({ ...form, validade: e.target.value })} className="bg-input border-border" />
+                    <Label>Estoque Mínimo</Label>
+                    <Input type="number" value={form.estoque_minimo} onChange={(e) => setForm({ ...form, estoque_minimo: e.target.value })} className="bg-input border-border" />
                   </div>
                   <Button onClick={addProduct} className="w-full">Adicionar Produto</Button>
                 </div>
@@ -336,24 +270,23 @@ export default function Estoque() {
               <Select value={movForm.tipo} onValueChange={(v) => setMovForm({ ...movForm, tipo: v })}>
                 <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="entrada">Entrada</SelectItem>
                   <SelectItem value="saida">Saída</SelectItem>
                   <SelectItem value="consumo">Consumo</SelectItem>
-                  <SelectItem value="ajuste">Ajuste</SelectItem>
                   <SelectItem value="perda">Perda</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Entradas devem ser feitas via Recebimento Digital (com lote/validade). Ajustes manuais desativados para manter FEFO.
+              </p>
             </div>
             <div>
               <Label>Quantidade</Label>
               <Input type="number" value={movForm.quantidade} onChange={(e) => setMovForm({ ...movForm, quantidade: e.target.value })} className="bg-input border-border" />
             </div>
-            {movForm.tipo === "ajuste" && (
-              <div>
-                <Label>Motivo *</Label>
-                <Textarea value={movForm.motivo} onChange={(e) => setMovForm({ ...movForm, motivo: e.target.value })} className="bg-input border-border" />
-              </div>
-            )}
+            <div>
+              <Label>Motivo</Label>
+              <Textarea value={movForm.motivo} onChange={(e) => setMovForm({ ...movForm, motivo: e.target.value })} className="bg-input border-border" placeholder="Opcional" />
+            </div>
             <Button onClick={addMovement} className="w-full">Registrar</Button>
           </div>
         </DialogContent>
