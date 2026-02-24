@@ -57,6 +57,8 @@ export default function PedidoInterno() {
   const [selectedKitchenId, setSelectedKitchenId] = useState("");
   const [quantidade, setQuantidade] = useState("");
   const [observacao, setObservacao] = useState("");
+  const [saldoCd, setSaldoCd] = useState<number | null>(null);
+  const [loadingSaldo, setLoadingSaldo] = useState(false);
 
   // CEO/Ger.Op don't need a unit linked — they can select destination
   const isAdmin = isCeo || isGerenteOperacional;
@@ -152,6 +154,30 @@ export default function PedidoInterno() {
 
   const selectedProduct = products.find((p) => p.id === selectedProductId);
 
+  // Fetch saldo from CD when product + CD are selected
+  useEffect(() => {
+    if (!selectedProductId || !selectedCdId) {
+      setSaldoCd(null);
+      return;
+    }
+    let cancelled = false;
+    const fetchSaldo = async () => {
+      setLoadingSaldo(true);
+      const { data } = await supabase
+        .from("v_estoque_por_unidade")
+        .select("saldo")
+        .eq("product_id", selectedProductId)
+        .eq("unidade_id", selectedCdId)
+        .maybeSingle();
+      if (!cancelled) {
+        setSaldoCd(data?.saldo ?? 0);
+        setLoadingSaldo(false);
+      }
+    };
+    fetchSaldo();
+    return () => { cancelled = true; };
+  }, [selectedProductId, selectedCdId]);
+
   const handleSubmit = async () => {
     if (!selectedProductId) {
       toast.error("Selecione um produto.");
@@ -176,6 +202,16 @@ export default function PedidoInterno() {
     const qty = parseFloat(quantidade);
     if (isNaN(qty) || qty <= 0) {
       toast.error("Quantidade deve ser maior que zero.");
+      return;
+    }
+
+    if (saldoCd !== null && saldoCd <= 0) {
+      toast.error("Estoque indisponível no CD (saldo zero).");
+      return;
+    }
+
+    if (saldoCd !== null && qty > saldoCd) {
+      toast.error(`Quantidade solicitada excede o estoque disponível no CD (${saldoCd} ${selectedProduct?.unidade_medida || "un"}).`);
       return;
     }
 
@@ -332,6 +368,19 @@ export default function PedidoInterno() {
             onChange={(e) => setQuantidade(e.target.value)}
             placeholder={selectedProduct ? `Em ${selectedProduct.unidade_medida}` : "0.00"}
           />
+          {selectedProductId && selectedCdId && (
+            <p className="text-xs text-muted-foreground">
+              {loadingSaldo ? (
+                "Consultando saldo..."
+              ) : saldoCd !== null ? (
+                saldoCd > 0 ? (
+                  <span>Disponível no CD: <span className="font-semibold text-foreground">{saldoCd} {selectedProduct?.unidade_medida || "un"}</span></span>
+                ) : (
+                  <span className="text-destructive font-medium">Estoque indisponível no CD (saldo zero).</span>
+                )
+              ) : null}
+            </p>
+          )}
         </div>
 
         {/* Observation */}
