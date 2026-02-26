@@ -665,6 +665,58 @@ export type Database = {
           },
         ]
       }
+      recipe_ingredients: {
+        Row: {
+          company_id: string
+          created_at: string
+          fator_correcao: number
+          id: string
+          menu_id: string
+          peso_limpo_per_capita: number
+          product_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          fator_correcao?: number
+          id?: string
+          menu_id: string
+          peso_limpo_per_capita?: number
+          product_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          fator_correcao?: number
+          id?: string
+          menu_id?: string
+          peso_limpo_per_capita?: number
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_ingredients_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transferencias: {
         Row: {
           aprovado_por: string | null
@@ -755,6 +807,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          numero_colaboradores: number
           type: string
         }
         Insert: {
@@ -762,6 +815,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          numero_colaboradores?: number
           type?: string
         }
         Update: {
@@ -769,6 +823,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          numero_colaboradores?: number
           type?: string
         }
         Relationships: [
@@ -853,33 +908,39 @@ export type Database = {
         Row: {
           company_id: string
           created_at: string
+          desperdicio_total_organico: number
           id: string
           menu_id: string | null
           observacao: string | null
           product_id: string
           quantidade: number
+          sobra_limpa_rampa: number
           unidade_id: string
           user_id: string
         }
         Insert: {
           company_id: string
           created_at?: string
+          desperdicio_total_organico?: number
           id?: string
           menu_id?: string | null
           observacao?: string | null
           product_id: string
           quantidade: number
+          sobra_limpa_rampa?: number
           unidade_id: string
           user_id: string
         }
         Update: {
           company_id?: string
           created_at?: string
+          desperdicio_total_organico?: number
           id?: string
           menu_id?: string | null
           observacao?: string | null
           product_id?: string
           quantidade?: number
+          sobra_limpa_rampa?: number
           unidade_id?: string
           user_id?: string
         }
