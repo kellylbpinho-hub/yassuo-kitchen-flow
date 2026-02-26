@@ -9,12 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Loader2, ChevronDown, ChevronUp, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
+import { FichaTecnica } from "@/components/FichaTecnica";
 
 interface WasteLog {
   id: string;
   quantidade: number;
+  sobra_limpa_rampa: number;
+  desperdicio_total_organico: number;
   observacao: string | null;
   unidade_id: string;
   created_at: string;
@@ -23,7 +27,7 @@ interface WasteLog {
 }
 
 interface Product { id: string; nome: string; unidade_medida: string; unidade_id: string; estoque_atual: number; }
-interface Menu { id: string; nome: string; data: string; }
+interface Menu { id: string; nome: string; data: string; unidade_id: string; }
 interface Unit { id: string; name: string; }
 
 export default function Desperdicio() {
@@ -35,8 +39,12 @@ export default function Desperdicio() {
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
-  const [form, setForm] = useState({ product_id: "", quantidade: "", observacao: "", menu_id: "", unidade_id: "" });
+  const [form, setForm] = useState({
+    product_id: "", sobra_limpa_rampa: "", desperdicio_total_organico: "",
+    observacao: "", menu_id: "", unidade_id: "",
+  });
   const [menuForm, setMenuForm] = useState({ nome: "", data: "", descricao: "", unidade_id: "" });
 
   useEffect(() => { loadData(); }, []);
@@ -46,7 +54,7 @@ export default function Desperdicio() {
     const [{ data: w }, { data: p }, { data: m }, { data: u }] = await Promise.all([
       supabase.from("waste_logs").select("*").order("created_at", { ascending: false }).limit(50),
       supabase.from("products").select("id, nome, unidade_medida, unidade_id, estoque_atual").eq("ativo", true),
-      supabase.from("menus").select("id, nome, data").order("data", { ascending: false }),
+      supabase.from("menus").select("id, nome, data, unidade_id").order("data", { ascending: false }),
       supabase.from("units").select("id, name"),
     ]);
     setLogs((w || []) as WasteLog[]);
@@ -65,46 +73,60 @@ export default function Desperdicio() {
       return;
     }
     const { error } = await supabase.from("menus").insert({
-      nome: menuForm.nome,
-      data: menuForm.data,
-      descricao: menuForm.descricao || null,
-      unidade_id: menuForm.unidade_id,
-      created_by: user!.id,
-      company_id: profile!.company_id,
+      nome: menuForm.nome, data: menuForm.data,
+      descricao: menuForm.descricao || null, unidade_id: menuForm.unidade_id,
+      created_by: user!.id, company_id: profile!.company_id,
     });
     if (error) toast.error("Erro: " + error.message);
     else { toast.success("Cardápio criado!"); setMenuOpen(false); loadData(); }
   };
 
   const addWaste = async () => {
-    if (!form.product_id || !form.quantidade || !form.unidade_id) {
-      toast.error("Preencha produto e quantidade.");
+    if (!form.product_id || !form.unidade_id) {
+      toast.error("Selecione produto e unidade.");
       return;
     }
-    const qty = Number(form.quantidade);
-    if (isNaN(qty) || qty <= 0) {
-      toast.error("Quantidade inválida.");
+    const sobra = Number(form.sobra_limpa_rampa) || 0;
+    const desp = Number(form.desperdicio_total_organico) || 0;
+    const total = sobra + desp;
+
+    if (total <= 0) {
+      toast.error("Informe ao menos uma pesagem.");
       return;
     }
 
-    const { data, error } = await supabase.rpc("rpc_consume_fefo", {
+    const { error } = await supabase.rpc("rpc_consume_fefo", {
       p_product_id: form.product_id,
       p_unidade_id: form.unidade_id,
-      p_quantidade: qty,
+      p_quantidade: total,
       p_tipo: "desperdicio",
-      p_motivo: "Desperdício registrado" + (form.observacao ? `: ${form.observacao}` : ""),
+      p_motivo: `Sobra Rampa: ${sobra}kg | Orgânico: ${desp}kg`,
       p_menu_id: form.menu_id || null,
       p_observacao: form.observacao || null,
     });
 
-    if (error) {
-      toast.error(error.message);
-      return;
+    if (error) { toast.error(error.message); return; }
+
+    // Update the waste_log with the two weighing fields
+    const { data: latestLog } = await supabase
+      .from("waste_logs")
+      .select("id")
+      .eq("product_id", form.product_id)
+      .eq("unidade_id", form.unidade_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (latestLog) {
+      await supabase.from("waste_logs").update({
+        sobra_limpa_rampa: sobra,
+        desperdicio_total_organico: desp,
+      }).eq("id", latestLog.id);
     }
 
     toast.success("Desperdício registrado!");
     setAddOpen(false);
-    setForm({ product_id: "", quantidade: "", observacao: "", menu_id: "", unidade_id: form.unidade_id });
+    setForm({ product_id: "", sobra_limpa_rampa: "", desperdicio_total_organico: "", observacao: "", menu_id: "", unidade_id: form.unidade_id });
     loadData();
   };
 
@@ -119,7 +141,7 @@ export default function Desperdicio() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-display font-bold text-foreground">Desperdício</h1>
+        <h1 className="text-2xl font-display font-bold text-foreground">Nutrição & Desperdício</h1>
         <div className="flex gap-2">
           {!isFinanceiro && (
             <>
@@ -149,9 +171,9 @@ export default function Desperdicio() {
                 <DialogTrigger asChild>
                   <Button><Plus className="h-4 w-4 mr-2" />Registrar Perda</Button>
                 </DialogTrigger>
-                <DialogContent className="bg-card border-border max-w-sm">
+                <DialogContent className="bg-card border-border max-w-md">
                   <DialogHeader><DialogTitle className="font-display">Registrar Desperdício</DialogTitle></DialogHeader>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div>
                       <Label>Cardápio (opcional)</Label>
                       <Select value={form.menu_id} onValueChange={(v) => setForm({ ...form, menu_id: v })}>
@@ -166,10 +188,37 @@ export default function Desperdicio() {
                         <SelectContent>{products.map((p) => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
-                    <div>
-                      <Label>Quantidade *</Label>
-                      <Input type="number" value={form.quantidade} onChange={(e) => setForm({ ...form, quantidade: e.target.value })} className="bg-input border-border" />
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Sobra Limpa (Rampa) <span className="text-muted-foreground">kg</span></Label>
+                        <Input
+                          type="number" step="0.01" min="0" placeholder="0.00"
+                          value={form.sobra_limpa_rampa}
+                          onChange={(e) => setForm({ ...form, sobra_limpa_rampa: e.target.value })}
+                          className="bg-input border-border"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Desperdício Orgânico <span className="text-muted-foreground">kg</span></Label>
+                        <Input
+                          type="number" step="0.01" min="0" placeholder="0.00"
+                          value={form.desperdicio_total_organico}
+                          onChange={(e) => setForm({ ...form, desperdicio_total_organico: e.target.value })}
+                          className="bg-input border-border"
+                        />
+                      </div>
                     </div>
+
+                    {(Number(form.sobra_limpa_rampa) > 0 || Number(form.desperdicio_total_organico) > 0) && (
+                      <div className="bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm">
+                        <span className="text-muted-foreground">Total: </span>
+                        <span className="font-semibold text-foreground">
+                          {((Number(form.sobra_limpa_rampa) || 0) + (Number(form.desperdicio_total_organico) || 0)).toFixed(2)} kg
+                        </span>
+                      </div>
+                    )}
+
                     <div>
                       <Label>Unidade</Label>
                       <Select value={form.unidade_id} onValueChange={(v) => setForm({ ...form, unidade_id: v })}>
@@ -190,38 +239,81 @@ export default function Desperdicio() {
         </div>
       </div>
 
-      <div className="glass-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead>Data</TableHead>
-                <TableHead>Produto</TableHead>
-                <TableHead>Cardápio</TableHead>
-                <TableHead>Qtd</TableHead>
-                <TableHead>Unidade</TableHead>
-                <TableHead>Obs</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {logs.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum registro.</TableCell></TableRow>
-              ) : (
-                logs.map((l) => (
-                  <TableRow key={l.id} className="border-border">
-                    <TableCell className="text-sm">{new Date(l.created_at).toLocaleDateString("pt-BR")}</TableCell>
-                    <TableCell className="font-medium">{getProductName(l.product_id)}</TableCell>
-                    <TableCell className="text-muted-foreground">{getMenuName(l.menu_id)}</TableCell>
-                    <TableCell>{l.quantidade}</TableCell>
-                    <TableCell><Badge variant="secondary" className="text-xs">{getUnitName(l.unidade_id)}</Badge></TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{l.observacao || "—"}</TableCell>
+      <Tabs defaultValue="cardapios" className="w-full">
+        <TabsList className="bg-muted/50">
+          <TabsTrigger value="cardapios">Cardápios & Fichas Técnicas</TabsTrigger>
+          <TabsTrigger value="registros">Registros de Desperdício</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="cardapios" className="space-y-3 mt-4">
+          {menus.length === 0 ? (
+            <div className="glass-card p-8 text-center text-muted-foreground">
+              <ClipboardList className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>Nenhum cardápio cadastrado. Clique em "+ Cardápio" para começar.</p>
+            </div>
+          ) : (
+            menus.map((m) => (
+              <div key={m.id} className="glass-card overflow-hidden">
+                <button
+                  onClick={() => setExpandedMenu(expandedMenu === m.id ? null : m.id)}
+                  className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors text-left"
+                >
+                  <div>
+                    <h3 className="font-semibold text-foreground">{m.nome}</h3>
+                    <div className="flex gap-2 mt-1">
+                      <Badge variant="secondary" className="text-xs">{new Date(m.data + "T00:00:00").toLocaleDateString("pt-BR")}</Badge>
+                      <Badge variant="outline" className="text-xs">{getUnitName(m.unidade_id)}</Badge>
+                    </div>
+                  </div>
+                  {expandedMenu === m.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                </button>
+                {expandedMenu === m.id && (
+                  <div className="border-t border-border p-4">
+                    <FichaTecnica menuId={m.id} unidadeId={m.unidade_id} companyId={profile!.company_id} />
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="registros" className="mt-4">
+          <div className="glass-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead>Data</TableHead>
+                    <TableHead>Produto</TableHead>
+                    <TableHead>Cardápio</TableHead>
+                    <TableHead className="text-right">Sobra Rampa</TableHead>
+                    <TableHead className="text-right">Orgânico</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead>Unidade</TableHead>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+                </TableHeader>
+                <TableBody>
+                  {logs.length === 0 ? (
+                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum registro.</TableCell></TableRow>
+                  ) : (
+                    logs.map((l) => (
+                      <TableRow key={l.id} className="border-border">
+                        <TableCell className="text-sm">{new Date(l.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                        <TableCell className="font-medium">{getProductName(l.product_id)}</TableCell>
+                        <TableCell className="text-muted-foreground">{getMenuName(l.menu_id)}</TableCell>
+                        <TableCell className="text-right">{l.sobra_limpa_rampa > 0 ? `${l.sobra_limpa_rampa} kg` : "—"}</TableCell>
+                        <TableCell className="text-right">{l.desperdicio_total_organico > 0 ? `${l.desperdicio_total_organico} kg` : "—"}</TableCell>
+                        <TableCell className="text-right font-semibold">{l.quantidade} kg</TableCell>
+                        <TableCell><Badge variant="secondary" className="text-xs">{getUnitName(l.unidade_id)}</Badge></TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
