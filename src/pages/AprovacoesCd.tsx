@@ -33,6 +33,7 @@ export default function AprovacoesCd() {
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   // Reject dialog
   const [rejectId, setRejectId] = useState<string | null>(null);
@@ -42,8 +43,8 @@ export default function AprovacoesCd() {
     loadData();
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
 
     const [transfersRes, productsRes, unitsRes, profilesRes] = await Promise.all([
       supabase
@@ -86,38 +87,47 @@ export default function AprovacoesCd() {
 
   const handleApprove = async (transferId: string) => {
     setProcessing(transferId);
-    const { data, error } = await supabase.rpc("rpc_approve_transfer", {
-      p_transfer_id: transferId,
-      p_decision: "aprovar",
-    });
-    setProcessing(null);
-
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const { error } = await supabase.rpc("rpc_approve_transfer", {
+        p_transfer_id: transferId,
+        p_decision: "aprovar",
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Transferência aprovada! Estoque movimentado.");
+      await loadData(true);
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao aprovar transferência.");
+    } finally {
+      setProcessing(null);
     }
-    toast.success("Transferência aprovada! Estoque movimentado.");
-    loadData();
   };
 
   const handleReject = async () => {
     if (!rejectId) return;
-    setProcessing(rejectId);
-    const { error } = await supabase.rpc("rpc_approve_transfer", {
-      p_transfer_id: rejectId,
-      p_decision: "rejeitar",
-      p_reason: rejectReason.trim() || null,
-    });
-    setProcessing(null);
-
-    if (error) {
-      toast.error(error.message);
-      return;
+    const currentRejectId = rejectId;
+    setProcessing(currentRejectId);
+    try {
+      const { error } = await supabase.rpc("rpc_approve_transfer", {
+        p_transfer_id: currentRejectId,
+        p_decision: "rejeitar",
+        p_reason: rejectReason.trim() || null,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Transferência rejeitada.");
+      setRejectId(null);
+      setRejectReason("");
+      await loadData(true);
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao rejeitar transferência.");
+    } finally {
+      setProcessing(null);
     }
-    toast.success("Transferência rejeitada.");
-    setRejectId(null);
-    setRejectReason("");
-    loadData();
   };
 
   if (loading) {
