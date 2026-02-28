@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { Package, AlertTriangle, TrendingDown, DollarSign, Clock, CheckCircle2, ShieldAlert } from "lucide-react";
+import { Package, AlertTriangle, TrendingDown, DollarSign, Clock, CheckCircle2, ShieldAlert, FileDown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { generatePerformancePDF } from "@/lib/pdfExport";
 
 interface DashboardData {
   totalEstoqueValor: number;
@@ -278,6 +280,24 @@ export default function Dashboard() {
 
         {/* PERFORMANCE */}
         <TabsContent value="performance" className="space-y-3">
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                generatePerformancePDF({
+                  sobraLimpa: data.wasteData.sobraLimpa,
+                  restoIngesta: data.wasteData.restoIngesta,
+                  custoMedioRefeicao: data.custoMedioRefeicao,
+                  perdasKg: data.perdasMes.kg,
+                  rankingUnidades: data.rankingUnidades,
+                  canSeeCosts,
+                });
+              }}
+            >
+              <FileDown className="h-4 w-4 mr-1" />Imprimir Relatório
+            </Button>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {/* Waste chart */}
             <Card>

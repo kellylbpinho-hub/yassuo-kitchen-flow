@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Calculator, Users, Loader2, ShoppingCart } from "lucide-react";
+import { Plus, Trash2, Calculator, Users, Loader2, ShoppingCart, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { fuzzyMatch } from "@/lib/fuzzySearch";
+import { generateRequisicaoInternaPDF } from "@/lib/pdfExport";
 
 interface RecipeIngredient {
   id: string;
@@ -193,16 +194,40 @@ export function FichaTecnica({ menuId, unidadeId, companyId }: Props) {
             <span className="text-sm font-semibold text-foreground">Necessidade Total para esta Unidade</span>
           </div>
           {!isFinanceiro && ingredients.length > 0 && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={generatePurchaseOrder}
-              disabled={generating}
-              className="gap-1.5"
-            >
-              {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShoppingCart className="h-3.5 w-3.5" />}
-              Gerar Necessidade de Compra
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  generateRequisicaoInternaPDF({
+                    menuName: "Ficha Técnica",
+                    unitName: `Unidade`,
+                    numColaboradores: numColaboradores,
+                    date: new Date().toLocaleDateString("pt-BR"),
+                    items: ingredients.map((i) => ({
+                      produto: getProductName(i.product_id),
+                      quantidade: calcDemanda(i.peso_limpo_per_capita, i.fator_correcao),
+                      unidade: getProductUnit(i.product_id),
+                    })),
+                  });
+                  toast.success("Requisição interna gerada!");
+                }}
+                className="gap-1.5"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                Imprimir Requisição
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={generatePurchaseOrder}
+                disabled={generating}
+                className="gap-1.5"
+              >
+                {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShoppingCart className="h-3.5 w-3.5" />}
+                Gerar Necessidade de Compra
+              </Button>
+            </div>
           )}
         </div>
         <div className="flex items-center gap-4 text-sm">
