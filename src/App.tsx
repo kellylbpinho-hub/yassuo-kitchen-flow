@@ -13,6 +13,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Estoque from "./pages/Estoque";
 import Compras from "./pages/Compras";
+import ComprasDetalhe from "./pages/ComprasDetalhe";
 import Desperdicio from "./pages/Desperdicio";
 import Usuarios from "./pages/Usuarios";
 import Unidades from "./pages/Unidades";
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/estoque" element={<Estoque />} />
               <Route path="/compras" element={<Compras />} />
+              <Route path="/compras/:id" element={<ComprasDetalhe />} />
               <Route path="/desperdicio" element={<Desperdicio />} />
               <Route path="/usuarios" element={<Usuarios />} />
               <Route path="/unidades" element={<Unidades />} />

@@ -12,8 +12,14 @@ const FINANCEIRO_BLOCKED_ROUTES = [
   "/unidades",
 ];
 
+const NUTRICIONISTA_BLOCKED_ROUTES = [
+  "/compras",
+  "/recebimento-digital",
+  "/pedido-interno",
+];
+
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, role, profile, loading, isFinanceiro } = useAuth();
+  const { user, role, profile, loading, isFinanceiro, isNutricionista } = useAuth();
   const location = useLocation();
   const toastShown = useRef(false);
 
@@ -67,6 +73,15 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     if (!toastShown.current) {
       toastShown.current = true;
       setTimeout(() => toast.error("Acesso restrito. Perfil somente leitura."), 0);
+    }
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Block nutricionista from restricted routes (also block /compras/xxx sub-routes)
+  if (isNutricionista && NUTRICIONISTA_BLOCKED_ROUTES.some((r) => location.pathname === r || location.pathname.startsWith(r + "/"))) {
+    if (!toastShown.current) {
+      toastShown.current = true;
+      setTimeout(() => toast.error("Acesso restrito para Nutricionista."), 0);
     }
     return <Navigate to="/dashboard" replace />;
   }

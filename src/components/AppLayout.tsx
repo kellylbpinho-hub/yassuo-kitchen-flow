@@ -36,12 +36,17 @@ export function AppLayout() {
   const { profile, role, signOut, canManageUsers, isNutricionista, isGerenteOperacional, isCeo, isEstoquista, canManage } = useAuth();
   const navigate = useNavigate();
 
-  const showPedidoInterno = isNutricionista || isGerenteOperacional || isCeo;
+  const showPedidoInterno = !isNutricionista && (isGerenteOperacional || isCeo);
   const showAprovacoes = isCeo || isGerenteOperacional;
   const showMeusPedidos = isNutricionista || isGerenteOperacional || isCeo;
 
+  // Nutricionista cannot see Compras, Recebimento, Transferência Interna
+  const filteredBaseNavItems = isNutricionista
+    ? baseNavItems.filter((item) => !["/compras", "/recebimento-digital"].includes(item.to))
+    : baseNavItems;
+
   const navItems = [
-    ...baseNavItems,
+    ...filteredBaseNavItems,
     ...(showPedidoInterno ? [{ to: "/pedido-interno", icon: ClipboardList, label: "Transferência Interna" }] : []),
     ...(showMeusPedidos ? [{ to: "/meus-pedidos", icon: FileText, label: "Meus Pedidos" }] : []),
     ...(showAprovacoes ? [{ to: "/aprovacoes-cd", icon: ClipboardCheck, label: "Aprovações CD" }] : []),
@@ -93,8 +98,8 @@ export function AppLayout() {
           </button>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 p-4 space-y-1">
+        {/* Nav - scrollable */}
+        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -110,8 +115,8 @@ export function AppLayout() {
           ))}
         </nav>
 
-        {/* User section */}
-        <div className="p-4 border-t border-sidebar-border">
+        {/* User section - sticky footer */}
+        <div className="shrink-0 p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-3 mb-3">
             <div className="h-9 w-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold text-sm">
               {profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
