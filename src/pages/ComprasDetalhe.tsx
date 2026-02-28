@@ -9,9 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Trash2, Send, Check, Package, Loader2, Search } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Send, Check, Package, Loader2, Search, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { fuzzyMatch } from "@/lib/fuzzySearch";
+import { generatePurchaseOrderPDF } from "@/lib/pdfExport";
 
 interface PurchaseOrder {
   id: string;
@@ -223,6 +224,31 @@ export default function ComprasDetalhe() {
           <Badge className={statusColors[order.status]}>{statusLabels[order.status]}</Badge>
         </div>
         <div className="flex-1" />
+
+        {items.length > 0 && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              generatePurchaseOrderPDF({
+                orderId: order.id,
+                date: new Date(order.created_at).toLocaleDateString("pt-BR"),
+                unitName: getUnitName(order.unidade_id),
+                status: statusLabels[order.status],
+                items: items.map((item) => ({
+                  produto: getProductName(item.product_id),
+                  quantidade: item.quantidade,
+                  unidade: getProductUnit(item.product_id),
+                  custoUnit: item.custo_unitario ? Number(item.custo_unitario) : null,
+                  total: item.custo_unitario ? item.quantidade * Number(item.custo_unitario) : null,
+                })),
+              });
+              toast.success("PDF gerado!");
+            }}
+          >
+            <FileDown className="h-4 w-4 mr-1" />Gerar PDF
+          </Button>
+        )}
 
         {!isFinanceiro && (
           <div className="flex gap-2">

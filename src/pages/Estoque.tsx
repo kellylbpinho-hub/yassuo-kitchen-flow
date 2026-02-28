@@ -9,13 +9,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, RefreshCw, Search, Loader2, AlertTriangle, Eye, Pencil, MoreVertical } from "lucide-react";
+import { Plus, RefreshCw, Search, Loader2, AlertTriangle, Eye, Pencil, MoreVertical, FileSpreadsheet } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { fuzzyMatch } from "@/lib/fuzzySearch";
 import { ProductDetailDrawer } from "@/components/ProductDetailDrawer";
 import { EditProductDialog } from "@/components/EditProductDialog";
+import { exportEstoqueExcel } from "@/lib/excelExport";
 
 interface Category {
   id: string;
@@ -199,6 +200,37 @@ export default function Estoque() {
               ))}
             </SelectContent>
           </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              const { data: lotes } = await supabase.from("lotes").select("product_id, codigo, quantidade, validade, status, unidade_id").eq("status", "ativo").gt("quantidade", 0);
+              exportEstoqueExcel({
+                canSeeCosts,
+                produtos: filtered.map((p) => ({
+                  nome: p.nome,
+                  categoria: getCategoryName(p),
+                  unidade_medida: p.unidade_medida,
+                  estoque_atual: Number(p.estoque_atual),
+                  estoque_minimo: Number(p.estoque_minimo),
+                  custo_unitario: Number(p.custo_unitario),
+                  valor_em_estoque: Number(p.estoque_atual) * Number(p.custo_unitario),
+                  unidade: getUnitName(p.unidade_id),
+                })),
+                lotes: (lotes || []).map((l: any) => ({
+                  produto: products.find((p) => p.id === l.product_id)?.nome || "—",
+                  codigo: l.codigo || "—",
+                  quantidade: Number(l.quantidade),
+                  validade: new Date(l.validade).toLocaleDateString("pt-BR"),
+                  status: l.status,
+                  unidade: getUnitName(l.unidade_id),
+                })),
+              });
+              toast.success("Relatório Excel exportado!");
+            }}
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-1" />Exportar Excel
+          </Button>
           {!isFinanceiro && !isNutricionista && (
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
               <DialogTrigger asChild>
