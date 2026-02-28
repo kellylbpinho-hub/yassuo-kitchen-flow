@@ -27,6 +27,7 @@ interface Category {
 interface Product {
   id: string;
   nome: string;
+  marca: string | null;
   categoria: string | null;
   category_id: string | null;
   unidade_medida: string;
@@ -391,7 +392,14 @@ export default function Estoque() {
               ) : (
                 filtered.map((p) => (
                   <TableRow key={p.id} className="border-border">
-                    <TableCell className="font-medium">{p.nome}</TableCell>
+                    <TableCell>
+                      <div>
+                        <span className="font-medium">{p.nome}</span>
+                        {p.marca && (
+                          <span className="block text-xs text-muted-foreground">{p.marca}</span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">{getCategoryName(p)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">

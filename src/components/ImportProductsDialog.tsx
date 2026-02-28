@@ -20,8 +20,9 @@ const DB_COLUMNS = [
   { key: "nome", label: "Nome *", required: true },
   { key: "categoria", label: "Categoria *", required: true },
   { key: "codigo_barras", label: "Código de Barras", required: false },
+  { key: "marca", label: "Marca", required: false },
   { key: "unidade_compra", label: "Unidade de Compra", required: false },
-  { key: "fator_conversao", label: "Fator de Conversão", required: false },
+  { key: "fator_conversao", label: "Unidades por Embalagem", required: false },
   { key: "unidade_medida", label: "Unidade de Estoque", required: false },
   { key: "estoque_minimo", label: "Estoque Mínimo", required: false },
 ] as const;
@@ -158,11 +159,17 @@ export function ImportProductsDialog({ open, onClose, onImported, units, default
     for (const row of rawData) {
       const nome = String(row[mapping.nome] || "").trim();
       const categoria = String(row[mapping.categoria] || "").trim();
-      const codigoBarras = mapping.codigo_barras ? String(row[mapping.codigo_barras] || "").trim() || null : null;
+      let codigoBarras = mapping.codigo_barras ? String(row[mapping.codigo_barras] || "").trim() || null : null;
+      const marca = mapping.marca ? String(row[mapping.marca] || "").trim() || null : null;
       const unidadeMedida = mapping.unidade_medida ? String(row[mapping.unidade_medida] || "").trim() : "kg";
       const estoqueMinimo = mapping.estoque_minimo ? Number(row[mapping.estoque_minimo]) || 0 : 0;
       const unidadeCompra = mapping.unidade_compra ? String(row[mapping.unidade_compra] || "").trim() : null;
       const fatorConversao = mapping.fator_conversao ? Number(row[mapping.fator_conversao]) || 1 : 1;
+
+      // If barcode equals product name, treat as no barcode (item without label)
+      if (codigoBarras && codigoBarras === nome) {
+        codigoBarras = null;
+      }
 
       const validUnit = UNIDADES_MEDIDA.includes(unidadeMedida) ? unidadeMedida : "kg";
 
@@ -184,11 +191,10 @@ export function ImportProductsDialog({ open, onClose, onImported, units, default
         const productId = result?.id;
 
         if (productId && !result?.already_existed) {
-          // Update categoria and estoque_minimo
-          await supabase.from("products").update({
-            categoria,
-            estoque_minimo: estoqueMinimo,
-          }).eq("id", productId);
+          // Update categoria, estoque_minimo, and marca
+          const updateData: any = { categoria, estoque_minimo: estoqueMinimo };
+          if (marca) updateData.marca = marca;
+          await supabase.from("products").update(updateData).eq("id", productId);
 
           // Create purchase unit if provided
           if (unidadeCompra && profile?.company_id) {

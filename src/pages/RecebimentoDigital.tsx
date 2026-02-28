@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
@@ -6,14 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ScanBarcode, Keyboard, Package, Loader2, CheckCircle2 } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScanBarcode, Keyboard, Package, Loader2, CheckCircle2, Search } from "lucide-react";
 import { toast } from "sonner";
+import { fuzzyMatch } from "@/lib/fuzzySearch";
 
 interface Product {
   id: string;
   nome: string;
+  marca: string | null;
   unidade_medida: string;
   codigo_barras: string | null;
   estoque_atual: number;
@@ -34,10 +37,14 @@ export default function RecebimentoDigital() {
   const { user, profile } = useAuth();
   const [step, setStep] = useState<Step>("idle");
   const [barcode, setBarcode] = useState("");
-  const [manualCode, setManualCode] = useState("");
   const [product, setProduct] = useState<Product | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Autocomplete state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   // Receipt form
   const [validade, setValidade] = useState("");
@@ -47,6 +54,7 @@ export default function RecebimentoDigital() {
 
   // Register product form
   const [newName, setNewName] = useState("");
+  const [newMarca, setNewMarca] = useState("");
   const [newUnidadeMedida, setNewUnidadeMedida] = useState("kg");
   const [newUnit, setNewUnit] = useState("");
   const [newCategoria, setNewCategoria] = useState("");
@@ -55,13 +63,13 @@ export default function RecebimentoDigital() {
 
   useEffect(() => {
     loadUnits();
+    loadAllProducts();
   }, []);
 
   const loadUnits = async () => {
     const { data } = await supabase.from("units").select("id, name, type");
     const allUnits = (data || []) as Unit[];
     setUnits(allUnits);
-    // Default to CD units for receiving
     const cdUnit = allUnits.find((u) => u.type === "cd");
     if (cdUnit) {
       setSelectedUnit(cdUnit.id);
@@ -72,7 +80,15 @@ export default function RecebimentoDigital() {
     }
   };
 
-  // Normalize barcode: strip non-digits + trim
+  const loadAllProducts = async () => {
+    const { data } = await supabase
+      .from("products")
+      .select("id, nome, marca, unidade_medida, codigo_barras, estoque_atual, unidade_id, company_id, category_id")
+      .eq("ativo", true)
+      .order("nome");
+    setAllProducts((data || []) as Product[]);
+  };
+
   const normalizeBarcode = (raw: string) => raw.replace(/[^0-9]/g, "").trim() || "";
 
   const lookupBarcode = async (code: string) => {
@@ -80,10 +96,9 @@ export default function RecebimentoDigital() {
     setBarcode(normalized);
     setLoading(true);
 
-    // Search by normalized barcode within user's company (RLS handles company filtering)
     const { data } = await supabase
       .from("products")
-      .select("*")
+      .select("id, nome, marca, unidade_medida, codigo_barras, estoque_atual, unidade_id, company_id, category_id")
       .eq("codigo_barras", normalized)
       .eq("ativo", true)
       .maybeSingle();
@@ -97,14 +112,37 @@ export default function RecebimentoDigital() {
     }
   };
 
+  const handleProductSelected = (p: Product) => {
+    setProduct(p);
+    setBarcode(p.codigo_barras || "");
+    setPopoverOpen(false);
+    setStep("receipt");
+  };
+
   const handleManualSubmit = () => {
-    const code = manualCode.trim();
+    const code = searchQuery.trim();
     if (!code) {
-      toast.error("Digite um código de barras.");
+      toast.error("Digite um código de barras ou nome do produto.");
       return;
     }
-    lookupBarcode(code);
+    // Check if it's a barcode (all digits)
+    if (/^\d+$/.test(code)) {
+      lookupBarcode(code);
+    } else {
+      // Try to find by name
+      const match = allProducts.find((p) => fuzzyMatch(p.nome, code));
+      if (match) {
+        handleProductSelected(match);
+      } else {
+        setBarcode("");
+        setStep("not_found");
+      }
+    }
   };
+
+  const filteredProducts = searchQuery.length >= 2
+    ? allProducts.filter((p) => fuzzyMatch(p.nome, searchQuery) || (p.codigo_barras && p.codigo_barras.includes(searchQuery)))
+    : [];
 
   const handleRegisterProduct = async () => {
     if (!newName.trim()) {
@@ -124,7 +162,7 @@ export default function RecebimentoDigital() {
       p_unidade_id: newUnit,
       p_nome: newName.trim(),
       p_unidade_medida: newUnidadeMedida,
-      p_codigo_barras: barcode,
+      p_codigo_barras: barcode || null,
     });
 
     if (error) {
@@ -133,9 +171,10 @@ export default function RecebimentoDigital() {
       return;
     }
     const result = data as any;
-    // Update categoria text field
     if (result?.id && !result?.already_existed) {
-      await supabase.from("products").update({ categoria: newCategoria }).eq("id", result.id);
+      const updateData: any = { categoria: newCategoria };
+      if (newMarca.trim()) updateData.marca = newMarca.trim();
+      await supabase.from("products").update(updateData).eq("id", result.id);
     }
     setProduct(result as Product);
     setStep("receipt");
@@ -172,13 +211,10 @@ export default function RecebimentoDigital() {
     setLoading(false);
 
     if (error) {
-      // Parse Postgres exception messages for user-friendly display
-      const msg = error.message || "Erro desconhecido";
-      toast.error(msg);
+      toast.error(error.message || "Erro desconhecido");
       return;
     }
 
-    // Update local product state with new stock from RPC response
     if (data && product) {
       setProduct({ ...product, estoque_atual: (data as any).novo_estoque_atual });
     }
@@ -190,12 +226,13 @@ export default function RecebimentoDigital() {
   const reset = () => {
     setStep("idle");
     setBarcode("");
-    setManualCode("");
+    setSearchQuery("");
     setProduct(null);
     setValidade("");
     setLote("");
     setQuantidade("");
     setNewName("");
+    setNewMarca("");
     setNewUnidadeMedida("kg");
     setNewCategoria("");
   };
@@ -235,22 +272,60 @@ export default function RecebimentoDigital() {
             onClick={() => setStep("manual")}
           >
             <Keyboard className="h-7 w-7" />
-            Digitar código manualmente
+            Buscar produto
           </Button>
         </div>
       )}
 
-      {/* Manual entry */}
+      {/* Manual entry with autocomplete */}
       {step === "manual" && (
         <div className="glass-card p-6 max-w-sm space-y-4">
-          <Label>Código de barras</Label>
-          <Input
-            placeholder="Ex: 7891234567890"
-            value={manualCode}
-            onChange={(e) => setManualCode(e.target.value)}
-            inputMode="numeric"
-            autoFocus
-          />
+          <Label>Buscar por nome ou código de barras</Label>
+          <Popover open={popoverOpen && filteredProducts.length > 0} onOpenChange={setPopoverOpen}>
+            <PopoverTrigger asChild>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Ex: Alcatra, 7891234..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPopoverOpen(true);
+                  }}
+                  onFocus={() => filteredProducts.length > 0 && setPopoverOpen(true)}
+                  className="pl-9"
+                  autoFocus
+                />
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+              <Command>
+                <CommandList>
+                  <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
+                  <CommandGroup heading="Sugestões">
+                    {filteredProducts.slice(0, 8).map((p) => (
+                      <CommandItem
+                        key={p.id}
+                        value={p.nome}
+                        onSelect={() => handleProductSelected(p)}
+                        className="cursor-pointer"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">{p.nome}</span>
+                          {p.marca && (
+                            <span className="text-xs text-muted-foreground">Marca: {p.marca}</span>
+                          )}
+                          {p.codigo_barras && (
+                            <span className="text-xs text-muted-foreground">EAN: {p.codigo_barras}</span>
+                          )}
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
           <div className="flex gap-2">
             <Button onClick={handleManualSubmit} disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
@@ -279,9 +354,11 @@ export default function RecebimentoDigital() {
               Produto não cadastrado
             </h2>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Código: <Badge variant="secondary">{barcode}</Badge>
-          </p>
+          {barcode && (
+            <p className="text-sm text-muted-foreground">
+              Código: <Badge variant="secondary">{barcode}</Badge>
+            </p>
+          )}
           <div className="flex gap-2">
             <Button onClick={() => setStep("register")}>
               Cadastrar produto
@@ -299,17 +376,25 @@ export default function RecebimentoDigital() {
           <h2 className="font-display font-bold text-foreground">
             Cadastrar Produto
           </h2>
-          <p className="text-xs text-muted-foreground">
-            Código: <Badge variant="secondary">{barcode}</Badge>
-          </p>
+          {barcode && (
+            <p className="text-xs text-muted-foreground">
+              Código: <Badge variant="secondary">{barcode}</Badge>
+            </p>
+          )}
           <div className="space-y-3">
-            <div>
-              <Label>Código de barras</Label>
-              <Input value={barcode} readOnly className="bg-muted" />
-            </div>
+            {barcode && (
+              <div>
+                <Label>Código de barras</Label>
+                <Input value={barcode} readOnly className="bg-muted" />
+              </div>
+            )}
             <div>
               <Label>Nome do produto *</Label>
               <Input value={newName} onChange={(e) => setNewName(e.target.value)} autoFocus />
+            </div>
+            <div>
+              <Label>Marca</Label>
+              <Input value={newMarca} onChange={(e) => setNewMarca(e.target.value)} placeholder="Ex: Friboi, Sadia..." />
             </div>
             <div>
               <Label>Unidade de medida</Label>
@@ -375,8 +460,11 @@ export default function RecebimentoDigital() {
           </h2>
           <div className="bg-accent/50 rounded-lg p-3 space-y-1">
             <p className="text-sm font-medium text-foreground">{product.nome}</p>
+            {product.marca && (
+              <p className="text-xs text-muted-foreground">Marca: {product.marca}</p>
+            )}
             <p className="text-xs text-muted-foreground">
-              Código: {barcode} · Medida: {product.unidade_medida}
+              {barcode ? `Código: ${barcode} · ` : ""}Medida: {product.unidade_medida}
             </p>
           </div>
 
