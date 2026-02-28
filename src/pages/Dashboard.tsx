@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { Package, AlertTriangle, TrendingDown, DollarSign, Clock, CheckCircle2, ShieldAlert, FileDown } from "lucide-react";
+import { Package, AlertTriangle, TrendingDown, DollarSign, Clock, CheckCircle2, ShieldAlert, FileDown, ShoppingCart, ClipboardCheck } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +25,8 @@ interface DashboardData {
   wasteData: { sobraLimpa: number; restoIngesta: number };
   custoMedioRefeicao: number;
   pedidosStatus: { name: string; value: number }[];
+  totalPedidos: number;
+  pedidosPendentes: number;
 }
 
 const PIE_COLORS = ["hsl(var(--muted-foreground))", "hsl(var(--primary))", "hsl(var(--success))"];
@@ -37,6 +39,7 @@ export default function Dashboard() {
     rankingUnidades: [], lotesVencendo: 0, lotesVencidos: 0, estoquesZerados: 0,
     lowStockItems: [], totalProdutos: 0, ultimasMovimentacoes: [],
     wasteData: { sobraLimpa: 0, restoIngesta: 0 }, custoMedioRefeicao: 0, pedidosStatus: [],
+    totalPedidos: 0, pedidosPendentes: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -85,7 +88,6 @@ export default function Dashboard() {
         }
       }
 
-      // Last movements
       const { data: movs } = await supabase.from("movements").select("id, product_id, tipo, quantidade, created_at").order("created_at", { ascending: false }).limit(8);
       const prodMap = Object.fromEntries(prods.map((p: any) => [p.id, p.nome]));
       const ultimasMovimentacoes = (movs || []).map((m) => ({
@@ -93,14 +95,17 @@ export default function Dashboard() {
         data: new Date(m.created_at).toLocaleDateString("pt-BR"),
       }));
 
-      // Purchase orders status
       const { data: orders } = await supabase.from("purchase_orders").select("status");
       const statusCount: Record<string, number> = {};
       (orders || []).forEach((o) => { statusCount[o.status] = (statusCount[o.status] || 0) + 1; });
       const statusLabels: Record<string, string> = { rascunho: "Rascunho", aprovado: "Aprovado", recebido: "Recebido", enviado: "Enviado" };
       const pedidosStatus = Object.entries(statusCount).map(([k, v]) => ({ name: statusLabels[k] || k, value: v }));
+      const totalPedidos = (orders || []).length;
+      const pedidosPendentes = (statusCount["rascunho"] || 0) + (statusCount["enviado"] || 0);
 
-      // Cost per meal estimate: sum of (quantidade * custo_unitario) for outgoing movements this month / total collaborators
+      // Transferências pendentes
+      const { data: transferencias } = await supabase.from("transferencias").select("status").eq("status", "pendente");
+
       const { data: unitsAll } = await supabase.from("units").select("numero_colaboradores");
       const totalColab = (unitsAll || []).reduce((s, u) => s + (u.numero_colaboradores || 0), 0);
       let custoMedioRefeicao = 0;
@@ -122,6 +127,7 @@ export default function Dashboard() {
         lowStockItems: lowStock.map((p: any) => ({ nome: p.nome, estoque_atual: Number(p.estoque_atual), estoque_minimo: Number(p.estoque_minimo), unidade_medida: p.unidade_medida || "kg" })),
         totalProdutos: prods.length, ultimasMovimentacoes,
         wasteData: { sobraLimpa, restoIngesta }, custoMedioRefeicao, pedidosStatus,
+        totalPedidos, pedidosPendentes,
       });
     } catch (err) { console.error("Dashboard error:", err); } finally { setLoading(false); }
   };
@@ -134,55 +140,119 @@ export default function Dashboard() {
     );
   }
 
-  const tipoLabels: Record<string, string> = { entrada: "Entrada", saida: "Saída", perda: "Perda", ajuste: "Ajuste" };
+  const tipoLabels: Record<string, string> = { entrada: "Entrada", saida: "Saída", perda: "Perda", ajuste: "Ajuste", consumo: "Consumo" };
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <h1 className="text-xl font-display font-bold text-foreground">Dashboard</h1>
-
-      {/* Top KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {canSeeCosts && (
-          <Card className="border-primary/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">Valor em Estoque</p>
-                <DollarSign className="h-4 w-4 text-primary" />
-              </div>
-              <p className="text-lg font-bold font-display mt-1 text-primary">
-                R$ {data.totalEstoqueValor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">Abaixo Mínimo</p>
-              <AlertTriangle className="h-4 w-4 text-warning" />
-            </div>
-            <p className="text-lg font-bold font-display mt-1">{data.itensAbaixoMinimo}</p>
-          </CardContent>
-        </Card>
-        <Card className="cursor-pointer" onClick={() => navigate("/alertas")}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">Vence em Breve</p>
-              <Clock className="h-4 w-4 text-warning" />
-            </div>
-            <p className="text-lg font-bold font-display mt-1 text-warning">{data.lotesVencendo}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">Perdas Mês</p>
-              <TrendingDown className="h-4 w-4 text-primary" />
-            </div>
-            <p className="text-lg font-bold font-display mt-1">{data.perdasMes.kg.toFixed(1)} kg</p>
-          </CardContent>
-        </Card>
+    <div className="space-y-5 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-display font-bold text-foreground">Painel de Controle</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Yassuo Alimentação — Visão consolidada</p>
+        </div>
       </div>
+
+      {/* KPI Cards Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Estoque */}
+        <div
+          className="relative overflow-hidden rounded-xl bg-card border border-border p-4 cursor-pointer hover:border-primary/30 transition-colors"
+          onClick={() => navigate("/estoque")}
+        >
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl" />
+          <div className="flex items-center justify-between mb-2">
+            <Package className="h-5 w-5 text-primary" />
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Estoque</span>
+          </div>
+          <p className="text-2xl font-bold font-display text-foreground">{data.totalProdutos}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            produtos cadastrados
+          </p>
+          {data.itensAbaixoMinimo > 0 && (
+            <div className="mt-2 flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3 text-warning" />
+              <span className="text-[10px] text-warning font-medium">{data.itensAbaixoMinimo} abaixo do mínimo</span>
+            </div>
+          )}
+        </div>
+
+        {/* Pedidos */}
+        <div
+          className="relative overflow-hidden rounded-xl bg-card border border-border p-4 cursor-pointer hover:border-chart-4/30 transition-colors"
+          onClick={() => navigate("/compras")}
+        >
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-chart-4 rounded-l-xl" />
+          <div className="flex items-center justify-between mb-2">
+            <ShoppingCart className="h-5 w-5 text-chart-4" />
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Pedidos</span>
+          </div>
+          <p className="text-2xl font-bold font-display text-foreground">{data.totalPedidos}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">pedidos de compra</p>
+          {data.pedidosPendentes > 0 && (
+            <div className="mt-2 flex items-center gap-1">
+              <Clock className="h-3 w-3 text-chart-4" />
+              <span className="text-[10px] text-chart-4 font-medium">{data.pedidosPendentes} pendentes</span>
+            </div>
+          )}
+        </div>
+
+        {/* Alertas */}
+        <div
+          className="relative overflow-hidden rounded-xl bg-card border border-border p-4 cursor-pointer hover:border-warning/30 transition-colors"
+          onClick={() => navigate("/alertas")}
+        >
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-warning rounded-l-xl" />
+          <div className="flex items-center justify-between mb-2">
+            <AlertTriangle className="h-5 w-5 text-warning" />
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Alertas</span>
+          </div>
+          <p className="text-2xl font-bold font-display text-foreground">{data.lotesVencendo + data.lotesVencidos}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">lotes com atenção</p>
+          {data.lotesVencidos > 0 && (
+            <div className="mt-2 flex items-center gap-1">
+              <ShieldAlert className="h-3 w-3 text-destructive" />
+              <span className="text-[10px] text-destructive font-medium">{data.lotesVencidos} vencidos</span>
+            </div>
+          )}
+        </div>
+
+        {/* Perdas */}
+        <div className="relative overflow-hidden rounded-xl bg-card border border-border p-4">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-destructive rounded-l-xl" />
+          <div className="flex items-center justify-between mb-2">
+            <TrendingDown className="h-5 w-5 text-destructive" />
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Perdas</span>
+          </div>
+          <p className="text-2xl font-bold font-display text-foreground">{data.perdasMes.kg.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">no mês corrente</p>
+        </div>
+      </div>
+
+      {/* Cost row (CEO/Financeiro only) */}
+      {canSeeCosts && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="relative overflow-hidden rounded-xl bg-card border border-border p-4">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-success rounded-l-xl" />
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-muted-foreground">Valor em Estoque</span>
+              <DollarSign className="h-4 w-4 text-success" />
+            </div>
+            <p className="text-xl font-bold font-display text-success">
+              R$ {data.totalEstoqueValor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </p>
+          </div>
+          <div className="relative overflow-hidden rounded-xl bg-card border border-border p-4">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-chart-5 rounded-l-xl" />
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-muted-foreground">Custo Médio / Refeição</span>
+              <DollarSign className="h-4 w-4 text-chart-5" />
+            </div>
+            <p className="text-xl font-bold font-display text-chart-5">
+              R$ {data.custoMedioRefeicao.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs defaultValue="operacional" className="space-y-3">
@@ -194,7 +264,6 @@ export default function Dashboard() {
 
         {/* OPERACIONAL */}
         <TabsContent value="operacional" className="space-y-3">
-          {/* Critical alerts */}
           {(data.lotesVencidos > 0 || data.estoquesZerados > 0) && (
             <Card>
               <CardHeader className="pb-2 p-4">
@@ -219,7 +288,6 @@ export default function Dashboard() {
             </Card>
           )}
 
-          {/* Low stock */}
           {data.lowStockItems.length > 0 && (
             <Card>
               <CardHeader className="pb-2 p-4">
@@ -243,7 +311,6 @@ export default function Dashboard() {
             </Card>
           )}
 
-          {/* Last movements */}
           <Card>
             <CardHeader className="pb-2 p-4">
               <CardTitle className="text-sm">Últimas Movimentações</CardTitle>
@@ -299,7 +366,6 @@ export default function Dashboard() {
             </Button>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {/* Waste chart */}
             <Card>
               <CardHeader className="pb-2 p-4">
                 <CardTitle className="text-sm">Índice de Desperdício (mês)</CardTitle>
@@ -324,7 +390,6 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* Waste by unit */}
             <Card>
               <CardHeader className="pb-2 p-4">
                 <CardTitle className="text-sm">Desperdício por Unidade</CardTitle>
@@ -346,23 +411,6 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
-
-          {/* Cost per meal */}
-          {canSeeCosts && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Custo Médio por Refeição (estimado)</p>
-                    <p className="text-xl font-bold font-display mt-1 text-primary">
-                      R$ {data.custoMedioRefeicao.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                  <DollarSign className="h-6 w-6 text-primary/40" />
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
 
         {/* LOGÍSTICA */}
