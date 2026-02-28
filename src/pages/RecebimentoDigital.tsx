@@ -9,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScanBarcode, Keyboard, Package, Loader2, CheckCircle2, Search, Info } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ScanBarcode, Keyboard, Package, Loader2, CheckCircle2, Search, Info, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { fuzzyMatch } from "@/lib/fuzzySearch";
-import { parseGS1Barcode, getSuggestedValidityDays, getDateOffsetISO, type GS1Data } from "@/lib/gs1Parser";
+import { parseGS1Barcode, getSuggestedValidityDays, type GS1Data } from "@/lib/gs1Parser";
 
 interface Product {
   id: string;
@@ -72,6 +73,10 @@ export default function RecebimentoDigital() {
   const [newUnit, setNewUnit] = useState("");
   const [newCategoria, setNewCategoria] = useState("");
 
+  // Weight deviation alert
+  const [weightAlert, setWeightAlert] = useState<{ avg: number; current: number } | null>(null);
+  const [showWeightAlert, setShowWeightAlert] = useState(false);
+
   const CATEGORIAS_FIXAS = ["Grãos", "Proteínas", "Laticínios", "Hortifruti", "Bebidas", "Descartáveis", "Limpeza", "Temperos", "Outros"];
 
   useEffect(() => {
@@ -113,11 +118,9 @@ export default function RecebimentoDigital() {
   const normalizeBarcode = (raw: string) => raw.replace(/[^0-9]/g, "").trim() || "";
 
   const lookupBarcode = async (code: string) => {
-    // Parse GS1-128 first
     const gs1 = parseGS1Barcode(code);
     setGs1Data(gs1.isGS1 ? gs1 : null);
 
-    // For GS1, use the GTIN for lookup; otherwise use the raw code
     const lookupCode = gs1.isGS1 && gs1.gtin ? normalizeBarcode(gs1.gtin) : normalizeBarcode(code);
     setBarcode(lookupCode);
     setLoading(true);
@@ -140,17 +143,14 @@ export default function RecebimentoDigital() {
     }
   };
 
-  const prefillFromGS1 = (gs1: GS1Data, p: Product) => {
+  const prefillFromGS1 = (gs1: GS1Data, _p: Product) => {
     if (gs1.isGS1) {
       if (gs1.expiryDate) setValidade(gs1.expiryDate);
       if (gs1.lotNumber) setLote(gs1.lotNumber);
       if (gs1.netWeightKg !== undefined) setQuantidade(String(gs1.netWeightKg));
     }
-    // Auto-suggest validity if not set by GS1
-    if (!gs1.isGS1 || !gs1.expiryDate) {
-      const days = getSuggestedValidityDays(p.categoria);
-      setValidade(getDateOffsetISO(days));
-    }
+    // Soberania da etiqueta: validade manual obrigatória se não GS1
+    // Não auto-preencher validade sem dados reais
   };
 
   const handleProductSelected = (p: Product) => {
@@ -158,9 +158,7 @@ export default function RecebimentoDigital() {
     setBarcode(p.codigo_barras || "");
     setPopoverOpen(false);
     setGs1Data(null);
-    // Auto-suggest validity based on category
-    const days = getSuggestedValidityDays(p.categoria);
-    setValidade(getDateOffsetISO(days));
+    // Soberania da etiqueta: não auto-sugerir validade
     setStep("receipt");
   };
 
@@ -170,11 +168,9 @@ export default function RecebimentoDigital() {
       toast.error("Digite um código de barras ou nome do produto.");
       return;
     }
-    // Check if it's a barcode (all digits or long GS1)
     if (/^\d{8,}$/.test(code.replace(/[^0-9]/g, ""))) {
       lookupBarcode(code);
     } else {
-      // Try to find by name
       const match = allProducts.find((p) => fuzzyMatch(p.nome, code));
       if (match) {
         handleProductSelected(match);
@@ -188,6 +184,29 @@ export default function RecebimentoDigital() {
   const filteredProducts = searchQuery.length >= 2
     ? allProducts.filter((p) => fuzzyMatch(p.nome, searchQuery) || (p.codigo_barras && p.codigo_barras.includes(searchQuery)))
     : [];
+
+  // Check weight deviation against last 5 entries
+  const checkWeightDeviation = async (productId: string, currentQty: number): Promise<boolean> => {
+    const { data: lastEntries } = await supabase
+      .from("movements")
+      .select("quantidade")
+      .eq("product_id", productId)
+      .eq("tipo", "entrada")
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (!lastEntries || lastEntries.length < 2) return false; // Not enough history
+
+    const avg = lastEntries.reduce((s, e) => s + Number(e.quantidade), 0) / lastEntries.length;
+    const deviation = Math.abs(currentQty - avg) / avg;
+
+    if (deviation > 0.3) {
+      setWeightAlert({ avg: Math.round(avg * 1000) / 1000, current: currentQty });
+      setShowWeightAlert(true);
+      return true; // Has deviation
+    }
+    return false;
+  };
 
   const handleRegisterProduct = async () => {
     if (!newName.trim()) {
@@ -227,8 +246,6 @@ export default function RecebimentoDigital() {
       marca: newMarca.trim() || null,
     };
     setProduct(newProduct);
-    const days = getSuggestedValidityDays(newCategoria);
-    setValidade(getDateOffsetISO(days));
     setStep("receipt");
     setLoading(false);
     if (result.already_existed) {
@@ -238,18 +255,8 @@ export default function RecebimentoDigital() {
     }
   };
 
-  const handleReceipt = async () => {
-    if (!validade || !lote.trim() || !quantidade || !selectedUnit) {
-      toast.error("Preencha todos os campos obrigatórios.");
-      return;
-    }
-
+  const executeReceipt = async () => {
     const qty = parseFloat(quantidade);
-    if (isNaN(qty) || qty <= 0) {
-      toast.error("Quantidade inválida.");
-      return;
-    }
-
     setLoading(true);
 
     const { data, error } = await supabase.rpc("rpc_receive_digital", {
@@ -275,6 +282,26 @@ export default function RecebimentoDigital() {
     toast.success("Recebimento registrado com sucesso!");
   };
 
+  const handleReceipt = async () => {
+    if (!validade || !lote.trim() || !quantidade || !selectedUnit) {
+      toast.error("Preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    const qty = parseFloat(quantidade);
+    if (isNaN(qty) || qty <= 0) {
+      toast.error("Quantidade inválida.");
+      return;
+    }
+
+    // Check weight deviation before confirming
+    const hasDeviation = await checkWeightDeviation(product!.id, qty);
+    if (!hasDeviation) {
+      await executeReceipt();
+    }
+    // If has deviation, the alert dialog will handle confirmation
+  };
+
   const reset = () => {
     setStep("idle");
     setBarcode("");
@@ -288,9 +315,9 @@ export default function RecebimentoDigital() {
     setNewMarca("");
     setNewUnidadeMedida("kg");
     setNewCategoria("");
+    setWeightAlert(null);
   };
 
-  // Get purchase unit hint for current product
   const getProductPurchaseUnit = (): PurchaseUnit | null => {
     if (!product) return null;
     return purchaseUnits.find((pu) => pu.product_id === product.id) || null;
@@ -300,7 +327,6 @@ export default function RecebimentoDigital() {
   const quantityLabel = isWeightUnit ? "Peso da Caixa (kg)" : "Quantidade na Caixa";
   const purchaseUnit = getProductPurchaseUnit();
 
-  // Scanning modal
   if (step === "scanning") {
     return (
       <BarcodeScanner
@@ -319,21 +345,38 @@ export default function RecebimentoDigital() {
         Recebimento Digital
       </h1>
 
-      {/* Idle: action buttons */}
+      {/* Weight deviation alert */}
+      <AlertDialog open={showWeightAlert} onOpenChange={setShowWeightAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              Peso fora do padrão
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              O peso inserido ({weightAlert?.current} kg) diverge mais de 30% da média das últimas entregas ({weightAlert?.avg} kg). Deseja confirmar o recebimento mesmo assim?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowWeightAlert(false)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setShowWeightAlert(false);
+              executeReceipt();
+            }}>
+              Confirmar mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Idle */}
       {step === "idle" && (
         <div className="grid gap-4 sm:grid-cols-2 max-w-lg">
-          <Button
-            className="h-24 text-lg gap-3"
-            onClick={() => setStep("scanning")}
-          >
+          <Button className="h-24 text-lg gap-3" onClick={() => setStep("scanning")}>
             <ScanBarcode className="h-7 w-7" />
             Escanear código de barras
           </Button>
-          <Button
-            variant="outline"
-            className="h-24 text-lg gap-3"
-            onClick={() => setStep("manual")}
-          >
+          <Button variant="outline" className="h-24 text-lg gap-3" onClick={() => setStep("manual")}>
             <Keyboard className="h-7 w-7" />
             Buscar produto
           </Button>
@@ -423,12 +466,8 @@ export default function RecebimentoDigital() {
             </p>
           )}
           <div className="flex gap-2">
-            <Button onClick={() => setStep("register")}>
-              Cadastrar produto
-            </Button>
-            <Button variant="ghost" onClick={reset}>
-              Voltar
-            </Button>
+            <Button onClick={() => setStep("register")}>Cadastrar produto</Button>
+            <Button variant="ghost" onClick={reset}>Voltar</Button>
           </div>
         </div>
       )}
@@ -436,9 +475,7 @@ export default function RecebimentoDigital() {
       {/* Register new product */}
       {step === "register" && (
         <div className="glass-card p-6 max-w-md space-y-4">
-          <h2 className="font-display font-bold text-foreground">
-            Cadastrar Produto
-          </h2>
+          <h2 className="font-display font-bold text-foreground">Cadastrar Produto</h2>
           {barcode && (
             <p className="text-xs text-muted-foreground">
               Código: <Badge variant="secondary">{barcode}</Badge>
@@ -508,9 +545,7 @@ export default function RecebimentoDigital() {
               {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Cadastrar e continuar
             </Button>
-            <Button variant="ghost" onClick={() => setStep("not_found")}>
-              Voltar
-            </Button>
+            <Button variant="ghost" onClick={() => setStep("not_found")}>Voltar</Button>
           </div>
         </div>
       )}
@@ -518,9 +553,7 @@ export default function RecebimentoDigital() {
       {/* Receipt form */}
       {step === "receipt" && product && (
         <div className="glass-card p-6 max-w-md space-y-4">
-          <h2 className="font-display font-bold text-foreground">
-            Recebimento
-          </h2>
+          <h2 className="font-display font-bold text-foreground">Recebimento</h2>
           <div className="bg-accent/50 rounded-lg p-3 space-y-1">
             <p className="text-sm font-medium text-foreground">{product.nome}</p>
             {product.marca && (
@@ -533,7 +566,7 @@ export default function RecebimentoDigital() {
               <div className="flex items-center gap-1 mt-1">
                 <Info className="h-3 w-3 text-primary" />
                 <span className="text-xs text-primary font-medium">
-                  Unidades/Emb.: {purchaseUnit.fator_conversao} {product.unidade_medida} ({purchaseUnit.nome})
+                  Peso/Qtd Esperada: {purchaseUnit.fator_conversao} {product.unidade_medida} ({purchaseUnit.nome})
                 </span>
               </div>
             )}
@@ -541,7 +574,7 @@ export default function RecebimentoDigital() {
 
           {/* GS1 badge */}
           {gs1Data?.isGS1 && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
                 GS1-128 detectado
               </Badge>
@@ -550,16 +583,21 @@ export default function RecebimentoDigital() {
                   Peso: {gs1Data.netWeightKg} kg
                 </Badge>
               )}
+              {gs1Data.lotNumber && (
+                <Badge variant="outline" className="text-xs">
+                  Lote: {gs1Data.lotNumber}
+                </Badge>
+              )}
             </div>
           )}
 
           <div className="space-y-3">
             <div>
-              <Label>Validade *</Label>
+              <Label>Validade * (data da etiqueta)</Label>
               <Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} />
-              {product.categoria && (
+              {product.categoria && !gs1Data?.isGS1 && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Sugestão: {getSuggestedValidityDays(product.categoria)} dias ({product.categoria})
+                  Referência: ~{getSuggestedValidityDays(product.categoria)} dias para {product.categoria}
                 </p>
               )}
             </div>
@@ -584,7 +622,7 @@ export default function RecebimentoDigital() {
               )}
             </div>
             <div>
-              <Label>Local de recebimento (CD/Unidade) *</Label>
+              <Label>Local de recebimento (CD) *</Label>
               <Select value={selectedUnit} onValueChange={setSelectedUnit}>
                 <SelectTrigger className="bg-input border-border">
                   <SelectValue />
@@ -607,9 +645,7 @@ export default function RecebimentoDigital() {
               {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Confirmar Recebimento
             </Button>
-            <Button variant="ghost" onClick={reset}>
-              Cancelar
-            </Button>
+            <Button variant="ghost" onClick={reset}>Cancelar</Button>
           </div>
         </div>
       )}

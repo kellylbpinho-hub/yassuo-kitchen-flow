@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { Package, AlertTriangle, TrendingDown, DollarSign, Clock, CheckCircle2, ShieldAlert, FileDown, ShoppingCart, ClipboardCheck } from "lucide-react";
+import { Package, AlertTriangle, TrendingDown, DollarSign, Clock, CheckCircle2, ShieldAlert, FileDown, ShoppingCart, ClipboardCheck, RotateCcw } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { generatePerformancePDF } from "@/lib/pdfExport";
+import { getTurnoverAlertDays } from "@/lib/gs1Parser";
+
+interface SlowTurnoverItem {
+  produtoNome: string;
+  loteCodigo: string;
+  diasEmEstoque: number;
+  limiteGiro: number;
+  quantidade: number;
+  unidadeNome: string;
+  categoria: string;
+}
 
 interface DashboardData {
   totalEstoqueValor: number;
@@ -27,6 +38,7 @@ interface DashboardData {
   pedidosStatus: { name: string; value: number }[];
   totalPedidos: number;
   pedidosPendentes: number;
+  slowTurnoverItems: SlowTurnoverItem[];
 }
 
 const PIE_COLORS = ["hsl(var(--muted-foreground))", "hsl(var(--primary))", "hsl(var(--success))"];
@@ -39,7 +51,7 @@ export default function Dashboard() {
     rankingUnidades: [], lotesVencendo: 0, lotesVencidos: 0, estoquesZerados: 0,
     lowStockItems: [], totalProdutos: 0, ultimasMovimentacoes: [],
     wasteData: { sobraLimpa: 0, restoIngesta: 0 }, custoMedioRefeicao: 0, pedidosStatus: [],
-    totalPedidos: 0, pedidosPendentes: 0,
+    totalPedidos: 0, pedidosPendentes: 0, slowTurnoverItems: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -47,7 +59,7 @@ export default function Dashboard() {
 
   const loadDashboard = async () => {
     try {
-      const { data: allProds } = await supabase.from("products").select("id, nome, estoque_atual, estoque_minimo, custo_unitario, validade_minima_dias, unidade_medida");
+      const { data: allProds } = await supabase.from("products").select("id, nome, estoque_atual, estoque_minimo, custo_unitario, validade_minima_dias, unidade_medida, categoria");
       const prods = allProds || [];
       const lowStock = prods.filter((p: any) => Number(p.estoque_atual) < Number(p.estoque_minimo));
       const estoquesZerados = prods.filter((p: any) => Number(p.estoque_atual) <= 0).length;
@@ -75,9 +87,15 @@ export default function Dashboard() {
       });
       const ranking = (units || []).map((u) => ({ name: u.name, desperdicio: wasteByUnit[u.id] || 0 })).sort((a, b) => b.desperdicio - a.desperdicio);
 
-      const { data: lotesAtivos } = await supabase.from("lotes").select("id, validade, product_id, status").eq("status", "ativo").gt("quantidade", 0);
+      const { data: lotesAtivos } = await supabase.from("lotes").select("id, validade, product_id, status, quantidade, recebido_em, unidade_id, codigo").eq("status", "ativo").gt("quantidade", 0);
       let lotesVencendo = 0, lotesVencidos = 0;
       const today = new Date(); today.setHours(0, 0, 0, 0);
+      const prodMap = Object.fromEntries(prods.map((p: any) => [p.id, p]));
+      const unitMap = Object.fromEntries((units || []).map((u) => [u.id, u.name]));
+
+      // Slow turnover analysis
+      const slowTurnoverItems: SlowTurnoverItem[] = [];
+
       if (lotesAtivos) {
         const prodMinDias = Object.fromEntries(prods.map((p: any) => [p.id, p.validade_minima_dias ?? 30]));
         for (const lote of lotesAtivos) {
@@ -85,13 +103,37 @@ export default function Dashboard() {
           const dias = Math.ceil((validade.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
           if (dias < 0) lotesVencidos++;
           else if (dias <= (prodMinDias[lote.product_id] ?? 30)) lotesVencendo++;
+
+          // Turnover check based on entry date
+          const prod = prodMap[lote.product_id];
+          if (prod) {
+            const limiteGiro = getTurnoverAlertDays(prod.categoria);
+            if (limiteGiro !== null) {
+              const entradaDate = new Date(lote.recebido_em);
+              const diasEmEstoque = Math.ceil((today.getTime() - entradaDate.getTime()) / (1000 * 60 * 60 * 24));
+              if (diasEmEstoque > limiteGiro) {
+                slowTurnoverItems.push({
+                  produtoNome: prod.nome,
+                  loteCodigo: lote.codigo || "—",
+                  diasEmEstoque,
+                  limiteGiro,
+                  quantidade: Number(lote.quantidade),
+                  unidadeNome: unitMap[lote.unidade_id] || "—",
+                  categoria: prod.categoria || "—",
+                });
+              }
+            }
+          }
         }
       }
 
+      // Sort by most overdue first
+      slowTurnoverItems.sort((a, b) => (b.diasEmEstoque - b.limiteGiro) - (a.diasEmEstoque - a.limiteGiro));
+
       const { data: movs } = await supabase.from("movements").select("id, product_id, tipo, quantidade, created_at").order("created_at", { ascending: false }).limit(8);
-      const prodMap = Object.fromEntries(prods.map((p: any) => [p.id, p.nome]));
+      const prodNameMap = Object.fromEntries(prods.map((p: any) => [p.id, p.nome]));
       const ultimasMovimentacoes = (movs || []).map((m) => ({
-        id: m.id, produto: prodMap[m.product_id] || "—", tipo: m.tipo, quantidade: Number(m.quantidade),
+        id: m.id, produto: prodNameMap[m.product_id] || "—", tipo: m.tipo, quantidade: Number(m.quantidade),
         data: new Date(m.created_at).toLocaleDateString("pt-BR"),
       }));
 
@@ -102,9 +144,6 @@ export default function Dashboard() {
       const pedidosStatus = Object.entries(statusCount).map(([k, v]) => ({ name: statusLabels[k] || k, value: v }));
       const totalPedidos = (orders || []).length;
       const pedidosPendentes = (statusCount["rascunho"] || 0) + (statusCount["enviado"] || 0);
-
-      // Transferências pendentes
-      const { data: transferencias } = await supabase.from("transferencias").select("status").eq("status", "pendente");
 
       const { data: unitsAll } = await supabase.from("units").select("numero_colaboradores");
       const totalColab = (unitsAll || []).reduce((s, u) => s + (u.numero_colaboradores || 0), 0);
@@ -127,7 +166,7 @@ export default function Dashboard() {
         lowStockItems: lowStock.map((p: any) => ({ nome: p.nome, estoque_atual: Number(p.estoque_atual), estoque_minimo: Number(p.estoque_minimo), unidade_medida: p.unidade_medida || "kg" })),
         totalProdutos: prods.length, ultimasMovimentacoes,
         wasteData: { sobraLimpa, restoIngesta }, custoMedioRefeicao, pedidosStatus,
-        totalPedidos, pedidosPendentes,
+        totalPedidos, pedidosPendentes, slowTurnoverItems,
       });
     } catch (err) { console.error("Dashboard error:", err); } finally { setLoading(false); }
   };
@@ -165,9 +204,7 @@ export default function Dashboard() {
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Estoque</span>
           </div>
           <p className="text-2xl font-bold font-display text-foreground">{data.totalProdutos}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            produtos cadastrados
-          </p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">produtos cadastrados</p>
           {data.itensAbaixoMinimo > 0 && (
             <div className="mt-2 flex items-center gap-1">
               <AlertTriangle className="h-3 w-3 text-warning" />
@@ -284,6 +321,49 @@ export default function Dashboard() {
                     <Badge variant="destructive">{data.estoquesZerados}</Badge>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Slow Turnover Alert */}
+          {data.slowTurnoverItems.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2 p-4">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <RotateCcw className="h-4 w-4 text-warning" /> Giro Lento
+                  <Badge className="bg-warning/20 text-warning text-xs ml-1">{data.slowTurnoverItems.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">Produto</TableHead>
+                      <TableHead className="text-xs">Lote</TableHead>
+                      <TableHead className="text-xs text-right">Dias</TableHead>
+                      <TableHead className="text-xs text-right">Limite</TableHead>
+                      <TableHead className="text-xs text-right">Qtd</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.slowTurnoverItems.slice(0, 10).map((item, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="text-sm py-2">
+                          <div className="flex flex-col">
+                            <span>{item.produtoNome}</span>
+                            <span className="text-[10px] text-muted-foreground">{item.categoria} · {item.unidadeNome}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm py-2">{item.loteCodigo}</TableCell>
+                        <TableCell className="text-sm py-2 text-right">
+                          <Badge variant="outline" className="text-warning border-warning/30">{item.diasEmEstoque}d</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm py-2 text-right text-muted-foreground">{item.limiteGiro}d</TableCell>
+                        <TableCell className="text-sm py-2 text-right">{item.quantidade}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           )}
