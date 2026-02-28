@@ -29,6 +29,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 interface NavGroup {
   label: string;
@@ -126,7 +127,7 @@ export function AppLayout() {
         {/* Logo */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-sidebar-border shrink-0">
           <h1 className="text-lg font-display font-bold text-foreground tracking-tight">
-            Yassuo<span className="text-primary">App</span>
+            Yassuo<span className="text-primary"> Alimentação</span>
           </h1>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground hover:text-foreground">
             <X className="h-5 w-5" />
@@ -215,10 +216,13 @@ export function AppLayout() {
         </header>
 
         {/* Page content */}
-        <div className="flex-1 overflow-auto p-3 lg:p-5">
+        <div className="flex-1 overflow-auto p-3 pb-16 lg:p-5 lg:pb-5">
           <Outlet />
         </div>
       </main>
+
+      {/* Mobile bottom navigation */}
+      <MobileBottomNav />
     </div>
   );
 }

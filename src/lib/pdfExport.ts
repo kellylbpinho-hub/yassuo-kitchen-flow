@@ -15,7 +15,7 @@ export function generatePurchaseOrderPDF(data: PurchaseOrderPDFData) {
   // Header
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text("YassuoApp", 14, 20);
+  doc.text("Yassuo Alimentação", 14, 20);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text("Sistema de Gestão de Food Service", 14, 26);
@@ -63,7 +63,7 @@ export function generatePurchaseOrderPDF(data: PurchaseOrderPDFData) {
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setTextColor(150);
-    doc.text(`Gerado em ${new Date().toLocaleString("pt-BR")} — YassuoApp`, 14, doc.internal.pageSize.height - 10);
+    doc.text(`Gerado em ${new Date().toLocaleString("pt-BR")} — Yassuo Alimentação`, 14, doc.internal.pageSize.height - 10);
   }
 
   doc.save(`ordem-compra-${data.orderId.substring(0, 8)}.pdf`);
@@ -82,7 +82,7 @@ export function generateRequisicaoInternaPDF(data: RequisicaoInternaData) {
 
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text("YassuoApp", 14, 20);
+  doc.text("Yassuo Alimentação", 14, 20);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text("Requisição Interna de Insumos", 14, 26);
@@ -119,7 +119,7 @@ export function generateRequisicaoInternaPDF(data: RequisicaoInternaData) {
 
   doc.setFontSize(8);
   doc.setTextColor(150);
-  doc.text(`Gerado em ${new Date().toLocaleString("pt-BR")} — YassuoApp`, 14, doc.internal.pageSize.height - 10);
+  doc.text(`Gerado em ${new Date().toLocaleString("pt-BR")} — Yassuo Alimentação`, 14, doc.internal.pageSize.height - 10);
 
   doc.save(`requisicao-interna-${data.menuName.replace(/\s/g, "-").substring(0, 20)}.pdf`);
 }
@@ -136,7 +136,7 @@ export function generatePerformancePDF(dashData: {
 
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text("YassuoApp", 14, 20);
+  doc.text("Yassuo Alimentação", 14, 20);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text("Relatório de Performance", 14, 26);
@@ -189,7 +189,7 @@ export function generatePerformancePDF(dashData: {
 
   doc.setFontSize(8);
   doc.setTextColor(150);
-  doc.text(`Gerado em ${new Date().toLocaleString("pt-BR")} — YassuoApp`, 14, doc.internal.pageSize.height - 10);
+  doc.text(`Gerado em ${new Date().toLocaleString("pt-BR")} — Yassuo Alimentação`, 14, doc.internal.pageSize.height - 10);
 
   doc.save(`relatorio-performance-${new Date().toISOString().slice(0, 7)}.pdf`);
 }
