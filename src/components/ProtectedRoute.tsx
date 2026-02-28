@@ -1,8 +1,8 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, ShieldAlert } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { Loader2, ShieldAlert, ShieldX } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const FINANCEIRO_BLOCKED_ROUTES = [
   "/recebimento-digital",
@@ -10,6 +10,7 @@ const FINANCEIRO_BLOCKED_ROUTES = [
   "/aprovacoes-cd",
   "/usuarios",
   "/unidades",
+  "/configuracoes-acesso",
 ];
 
 const NUTRICIONISTA_BLOCKED_ROUTES = [
@@ -18,13 +19,73 @@ const NUTRICIONISTA_BLOCKED_ROUTES = [
   "/pedido-interno",
 ];
 
+const ESTOQUISTA_BLOCKED_ROUTES = [
+  "/compras",
+  "/usuarios",
+  "/unidades",
+  "/aprovacoes-cd",
+  "/configuracoes-acesso",
+];
+
+const COMPRADOR_BLOCKED_ROUTES = [
+  "/recebimento-digital",
+  "/pedido-interno",
+  "/aprovacoes-cd",
+  "/usuarios",
+  "/unidades",
+  "/configuracoes-acesso",
+];
+
+const FUNCIONARIO_BLOCKED_ROUTES = [
+  "/compras",
+  "/recebimento-digital",
+  "/pedido-interno",
+  "/aprovacoes-cd",
+  "/usuarios",
+  "/unidades",
+  "/configuracoes-acesso",
+];
+
+const CEO_ONLY_ROUTES = ["/configuracoes-acesso"];
+
+const roleLabels: Record<string, string> = {
+  ceo: "CEO",
+  gerente_financeiro: "Gerente Financeiro",
+  gerente_operacional: "Gerente Operacional",
+  nutricionista: "Nutricionista",
+  estoquista: "Estoquista",
+  comprador: "Comprador",
+  funcionario: "Funcionário",
+};
+
+function isBlocked(role: string | null, pathname: string): boolean {
+  if (!role) return false;
+  const matchRoute = (routes: string[]) =>
+    routes.some((r) => pathname === r || pathname.startsWith(r + "/"));
+
+  switch (role) {
+    case "gerente_financeiro":
+      return matchRoute(FINANCEIRO_BLOCKED_ROUTES);
+    case "nutricionista":
+      return matchRoute(NUTRICIONISTA_BLOCKED_ROUTES);
+    case "estoquista":
+      return matchRoute(ESTOQUISTA_BLOCKED_ROUTES);
+    case "comprador":
+      return matchRoute(COMPRADOR_BLOCKED_ROUTES);
+    case "funcionario":
+      return matchRoute(FUNCIONARIO_BLOCKED_ROUTES);
+    default:
+      return false;
+  }
+}
+
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, role, profile, loading, isFinanceiro, isNutricionista } = useAuth();
+  const { user, role, profile, loading } = useAuth();
   const location = useLocation();
-  const toastShown = useRef(false);
+  const [showDenied, setShowDenied] = useState(false);
 
   useEffect(() => {
-    toastShown.current = false;
+    setShowDenied(false);
   }, [location.pathname]);
 
   if (loading) {
@@ -68,22 +129,34 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Block financeiro from restricted routes
-  if (isFinanceiro && FINANCEIRO_BLOCKED_ROUTES.includes(location.pathname)) {
-    if (!toastShown.current) {
-      toastShown.current = true;
-      setTimeout(() => toast.error("Acesso restrito. Perfil somente leitura."), 0);
-    }
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // Block nutricionista from restricted routes (also block /compras/xxx sub-routes)
-  if (isNutricionista && NUTRICIONISTA_BLOCKED_ROUTES.some((r) => location.pathname === r || location.pathname.startsWith(r + "/"))) {
-    if (!toastShown.current) {
-      toastShown.current = true;
-      setTimeout(() => toast.error("Acesso restrito para Nutricionista."), 0);
-    }
-    return <Navigate to="/dashboard" replace />;
+  // Check route access
+  if (isBlocked(role, location.pathname)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background p-4">
+        <div className="glass-card p-8 max-w-md text-center space-y-4 animate-fade-in">
+          <div className="mx-auto h-16 w-16 rounded-full bg-destructive/15 flex items-center justify-center">
+            <ShieldX className="h-8 w-8 text-destructive" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground">
+            Acesso restrito
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Seu cargo de <span className="font-semibold text-foreground">{roleLabels[role] || role}</span> não tem permissão para acessar esta área.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Se você acredita que deveria ter acesso, entre em contato com o administrador (CEO).
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.history.back()}
+            className="mt-2"
+          >
+            Voltar
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;
