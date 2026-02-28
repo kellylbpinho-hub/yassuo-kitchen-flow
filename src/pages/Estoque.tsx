@@ -48,7 +48,7 @@ interface StockByUnit {
 }
 
 export default function Estoque() {
-  const { user, canSeeCosts, profile, canManage, isFinanceiro } = useAuth();
+  const { user, canSeeCosts, profile, canManage, isFinanceiro, isNutricionista } = useAuth();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -198,7 +198,7 @@ export default function Estoque() {
               ))}
             </SelectContent>
           </Select>
-          {!isFinanceiro && (
+          {!isFinanceiro && !isNutricionista && (
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
               <DialogTrigger asChild>
                 <Button><Plus className="h-4 w-4 mr-2" />Novo</Button>
@@ -298,7 +298,7 @@ export default function Estoque() {
         const rupturaItems = filtered.filter((p) =>
           filterUnit !== "all"
             ? getStockForUnit(p.id, filterUnit) < p.estoque_minimo
-            : p.estoque_atual < p.estoque_minimo
+          : stockByUnit.filter((s) => s.product_id === p.id).reduce((sum, s) => sum + (s.saldo || 0), 0) < p.estoque_minimo
         );
         if (rupturaItems.length === 0) return null;
         return (
@@ -311,7 +311,7 @@ export default function Estoque() {
             </div>
             <div className="flex flex-wrap gap-2">
               {rupturaItems.slice(0, 10).map((p) => {
-                const saldo = filterUnit !== "all" ? getStockForUnit(p.id, filterUnit) : p.estoque_atual;
+                const saldo = filterUnit !== "all" ? getStockForUnit(p.id, filterUnit) : stockByUnit.filter((s) => s.product_id === p.id).reduce((sum, s) => sum + (s.saldo || 0), 0);
                 return (
                   <Badge key={p.id} variant="destructive" className="text-xs gap-1">
                     {p.nome}: {saldo}/{p.estoque_minimo} {p.unidade_medida}
@@ -334,7 +334,7 @@ export default function Estoque() {
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead>Produto</TableHead>
                 <TableHead>Categoria</TableHead>
-                <TableHead>{filterUnit !== "all" ? "Saldo Unidade" : "Estoque Geral"}</TableHead>
+                <TableHead>{filterUnit !== "all" ? "Saldo Unidade" : "Saldo (Lotes)"}</TableHead>
                 <TableHead>Mínimo</TableHead>
                 {canSeeCosts && <TableHead>Custo</TableHead>}
                 <TableHead>Unidade</TableHead>
@@ -363,14 +363,21 @@ export default function Estoque() {
                             <span className="text-xs text-muted-foreground">/ {p.estoque_atual} total</span>
                           </>
                         ) : (
-                          <span className={p.estoque_atual < p.estoque_minimo ? "text-destructive font-semibold" : ""}>
-                            {p.estoque_atual}
-                          </span>
+                          (() => {
+                            const totalLotes = stockByUnit
+                              .filter((s) => s.product_id === p.id)
+                              .reduce((sum, s) => sum + (s.saldo || 0), 0);
+                            return (
+                              <span className={totalLotes < p.estoque_minimo ? "text-destructive font-semibold" : ""}>
+                                {totalLotes}
+                              </span>
+                            );
+                          })()
                         )}
                         <span className="text-xs text-muted-foreground">{p.unidade_medida}</span>
                         {(filterUnit !== "all"
                           ? getStockForUnit(p.id, filterUnit) < p.estoque_minimo
-                          : p.estoque_atual < p.estoque_minimo
+                          : stockByUnit.filter((s) => s.product_id === p.id).reduce((sum, s) => sum + (s.saldo || 0), 0) < p.estoque_minimo
                         ) && (
                           <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
                             Ruptura
@@ -398,7 +405,7 @@ export default function Estoque() {
                           <DropdownMenuItem onClick={() => setDetailProduct(p)}>
                             <Eye className="h-4 w-4 mr-2" />Detalhes
                           </DropdownMenuItem>
-                          {!isFinanceiro && (
+                          {!isFinanceiro && !isNutricionista && (
                             <>
                               <DropdownMenuItem onClick={() => setEditProduct(p)}>
                                 <Pencil className="h-4 w-4 mr-2" />Editar
