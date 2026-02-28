@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, RefreshCw, Search, Loader2, AlertTriangle, Eye, Pencil, MoreVertical, FileSpreadsheet } from "lucide-react";
+import { Plus, RefreshCw, Search, Loader2, AlertTriangle, Eye, Pencil, MoreVertical, FileSpreadsheet, Upload } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +17,7 @@ import { fuzzyMatch } from "@/lib/fuzzySearch";
 import { ProductDetailDrawer } from "@/components/ProductDetailDrawer";
 import { EditProductDialog } from "@/components/EditProductDialog";
 import { exportEstoqueExcel } from "@/lib/excelExport";
+import { ImportProductsDialog } from "@/components/ImportProductsDialog";
 
 interface Category {
   id: string;
@@ -60,6 +61,7 @@ export default function Estoque() {
   const [search, setSearch] = useState("");
   const [filterUnit, setFilterUnit] = useState("all");
   const [addOpen, setAddOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [movOpen, setMovOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
@@ -232,62 +234,67 @@ export default function Estoque() {
             <FileSpreadsheet className="h-4 w-4 mr-1" />Exportar Excel
           </Button>
           {!isFinanceiro && !isNutricionista && (
-            <Dialog open={addOpen} onOpenChange={setAddOpen}>
-              <DialogTrigger asChild>
-                <Button><Plus className="h-4 w-4 mr-2" />Novo</Button>
-              </DialogTrigger>
-              <DialogContent className="bg-card border-border max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="font-display">Novo Produto</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-3">
-                  <div>
-                    <Label>Nome *</Label>
-                    <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="bg-input border-border" />
-                  </div>
-                  <div>
-                    <Label>Categoria *</Label>
-                    <Select value={form.categoria} onValueChange={(v) => setForm({ ...form, categoria: v })}>
-                      <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                      <SelectContent>
-                        {CATEGORIAS_FIXAS.map((c) => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
+            <>
+              <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+                <Upload className="h-4 w-4 mr-1" />Importar Planilha
+              </Button>
+              <Dialog open={addOpen} onOpenChange={setAddOpen}>
+                <DialogTrigger asChild>
+                  <Button><Plus className="h-4 w-4 mr-2" />Novo</Button>
+                </DialogTrigger>
+                <DialogContent className="bg-card border-border max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="font-display">Novo Produto</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3">
                     <div>
-                      <Label>Unid. Medida</Label>
-                      <Select value={form.unidade_medida} onValueChange={(v) => setForm({ ...form, unidade_medida: v })}>
-                        <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                      <Label>Nome *</Label>
+                      <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="bg-input border-border" />
+                    </div>
+                    <div>
+                      <Label>Categoria *</Label>
+                      <Select value={form.categoria} onValueChange={(v) => setForm({ ...form, categoria: v })}>
+                        <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                         <SelectContent>
-                          {["kg", "g", "L", "ml", "un"].map((u) => (
-                            <SelectItem key={u} value={u}>{u}</SelectItem>
+                          {CATEGORIAS_FIXAS.map((c) => (
+                            <SelectItem key={c} value={c}>{c}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <div>
-                      <Label>Unidade</Label>
-                      <Select value={form.unidade_id} onValueChange={(v) => setForm({ ...form, unidade_id: v })}>
-                        <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {units.map((u) => (
-                            <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Unid. Medida</Label>
+                        <Select value={form.unidade_medida} onValueChange={(v) => setForm({ ...form, unidade_medida: v })}>
+                          <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {["kg", "g", "L", "ml", "un"].map((u) => (
+                              <SelectItem key={u} value={u}>{u}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Unidade</Label>
+                        <Select value={form.unidade_id} onValueChange={(v) => setForm({ ...form, unidade_id: v })}>
+                          <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {units.map((u) => (
+                              <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
+                    <div>
+                      <Label>Estoque Mínimo</Label>
+                      <Input type="number" value={form.estoque_minimo} onChange={(e) => setForm({ ...form, estoque_minimo: e.target.value })} className="bg-input border-border" />
+                    </div>
+                    <Button onClick={addProduct} className="w-full">Adicionar Produto</Button>
                   </div>
-                  <div>
-                    <Label>Estoque Mínimo</Label>
-                    <Input type="number" value={form.estoque_minimo} onChange={(e) => setForm({ ...form, estoque_minimo: e.target.value })} className="bg-input border-border" />
-                  </div>
-                  <Button onClick={addProduct} className="w-full">Adicionar Produto</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            </>
           )}
         </div>
       </div>
@@ -474,6 +481,15 @@ export default function Estoque() {
         open={!!editProduct}
         onClose={() => setEditProduct(null)}
         onSaved={loadData}
+      />
+
+      {/* Import products dialog */}
+      <ImportProductsDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={loadData}
+        units={units}
+        defaultUnitId={profile?.unidade_id || units[0]?.id || ""}
       />
     </div>
   );
