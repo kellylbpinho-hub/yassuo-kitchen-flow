@@ -128,7 +128,7 @@ export function AppLayout() {
         {/* Logo */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-sidebar-border shrink-0">
           <div className="flex items-center gap-2.5">
-            <img src={logoY} alt="Yassuo" className="h-8 w-8 object-contain drop-shadow-[0_0_6px_hsl(var(--primary)/0.4)]" />
+            <img src={logoY} alt="Yassuo" className="h-12 w-12 object-contain drop-shadow-[0_0_8px_hsl(var(--primary)/0.4)]" />
             <h1 className="text-lg font-display font-bold text-foreground tracking-tight">
               Yassuo
             </h1>
@@ -217,7 +217,7 @@ export function AppLayout() {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex-1 flex justify-center lg:hidden">
-            <img src={logoY} alt="Yassuo" className="h-8 w-8 object-contain drop-shadow-[0_0_6px_hsl(var(--primary)/0.4)]" />
+            <img src={logoY} alt="Yassuo" className="h-14 w-14 object-contain drop-shadow-[0_0_10px_hsl(var(--primary)/0.5)]" />
           </div>
           <div className="hidden lg:flex-1 lg:block" />
         </header>
