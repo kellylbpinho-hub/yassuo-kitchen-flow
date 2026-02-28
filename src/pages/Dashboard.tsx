@@ -98,10 +98,20 @@ export default function Dashboard() {
       const statusLabels: Record<string, string> = { rascunho: "Rascunho", aprovado: "Aprovado", recebido: "Recebido", enviado: "Enviado" };
       const pedidosStatus = Object.entries(statusCount).map(([k, v]) => ({ name: statusLabels[k] || k, value: v }));
 
-      // Cost per meal estimate
+      // Cost per meal estimate: sum of (quantidade * custo_unitario) for outgoing movements this month / total collaborators
       const { data: unitsAll } = await supabase.from("units").select("numero_colaboradores");
       const totalColab = (unitsAll || []).reduce((s, u) => s + (u.numero_colaboradores || 0), 0);
-      const custoMedioRefeicao = totalColab > 0 ? totalValue / totalColab : 0;
+      let custoMedioRefeicao = 0;
+      if (canSeeCosts && totalColab > 0) {
+        const { data: saidasMes } = await supabase
+          .from("movements")
+          .select("product_id, quantidade")
+          .in("tipo", ["consumo", "saida", "perda"])
+          .gte("created_at", startOfMonth.toISOString());
+        const prodCusto = Object.fromEntries(prods.map((p: any) => [p.id, Number(p.custo_unitario || 0)]));
+        const totalCustoSaidas = (saidasMes || []).reduce((s, m) => s + (Number(m.quantidade) * (prodCusto[m.product_id] || 0)), 0);
+        custoMedioRefeicao = totalCustoSaidas / totalColab;
+      }
 
       setData({
         totalEstoqueValor: totalValue, itensAbaixoMinimo: lowStock.length,
