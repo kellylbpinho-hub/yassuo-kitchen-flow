@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScanBarcode, Keyboard, Package, Loader2, CheckCircle2, Search } from "lucide-react";
+import { ScanBarcode, Keyboard, Package, Loader2, CheckCircle2, Search, Info } from "lucide-react";
 import { toast } from "sonner";
 import { fuzzyMatch } from "@/lib/fuzzySearch";
+import { parseGS1Barcode, getSuggestedValidityDays, getDateOffsetISO, type GS1Data } from "@/lib/gs1Parser";
 
 interface Product {
   id: string;
@@ -23,12 +24,20 @@ interface Product {
   unidade_id: string;
   company_id: string;
   category_id: string | null;
+  categoria: string | null;
 }
 
 interface Unit {
   id: string;
   name: string;
   type: string;
+}
+
+interface PurchaseUnit {
+  id: string;
+  nome: string;
+  fator_conversao: number;
+  product_id: string;
 }
 
 type Step = "idle" | "scanning" | "manual" | "found" | "not_found" | "register" | "receipt" | "success";
@@ -40,7 +49,11 @@ export default function RecebimentoDigital() {
   const [product, setProduct] = useState<Product | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [purchaseUnits, setPurchaseUnits] = useState<PurchaseUnit[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // GS1 parsed data
+  const [gs1Data, setGs1Data] = useState<GS1Data | null>(null);
 
   // Autocomplete state
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,6 +77,7 @@ export default function RecebimentoDigital() {
   useEffect(() => {
     loadUnits();
     loadAllProducts();
+    loadPurchaseUnits();
   }, []);
 
   const loadUnits = async () => {
@@ -83,32 +97,59 @@ export default function RecebimentoDigital() {
   const loadAllProducts = async () => {
     const { data } = await supabase
       .from("products")
-      .select("id, nome, marca, unidade_medida, codigo_barras, estoque_atual, unidade_id, company_id, category_id")
+      .select("id, nome, marca, unidade_medida, codigo_barras, estoque_atual, unidade_id, company_id, category_id, categoria")
       .eq("ativo", true)
       .order("nome");
     setAllProducts((data || []) as Product[]);
   };
 
+  const loadPurchaseUnits = async () => {
+    const { data } = await supabase
+      .from("product_purchase_units")
+      .select("id, nome, fator_conversao, product_id");
+    setPurchaseUnits((data || []) as PurchaseUnit[]);
+  };
+
   const normalizeBarcode = (raw: string) => raw.replace(/[^0-9]/g, "").trim() || "";
 
   const lookupBarcode = async (code: string) => {
-    const normalized = normalizeBarcode(code);
-    setBarcode(normalized);
+    // Parse GS1-128 first
+    const gs1 = parseGS1Barcode(code);
+    setGs1Data(gs1.isGS1 ? gs1 : null);
+
+    // For GS1, use the GTIN for lookup; otherwise use the raw code
+    const lookupCode = gs1.isGS1 && gs1.gtin ? normalizeBarcode(gs1.gtin) : normalizeBarcode(code);
+    setBarcode(lookupCode);
     setLoading(true);
 
     const { data } = await supabase
       .from("products")
-      .select("id, nome, marca, unidade_medida, codigo_barras, estoque_atual, unidade_id, company_id, category_id")
-      .eq("codigo_barras", normalized)
+      .select("id, nome, marca, unidade_medida, codigo_barras, estoque_atual, unidade_id, company_id, category_id, categoria")
+      .eq("codigo_barras", lookupCode)
       .eq("ativo", true)
       .maybeSingle();
 
     setLoading(false);
     if (data) {
-      setProduct(data as Product);
+      const p = data as Product;
+      setProduct(p);
+      prefillFromGS1(gs1, p);
       setStep("receipt");
     } else {
       setStep("not_found");
+    }
+  };
+
+  const prefillFromGS1 = (gs1: GS1Data, p: Product) => {
+    if (gs1.isGS1) {
+      if (gs1.expiryDate) setValidade(gs1.expiryDate);
+      if (gs1.lotNumber) setLote(gs1.lotNumber);
+      if (gs1.netWeightKg !== undefined) setQuantidade(String(gs1.netWeightKg));
+    }
+    // Auto-suggest validity if not set by GS1
+    if (!gs1.isGS1 || !gs1.expiryDate) {
+      const days = getSuggestedValidityDays(p.categoria);
+      setValidade(getDateOffsetISO(days));
     }
   };
 
@@ -116,6 +157,10 @@ export default function RecebimentoDigital() {
     setProduct(p);
     setBarcode(p.codigo_barras || "");
     setPopoverOpen(false);
+    setGs1Data(null);
+    // Auto-suggest validity based on category
+    const days = getSuggestedValidityDays(p.categoria);
+    setValidade(getDateOffsetISO(days));
     setStep("receipt");
   };
 
@@ -125,8 +170,8 @@ export default function RecebimentoDigital() {
       toast.error("Digite um código de barras ou nome do produto.");
       return;
     }
-    // Check if it's a barcode (all digits)
-    if (/^\d+$/.test(code)) {
+    // Check if it's a barcode (all digits or long GS1)
+    if (/^\d{8,}$/.test(code.replace(/[^0-9]/g, ""))) {
       lookupBarcode(code);
     } else {
       // Try to find by name
@@ -176,7 +221,14 @@ export default function RecebimentoDigital() {
       if (newMarca.trim()) updateData.marca = newMarca.trim();
       await supabase.from("products").update(updateData).eq("id", result.id);
     }
-    setProduct(result as Product);
+    const newProduct: Product = {
+      ...(result as Product),
+      categoria: newCategoria,
+      marca: newMarca.trim() || null,
+    };
+    setProduct(newProduct);
+    const days = getSuggestedValidityDays(newCategoria);
+    setValidade(getDateOffsetISO(days));
     setStep("receipt");
     setLoading(false);
     if (result.already_existed) {
@@ -228,6 +280,7 @@ export default function RecebimentoDigital() {
     setBarcode("");
     setSearchQuery("");
     setProduct(null);
+    setGs1Data(null);
     setValidade("");
     setLote("");
     setQuantidade("");
@@ -236,6 +289,16 @@ export default function RecebimentoDigital() {
     setNewUnidadeMedida("kg");
     setNewCategoria("");
   };
+
+  // Get purchase unit hint for current product
+  const getProductPurchaseUnit = (): PurchaseUnit | null => {
+    if (!product) return null;
+    return purchaseUnits.find((pu) => pu.product_id === product.id) || null;
+  };
+
+  const isWeightUnit = product?.unidade_medida && ["kg", "g"].includes(product.unidade_medida);
+  const quantityLabel = isWeightUnit ? "Peso da Caixa (kg)" : "Quantidade na Caixa";
+  const purchaseUnit = getProductPurchaseUnit();
 
   // Scanning modal
   if (step === "scanning") {
@@ -466,27 +529,59 @@ export default function RecebimentoDigital() {
             <p className="text-xs text-muted-foreground">
               {barcode ? `Código: ${barcode} · ` : ""}Medida: {product.unidade_medida}
             </p>
+            {purchaseUnit && (
+              <div className="flex items-center gap-1 mt-1">
+                <Info className="h-3 w-3 text-primary" />
+                <span className="text-xs text-primary font-medium">
+                  Unidades/Emb.: {purchaseUnit.fator_conversao} {product.unidade_medida} ({purchaseUnit.nome})
+                </span>
+              </div>
+            )}
           </div>
+
+          {/* GS1 badge */}
+          {gs1Data?.isGS1 && (
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                GS1-128 detectado
+              </Badge>
+              {gs1Data.netWeightKg !== undefined && (
+                <Badge variant="outline" className="text-xs">
+                  Peso: {gs1Data.netWeightKg} kg
+                </Badge>
+              )}
+            </div>
+          )}
 
           <div className="space-y-3">
             <div>
               <Label>Validade *</Label>
               <Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} />
+              {product.categoria && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Sugestão: {getSuggestedValidityDays(product.categoria)} dias ({product.categoria})
+                </p>
+              )}
             </div>
             <div>
               <Label>Lote *</Label>
               <Input value={lote} onChange={(e) => setLote(e.target.value)} placeholder="Ex: L2025-001" />
             </div>
             <div>
-              <Label>Quantidade recebida *</Label>
+              <Label>{quantityLabel} *</Label>
               <Input
                 type="number"
-                min="0.01"
-                step="0.01"
+                min="0.001"
+                step="0.001"
                 value={quantidade}
                 onChange={(e) => setQuantidade(e.target.value)}
-                placeholder={`Em ${product.unidade_medida}`}
+                placeholder={isWeightUnit ? "Ex: 12.450" : `Em ${product.unidade_medida}`}
               />
+              {isWeightUnit && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Aceita decimais para peso real (ex: 12.450 kg)
+                </p>
+              )}
             </div>
             <div>
               <Label>Local de recebimento (CD/Unidade) *</Label>

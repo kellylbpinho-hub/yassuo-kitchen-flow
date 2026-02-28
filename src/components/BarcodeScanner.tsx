@@ -60,7 +60,7 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
           patchSize: "medium",
         },
         decoder: {
-          readers: ["ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader"],
+          readers: ["ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "code_128_reader"],
         },
         locate: true,
         frequency: 10,
