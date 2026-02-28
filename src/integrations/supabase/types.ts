@@ -435,6 +435,7 @@ export type Database = {
           estoque_atual: number
           estoque_minimo: number
           id: string
+          marca: string | null
           nome: string
           proteina_por_100g: number | null
           unidade_id: string
@@ -454,6 +455,7 @@ export type Database = {
           estoque_atual?: number
           estoque_minimo?: number
           id?: string
+          marca?: string | null
           nome: string
           proteina_por_100g?: number | null
           unidade_id: string
@@ -473,6 +475,7 @@ export type Database = {
           estoque_atual?: number
           estoque_minimo?: number
           id?: string
+          marca?: string | null
           nome?: string
           proteina_por_100g?: number | null
           unidade_id?: string
