@@ -32,8 +32,8 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-display font-bold text-foreground tracking-tight">
-            Yassuo<span className="text-primary">App</span>
+          <h1 className="text-4xl font-sans font-bold text-foreground tracking-tight">
+            Yassuo <span className="text-destructive">App</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-2">
             Controle de estoque e operações
