@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Calculator, Users, Loader2 } from "lucide-react";
+import { Plus, Trash2, Calculator, Users, Loader2, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { fuzzyMatch } from "@/lib/fuzzySearch";
 
 interface RecipeIngredient {
   id: string;
@@ -26,13 +28,16 @@ interface Props {
 }
 
 export function FichaTecnica({ menuId, unidadeId, companyId }: Props) {
-  const { isFinanceiro } = useAuth();
+  const { isFinanceiro, user, profile } = useAuth();
+  const navigate = useNavigate();
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [numColaboradores, setNumColaboradores] = useState(0);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [newForm, setNewForm] = useState({ product_id: "", peso_limpo_per_capita: "", fator_correcao: "1" });
+  const [ingredientSearch, setIngredientSearch] = useState("");
 
   useEffect(() => { loadData(); }, [menuId]);
 
@@ -89,6 +94,91 @@ export function FichaTecnica({ menuId, unidadeId, companyId }: Props) {
   const calcDemanda = (peso: number, fator: number) => peso * fator * numColaboradores;
   const totalDemanda = ingredients.reduce((sum, i) => sum + calcDemanda(i.peso_limpo_per_capita, i.fator_correcao), 0);
 
+  const generatePurchaseOrder = async () => {
+    if (ingredients.length === 0) {
+      toast.error("Nenhum ingrediente na ficha técnica.");
+      return;
+    }
+    if (numColaboradores === 0) {
+      toast.error("Configure o número de colaboradores na unidade antes de gerar a necessidade.");
+      return;
+    }
+
+    setGenerating(true);
+    try {
+      // Get current stock for each ingredient in this unit
+      const { data: stockData } = await supabase
+        .from("v_estoque_por_unidade")
+        .select("product_id, saldo")
+        .eq("unidade_id", unidadeId)
+        .in("product_id", ingredients.map(i => i.product_id));
+
+      const stockMap = new Map<string, number>();
+      (stockData || []).forEach((s: any) => stockMap.set(s.product_id, s.saldo || 0));
+
+      // Calculate shortfalls
+      const shortfalls: { product_id: string; quantidade: number }[] = [];
+      for (const ing of ingredients) {
+        const demand = calcDemanda(ing.peso_limpo_per_capita, ing.fator_correcao);
+        const stock = stockMap.get(ing.product_id) || 0;
+        const deficit = demand - stock;
+        if (deficit > 0) {
+          shortfalls.push({ product_id: ing.product_id, quantidade: Math.ceil(deficit * 100) / 100 });
+        }
+      }
+
+      if (shortfalls.length === 0) {
+        toast.success("Estoque suficiente! Não é necessário gerar pedido de compra.");
+        setGenerating(false);
+        return;
+      }
+
+      // Create purchase order draft
+      const { data: order, error: orderError } = await supabase
+        .from("purchase_orders")
+        .insert({
+          status: "rascunho",
+          unidade_id: unidadeId,
+          created_by: user!.id,
+          company_id: companyId,
+          observacao: `Gerado automaticamente a partir da ficha técnica`,
+        })
+        .select("id")
+        .single();
+
+      if (orderError) {
+        toast.error("Erro ao criar pedido: " + orderError.message);
+        setGenerating(false);
+        return;
+      }
+
+      // Insert items
+      const items = shortfalls.map(s => ({
+        purchase_order_id: order.id,
+        product_id: s.product_id,
+        quantidade: s.quantidade,
+        company_id: companyId,
+      }));
+
+      const { error: itemsError } = await supabase.from("purchase_items").insert(items);
+      if (itemsError) {
+        toast.error("Erro ao adicionar itens: " + itemsError.message);
+        setGenerating(false);
+        return;
+      }
+
+      toast.success(`Pedido de compra criado com ${shortfalls.length} itens em falta!`);
+      navigate(`/compras/${order.id}`);
+    } catch (err: any) {
+      toast.error("Erro inesperado: " + err.message);
+    }
+    setGenerating(false);
+  };
+
+  const availableProducts = products
+    .filter(p => !ingredients.find(i => i.product_id === p.id))
+    .filter(p => fuzzyMatch(p.nome, ingredientSearch));
+
   if (loading) {
     return <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>;
   }
@@ -97,9 +187,23 @@ export function FichaTecnica({ menuId, unidadeId, companyId }: Props) {
     <div className="space-y-4">
       {/* Demand summary card */}
       <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Calculator className="h-4 w-4 text-primary" />
-          <span className="text-sm font-semibold text-foreground">Necessidade Total para esta Unidade</span>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Calculator className="h-4 w-4 text-primary" />
+            <span className="text-sm font-semibold text-foreground">Necessidade Total para esta Unidade</span>
+          </div>
+          {!isFinanceiro && ingredients.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={generatePurchaseOrder}
+              disabled={generating}
+              className="gap-1.5"
+            >
+              {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShoppingCart className="h-3.5 w-3.5" />}
+              Gerar Necessidade de Compra
+            </Button>
+          )}
         </div>
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-1.5">
@@ -161,14 +265,18 @@ export function FichaTecnica({ menuId, unidadeId, companyId }: Props) {
           {adding ? (
             <div className="border border-border rounded-lg p-3 space-y-3 bg-muted/30">
               <div>
+                <Label className="text-xs">Buscar Produto</Label>
+                <Input
+                  placeholder="Digite para buscar (ex: limao)..."
+                  value={ingredientSearch}
+                  onChange={(e) => setIngredientSearch(e.target.value)}
+                  className="bg-input border-border mb-2"
+                />
                 <Label className="text-xs">Produto</Label>
                 <Select value={newForm.product_id} onValueChange={(v) => setNewForm({ ...newForm, product_id: v })}>
                   <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
-                    {products
-                      .filter(p => !ingredients.find(i => i.product_id === p.id))
-                      .map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)
-                    }
+                    {availableProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -194,7 +302,7 @@ export function FichaTecnica({ menuId, unidadeId, companyId }: Props) {
               </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={addIngredient}>Adicionar</Button>
-                <Button size="sm" variant="outline" onClick={() => setAdding(false)}>Cancelar</Button>
+                <Button size="sm" variant="outline" onClick={() => { setAdding(false); setIngredientSearch(""); }}>Cancelar</Button>
               </div>
             </div>
           ) : (
