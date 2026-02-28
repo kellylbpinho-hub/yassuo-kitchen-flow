@@ -21,6 +21,7 @@ import {
   UtensilsCrossed,
   Truck,
   DollarSign,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -88,6 +89,9 @@ export function AppLayout() {
   if (canManageUsers) {
     adminItems.push({ to: "/usuarios", icon: Users, label: "Usuários" });
     adminItems.push({ to: "/unidades", icon: Building2, label: "Unidades" });
+  }
+  if (isCeo) {
+    adminItems.push({ to: "/configuracoes-acesso", icon: Shield, label: "Config. Acesso" });
   }
   groups.push({ label: "💰 Administração", icon: DollarSign, items: adminItems });
 
