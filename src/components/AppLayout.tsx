@@ -30,7 +30,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
-import logoY from "@/assets/logo-y.png";
+
 
 interface NavGroup {
   label: string;
@@ -128,9 +128,8 @@ export function AppLayout() {
         {/* Logo */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-sidebar-border shrink-0">
           <div className="flex items-center gap-2.5">
-            <img src={logoY} alt="Yassuo" className="h-12 w-12 object-contain drop-shadow-[0_0_8px_hsl(var(--primary)/0.4)]" />
-            <h1 className="text-lg font-display font-bold text-foreground tracking-tight">
-              Yassuo
+            <h1 className="text-lg font-sans font-bold tracking-tight">
+              <span className="text-white">Yassuo</span> <span className="text-destructive">App</span>
             </h1>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground hover:text-foreground">
@@ -217,7 +216,7 @@ export function AppLayout() {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex-1 flex justify-center lg:hidden">
-            <img src={logoY} alt="Yassuo" className="h-14 w-14 object-contain drop-shadow-[0_0_10px_hsl(var(--primary)/0.5)]" />
+            <span className="text-lg font-sans font-bold tracking-tight"><span className="text-white">Yassuo</span> <span className="text-destructive">App</span></span>
           </div>
           <div className="hidden lg:flex-1 lg:block" />
         </header>
