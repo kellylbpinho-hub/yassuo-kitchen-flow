@@ -88,7 +88,7 @@ export default function Login() {
           <div className="mt-4 text-center">
             <Link
               to="/esqueci-senha"
-              className="text-sm text-primary hover:underline">
+              className="text-sm hover:underline text-popover-foreground">
               
               Esqueci minha senha
             </Link>
