@@ -58,6 +58,7 @@ const App = () => (
               <Route path="/aprovacoes-cd" element={<AprovacoesCd />} />
               <Route path="/meus-pedidos" element={<MeusPedidos />} />
               <Route path="/configuracoes-acesso" element={<ConfiguracoesAcesso />} />
+              <Route path="/cardapio-semanal" element={<CardapioSemanal />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
