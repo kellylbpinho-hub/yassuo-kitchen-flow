@@ -918,6 +918,7 @@ export type Database = {
           product_id: string
           quantidade: number
           sobra_limpa_rampa: number
+          sobra_prato: number
           unidade_id: string
           user_id: string
         }
@@ -931,6 +932,7 @@ export type Database = {
           product_id: string
           quantidade: number
           sobra_limpa_rampa?: number
+          sobra_prato?: number
           unidade_id: string
           user_id: string
         }
@@ -944,6 +946,7 @@ export type Database = {
           product_id?: string
           quantidade?: number
           sobra_limpa_rampa?: number
+          sobra_prato?: number
           unidade_id?: string
           user_id?: string
         }
