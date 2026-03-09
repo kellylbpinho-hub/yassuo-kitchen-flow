@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, ShieldAlert, ShieldX } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 const FINANCEIRO_BLOCKED_ROUTES = [
@@ -16,7 +16,12 @@ const FINANCEIRO_BLOCKED_ROUTES = [
 const NUTRICIONISTA_BLOCKED_ROUTES = [
   "/compras",
   "/recebimento-digital",
-  "/pedido-interno",
+  "/estoque",
+  "/alertas",
+  "/usuarios",
+  "/unidades",
+  "/aprovacoes-cd",
+  "/configuracoes-acesso",
 ];
 
 const ESTOQUISTA_BLOCKED_ROUTES = [
@@ -100,7 +105,6 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
-  // User is authenticated but has no role assigned yet
   if (!role) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background p-4">
@@ -129,7 +133,6 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Check route access
   if (isBlocked(role, location.pathname)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background p-4">

@@ -25,6 +25,7 @@ import PedidoInterno from "./pages/PedidoInterno";
 import AprovacoesCd from "./pages/AprovacoesCd";
 import MeusPedidos from "./pages/MeusPedidos";
 import ConfiguracoesAcesso from "./pages/ConfiguracoesAcesso";
+import CardapioSemanal from "./pages/CardapioSemanal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/aprovacoes-cd" element={<AprovacoesCd />} />
               <Route path="/meus-pedidos" element={<MeusPedidos />} />
               <Route path="/configuracoes-acesso" element={<ConfiguracoesAcesso />} />
+              <Route path="/cardapio-semanal" element={<CardapioSemanal />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

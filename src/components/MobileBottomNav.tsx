@@ -1,17 +1,26 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingCart, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, ClipboardList, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-  { path: "/dashboard", icon: LayoutDashboard, label: "Início" },
-  { path: "/estoque", icon: Package, label: "Estoque" },
-  { path: "/compras", icon: ShoppingCart, label: "Pedidos" },
-  { path: "/meus-pedidos", icon: ClipboardList, label: "Meus Pedidos" },
-];
+import { useAuth } from "@/contexts/AuthContext";
 
 export function MobileBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isNutricionista } = useAuth();
+
+  const navItems = isNutricionista
+    ? [
+        { path: "/dashboard", icon: LayoutDashboard, label: "Início" },
+        { path: "/desperdicio", icon: Trash2, label: "Desperdício" },
+        { path: "/pedido-interno", icon: ClipboardList, label: "Pedido" },
+        { path: "/meus-pedidos", icon: Package, label: "Meus Pedidos" },
+      ]
+    : [
+        { path: "/dashboard", icon: LayoutDashboard, label: "Início" },
+        { path: "/estoque", icon: Package, label: "Estoque" },
+        { path: "/compras", icon: ShoppingCart, label: "Pedidos" },
+        { path: "/meus-pedidos", icon: ClipboardList, label: "Meus Pedidos" },
+      ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border lg:hidden">
