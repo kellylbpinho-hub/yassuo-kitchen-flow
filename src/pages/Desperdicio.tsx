@@ -17,6 +17,7 @@ import { FichaTecnica } from "@/components/FichaTecnica";
 interface WasteLog {
   id: string;
   quantidade: number;
+  sobra_prato: number;
   sobra_limpa_rampa: number;
   desperdicio_total_organico: number;
   observacao: string | null;
@@ -42,7 +43,7 @@ export default function Desperdicio() {
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
   const [form, setForm] = useState({
-    product_id: "", sobra_limpa_rampa: "", desperdicio_total_organico: "",
+    product_id: "", sobra_prato: "", sobra_limpa_rampa: "", desperdicio_total_organico: "",
     observacao: "", menu_id: "", unidade_id: "",
   });
   const [menuForm, setMenuForm] = useState({ nome: "", data: "", descricao: "", unidade_id: "" });
@@ -86,9 +87,10 @@ export default function Desperdicio() {
       toast.error("Selecione produto e unidade.");
       return;
     }
-    const sobra = Number(form.sobra_limpa_rampa) || 0;
-    const desp = Number(form.desperdicio_total_organico) || 0;
-    const total = sobra + desp;
+    const prato = Number(form.sobra_prato) || 0;
+    const rampa = Number(form.sobra_limpa_rampa) || 0;
+    const compostagem = Number(form.desperdicio_total_organico) || 0;
+    const total = prato + rampa + compostagem;
 
     if (total <= 0) {
       toast.error("Informe ao menos uma pesagem.");
@@ -100,14 +102,14 @@ export default function Desperdicio() {
       p_unidade_id: form.unidade_id,
       p_quantidade: total,
       p_tipo: "desperdicio",
-      p_motivo: `Sobra Rampa: ${sobra}kg | Orgânico: ${desp}kg`,
+      p_motivo: `Prato: ${prato}kg | Rampa: ${rampa}kg | Compostagem: ${compostagem}kg`,
       p_menu_id: form.menu_id || null,
       p_observacao: form.observacao || null,
     });
 
     if (error) { toast.error(error.message); return; }
 
-    // Update the waste_log with the two weighing fields
+    // Update the waste_log with the three weighing fields
     const { data: latestLog } = await supabase
       .from("waste_logs")
       .select("id")
@@ -119,14 +121,15 @@ export default function Desperdicio() {
 
     if (latestLog) {
       await supabase.from("waste_logs").update({
-        sobra_limpa_rampa: sobra,
-        desperdicio_total_organico: desp,
+        sobra_prato: prato,
+        sobra_limpa_rampa: rampa,
+        desperdicio_total_organico: compostagem,
       }).eq("id", latestLog.id);
     }
 
     toast.success("Desperdício registrado!");
     setAddOpen(false);
-    setForm({ product_id: "", sobra_limpa_rampa: "", desperdicio_total_organico: "", observacao: "", menu_id: "", unidade_id: form.unidade_id });
+    setForm({ product_id: "", sobra_prato: "", sobra_limpa_rampa: "", desperdicio_total_organico: "", observacao: "", menu_id: "", unidade_id: form.unidade_id });
     loadData();
   };
 
@@ -189,32 +192,44 @@ export default function Desperdicio() {
                       </Select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs">Sobra Limpa (Rampa) <span className="text-muted-foreground">kg</span></Label>
-                        <Input
-                          type="number" step="0.01" min="0" placeholder="0.00"
-                          value={form.sobra_limpa_rampa}
-                          onChange={(e) => setForm({ ...form, sobra_limpa_rampa: e.target.value })}
-                          className="bg-input border-border"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Desperdício Orgânico <span className="text-muted-foreground">kg</span></Label>
-                        <Input
-                          type="number" step="0.01" min="0" placeholder="0.00"
-                          value={form.desperdicio_total_organico}
-                          onChange={(e) => setForm({ ...form, desperdicio_total_organico: e.target.value })}
-                          className="bg-input border-border"
-                        />
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-foreground">Pesagens</h4>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs">🍽️ Prato <span className="text-muted-foreground">kg</span></Label>
+                          <Input
+                            type="number" step="0.01" min="0" placeholder="0.00"
+                            value={form.sobra_prato}
+                            onChange={(e) => setForm({ ...form, sobra_prato: e.target.value })}
+                            className="bg-input border-border"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">🔽 Rampa <span className="text-muted-foreground">kg</span></Label>
+                          <Input
+                            type="number" step="0.01" min="0" placeholder="0.00"
+                            value={form.sobra_limpa_rampa}
+                            onChange={(e) => setForm({ ...form, sobra_limpa_rampa: e.target.value })}
+                            className="bg-input border-border"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">♻️ Compost. <span className="text-muted-foreground">kg</span></Label>
+                          <Input
+                            type="number" step="0.01" min="0" placeholder="0.00"
+                            value={form.desperdicio_total_organico}
+                            onChange={(e) => setForm({ ...form, desperdicio_total_organico: e.target.value })}
+                            className="bg-input border-border"
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    {(Number(form.sobra_limpa_rampa) > 0 || Number(form.desperdicio_total_organico) > 0) && (
+                    {(Number(form.sobra_prato) > 0 || Number(form.sobra_limpa_rampa) > 0 || Number(form.desperdicio_total_organico) > 0) && (
                       <div className="bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm">
                         <span className="text-muted-foreground">Total: </span>
                         <span className="font-semibold text-foreground">
-                          {((Number(form.sobra_limpa_rampa) || 0) + (Number(form.desperdicio_total_organico) || 0)).toFixed(2)} kg
+                          {((Number(form.sobra_prato) || 0) + (Number(form.sobra_limpa_rampa) || 0) + (Number(form.desperdicio_total_organico) || 0)).toFixed(2)} kg
                         </span>
                       </div>
                     )}
@@ -286,21 +301,23 @@ export default function Desperdicio() {
                     <TableHead>Data</TableHead>
                     <TableHead>Produto</TableHead>
                     <TableHead>Cardápio</TableHead>
-                    <TableHead className="text-right">Sobra Rampa</TableHead>
-                    <TableHead className="text-right">Orgânico</TableHead>
+                    <TableHead className="text-right">🍽️ Prato</TableHead>
+                    <TableHead className="text-right">🔽 Rampa</TableHead>
+                    <TableHead className="text-right">♻️ Compost.</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                     <TableHead>Unidade</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {logs.length === 0 ? (
-                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum registro.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum registro.</TableCell></TableRow>
                   ) : (
                     logs.map((l) => (
                       <TableRow key={l.id} className="border-border">
                         <TableCell className="text-sm">{new Date(l.created_at).toLocaleDateString("pt-BR")}</TableCell>
                         <TableCell className="font-medium">{getProductName(l.product_id)}</TableCell>
                         <TableCell className="text-muted-foreground">{getMenuName(l.menu_id)}</TableCell>
+                        <TableCell className="text-right">{l.sobra_prato > 0 ? `${l.sobra_prato} kg` : "—"}</TableCell>
                         <TableCell className="text-right">{l.sobra_limpa_rampa > 0 ? `${l.sobra_limpa_rampa} kg` : "—"}</TableCell>
                         <TableCell className="text-right">{l.desperdicio_total_organico > 0 ? `${l.desperdicio_total_organico} kg` : "—"}</TableCell>
                         <TableCell className="text-right font-semibold">{l.quantidade} kg</TableCell>

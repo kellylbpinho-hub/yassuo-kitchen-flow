@@ -19,9 +19,9 @@ import {
   ClipboardCheck,
   FileText,
   UtensilsCrossed,
-  Truck,
   DollarSign,
   Shield,
+  CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
-
 
 interface NavGroup {
   label: string;
@@ -45,55 +44,71 @@ export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const showPedidoInterno = !isNutricionista && (isGerenteOperacional || isCeo);
-  const showAprovacoes = isCeo || isGerenteOperacional;
-  const showMeusPedidos = isNutricionista || isGerenteOperacional || isCeo;
-
-  // Build groups
   const groups: NavGroup[] = [];
 
-  // Suprimentos
-  const suprimentosItems: NavGroup["items"] = [
-    { to: "/estoque", icon: Package, label: "Estoque" },
-  ];
-  if (!isNutricionista) {
+  if (isNutricionista) {
+    // Nutricionista sees only: Desperdício, Cardápio Semanal, Pedido Interno, Meus Pedidos
+    groups.push({
+      label: "🍎 Nutrição",
+      icon: UtensilsCrossed,
+      items: [
+        { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
+        { to: "/cardapio-semanal", icon: CalendarDays, label: "Cardápio Semanal" },
+      ],
+    });
+    groups.push({
+      label: "📦 Suprimentos",
+      icon: Package,
+      items: [
+        { to: "/pedido-interno", icon: ClipboardList, label: "Pedido Interno" },
+        { to: "/meus-pedidos", icon: FileText, label: "Meus Pedidos" },
+      ],
+    });
+  } else {
+    // Normal sidebar for other roles
+    const showPedidoInterno = isGerenteOperacional || isCeo;
+    const showAprovacoes = isCeo || isGerenteOperacional;
+    const showMeusPedidos = isGerenteOperacional || isCeo;
+
+    // Suprimentos
+    const suprimentosItems: NavGroup["items"] = [
+      { to: "/estoque", icon: Package, label: "Estoque" },
+    ];
     suprimentosItems.push({ to: "/recebimento-digital", icon: ScanBarcode, label: "Recebimento" });
-  }
-  if (showPedidoInterno) {
-    suprimentosItems.push({ to: "/pedido-interno", icon: ClipboardList, label: "Transferência" });
-  }
-  if (showAprovacoes) {
-    suprimentosItems.push({ to: "/aprovacoes-cd", icon: ClipboardCheck, label: "Aprovações CD" });
-  }
-  if (showMeusPedidos) {
-    suprimentosItems.push({ to: "/meus-pedidos", icon: FileText, label: "Meus Pedidos" });
-  }
-  groups.push({ label: "📦 Suprimentos", icon: Package, items: suprimentosItems });
+    if (showPedidoInterno) {
+      suprimentosItems.push({ to: "/pedido-interno", icon: ClipboardList, label: "Transferência" });
+    }
+    if (showAprovacoes) {
+      suprimentosItems.push({ to: "/aprovacoes-cd", icon: ClipboardCheck, label: "Aprovações CD" });
+    }
+    if (showMeusPedidos) {
+      suprimentosItems.push({ to: "/meus-pedidos", icon: FileText, label: "Meus Pedidos" });
+    }
+    groups.push({ label: "📦 Suprimentos", icon: Package, items: suprimentosItems });
 
-  // Nutrição
-  groups.push({
-    label: "🍎 Nutrição",
-    icon: UtensilsCrossed,
-    items: [
-      { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
-      { to: "/alertas", icon: Bell, label: "Alertas" },
-    ],
-  });
+    // Nutrição
+    groups.push({
+      label: "🍎 Nutrição",
+      icon: UtensilsCrossed,
+      items: [
+        { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
+        { to: "/alertas", icon: Bell, label: "Alertas" },
+      ],
+    });
 
-  // Administração
-  const adminItems: NavGroup["items"] = [];
-  if (!isNutricionista) {
+    // Administração
+    const adminItems: NavGroup["items"] = [];
     adminItems.push({ to: "/compras", icon: ShoppingCart, label: "Compras" });
+    adminItems.push({ to: "/categorias", icon: Tag, label: "Categorias" });
+    if (canManageUsers) {
+      adminItems.push({ to: "/usuarios", icon: Users, label: "Usuários" });
+      adminItems.push({ to: "/unidades", icon: Building2, label: "Unidades" });
+    }
+    if (isCeo) {
+      adminItems.push({ to: "/configuracoes-acesso", icon: Shield, label: "Config. Acesso" });
+    }
+    groups.push({ label: "💰 Administração", icon: DollarSign, items: adminItems });
   }
-  adminItems.push({ to: "/categorias", icon: Tag, label: "Categorias" });
-  if (canManageUsers) {
-    adminItems.push({ to: "/usuarios", icon: Users, label: "Usuários" });
-    adminItems.push({ to: "/unidades", icon: Building2, label: "Unidades" });
-  }
-  if (isCeo) {
-    adminItems.push({ to: "/configuracoes-acesso", icon: Shield, label: "Config. Acesso" });
-  }
-  groups.push({ label: "💰 Administração", icon: DollarSign, items: adminItems });
 
   const handleSignOut = async () => {
     await signOut();
@@ -114,7 +129,6 @@ export function AppLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
@@ -122,14 +136,12 @@ export function AppLayout() {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-60 bg-sidebar border-r border-sidebar-border flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Logo */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-sidebar-border shrink-0">
           <div className="flex items-center gap-2.5">
             <h1 className="text-lg font-sans font-bold tracking-tight">
@@ -141,7 +153,6 @@ export function AppLayout() {
           </button>
         </div>
 
-        {/* Dashboard link */}
         <div className="px-3 pt-3 shrink-0">
           <NavLink
             to="/dashboard"
@@ -155,7 +166,6 @@ export function AppLayout() {
           </NavLink>
         </div>
 
-        {/* Nav groups - scrollable */}
         <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
           {groups.map((group) => (
             <Collapsible key={group.label} defaultOpen={isGroupActive(group)}>
@@ -182,7 +192,6 @@ export function AppLayout() {
           ))}
         </nav>
 
-        {/* User section - sticky footer */}
         <div className="shrink-0 px-4 py-3 border-t border-sidebar-border">
           <div className="flex items-center gap-3 mb-2">
             <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold text-xs">
@@ -209,9 +218,7 @@ export function AppLayout() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Top bar */}
         <header className="flex items-center justify-between px-4 py-2 border-b border-border bg-card lg:px-5 shrink-0">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -225,13 +232,11 @@ export function AppLayout() {
           <div className="hidden lg:flex-1 lg:block" />
         </header>
 
-        {/* Page content */}
         <div className="flex-1 overflow-auto p-3 pb-16 lg:p-5 lg:pb-5">
           <Outlet />
         </div>
       </main>
 
-      {/* Mobile bottom navigation */}
       <MobileBottomNav />
     </div>
   );
