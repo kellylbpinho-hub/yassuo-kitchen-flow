@@ -225,21 +225,30 @@ export default function PedidoInterno() {
       return;
     }
 
-    if (saldoCd === null) {
-      toast.error("Aguarde a consulta de saldo do CD.");
-      return;
-    }
+    if (isNutricionista) {
+      // Nutricionista can request even without stock — just warn
+      if (saldoCd !== null && saldoCd <= 0) {
+        toast.warning("Atenção: estoque indisponível no CD. O pedido será enviado como pendente de cobertura.");
+      } else if (saldoCd !== null && qty > saldoCd) {
+        toast.warning(`Atenção: quantidade excede o saldo disponível (${saldoCd} ${selectedProduct?.unidade_medida || "un"}). Pedido enviado como pendente.`);
+      }
+    } else {
+      if (saldoCd === null) {
+        toast.error("Aguarde a consulta de saldo do CD.");
+        return;
+      }
 
-    if (saldoCd <= 0) {
-      toast.error("Estoque indisponível no CD (saldo zero).");
-      return;
-    }
+      if (saldoCd <= 0) {
+        toast.error("Estoque indisponível no CD (saldo zero).");
+        return;
+      }
 
-    if (qty > saldoCd) {
-      toast.error(
-        `Quantidade solicitada excede o estoque disponível no CD (${saldoCd} ${selectedProduct?.unidade_medida || "un"}).`
-      );
-      return;
+      if (qty > saldoCd) {
+        toast.error(
+          `Quantidade solicitada excede o estoque disponível no CD (${saldoCd} ${selectedProduct?.unidade_medida || "un"}).`
+        );
+        return;
+      }
     }
 
     setSending(true);
