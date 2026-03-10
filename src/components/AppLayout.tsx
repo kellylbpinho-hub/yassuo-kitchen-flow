@@ -100,7 +100,7 @@ export function AppLayout() {
     // Administração
     const adminItems: NavGroup["items"] = [];
     adminItems.push({ to: "/compras", icon: ShoppingCart, label: "Compras" });
-    adminItems.push({ to: "/categorias", icon: Tag, label: "Categorias" });
+    adminItems.push({ to: "/categorias", icon: Shield, label: "Contratos" });
     if (canManageUsers) {
       adminItems.push({ to: "/usuarios", icon: Users, label: "Usuários" });
       adminItems.push({ to: "/unidades", icon: Building2, label: "Unidades" });

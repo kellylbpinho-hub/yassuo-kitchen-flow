@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, Send, Clock, PackageCheck, PackageX } from "lucide-react";
+import { Loader2, Search, Send, Clock, PackageCheck, PackageX, ShieldX } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -59,6 +59,7 @@ export default function PedidoInterno() {
   const [observacao, setObservacao] = useState("");
   const [saldoCd, setSaldoCd] = useState<number | null>(null);
   const [loadingSaldo, setLoadingSaldo] = useState(false);
+  const [blockedByContract, setBlockedByContract] = useState(false);
 
   // CEO/Ger.Op don't need a unit linked — they can select destination
   const isAdmin = isCeo || isGerenteOperacional;
@@ -198,9 +199,35 @@ export default function PedidoInterno() {
     return () => { cancelled = true; };
   }, [selectedProductId, selectedCdId]);
 
+  // Check contract rules when product + destination are known
+  useEffect(() => {
+    const destId = isAdmin ? selectedKitchenId : kitchenUnitId;
+    if (!selectedProductId || !destId) {
+      setBlockedByContract(false);
+      return;
+    }
+    let cancelled = false;
+    const checkContract = async () => {
+      const { data } = await supabase
+        .from("unit_product_rules")
+        .select("status")
+        .eq("unit_id", destId)
+        .eq("product_id", selectedProductId)
+        .eq("status", "bloqueado")
+        .maybeSingle();
+      if (!cancelled) setBlockedByContract(!!data);
+    };
+    checkContract();
+    return () => { cancelled = true; };
+  }, [selectedProductId, selectedKitchenId, kitchenUnitId, isAdmin]);
+
   const handleSubmit = async () => {
     if (!selectedProductId) {
       toast.error("Selecione um produto.");
+      return;
+    }
+    if (blockedByContract) {
+      toast.error("Produto não permitido para esta unidade conforme contrato.");
       return;
     }
     if (!selectedCdId) {
@@ -349,9 +376,17 @@ export default function PedidoInterno() {
             </div>
           )}
           {selectedProduct && !search.trim() && (
-            <Badge variant="secondary" className="mt-1">
-              {selectedProduct.nome} ({selectedProduct.unidade_medida})
-            </Badge>
+            <div className="mt-1 space-y-1">
+              <Badge variant="secondary">
+                {selectedProduct.nome} ({selectedProduct.unidade_medida})
+              </Badge>
+              {blockedByContract && (
+                <div className="flex items-center gap-1.5 text-destructive text-sm font-medium">
+                  <ShieldX className="h-4 w-4" />
+                  Produto não permitido para esta unidade conforme contrato.
+                </div>
+              )}
+            </div>
           )}
         </div>
 
