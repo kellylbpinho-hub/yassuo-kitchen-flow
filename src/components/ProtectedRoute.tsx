@@ -74,15 +74,17 @@ function isBlocked(role: string | null, pathname: string): boolean {
 
   switch (role) {
     case "gerente_financeiro":
-      return matchRoute(FINANCEIRO_BLOCKED_ROUTES);
+      return matchRoute(FINANCEIRO_BLOCKED_ROUTES) || matchRoute(NON_NUTRI_BLOCKED_ROUTES);
     case "nutricionista":
       return matchRoute(NUTRICIONISTA_BLOCKED_ROUTES);
     case "estoquista":
-      return matchRoute(ESTOQUISTA_BLOCKED_ROUTES);
+      return matchRoute(ESTOQUISTA_BLOCKED_ROUTES) || matchRoute(NON_NUTRI_BLOCKED_ROUTES);
     case "comprador":
-      return matchRoute(COMPRADOR_BLOCKED_ROUTES);
+      return matchRoute(COMPRADOR_BLOCKED_ROUTES) || matchRoute(NON_NUTRI_BLOCKED_ROUTES);
     case "funcionario":
       return matchRoute(FUNCIONARIO_BLOCKED_ROUTES);
+    case "gerente_operacional":
+      return matchRoute(NON_NUTRI_BLOCKED_ROUTES);
     default:
       return false;
   }

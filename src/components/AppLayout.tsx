@@ -47,14 +47,14 @@ export function AppLayout() {
   const groups: NavGroup[] = [];
 
   if (isNutricionista) {
-    // Nutricionista sees only: Desperdício, Cardápio Semanal, Pedido Interno, Meus Pedidos
     groups.push({
       label: "🍎 Nutrição",
       icon: UtensilsCrossed,
       items: [
-        { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
-        { to: "/pratos", icon: UtensilsCrossed, label: "Pratos" },
         { to: "/cardapio-semanal", icon: CalendarDays, label: "Cardápio Semanal" },
+        { to: "/painel-nutri", icon: LayoutDashboard, label: "Painel da Nutri" },
+        { to: "/pratos", icon: UtensilsCrossed, label: "Pratos" },
+        { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
       ],
     });
     groups.push({
