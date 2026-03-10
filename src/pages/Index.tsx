@@ -4,14 +4,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
 const Index = () => {
-  const { user, loading } = useAuth();
+  const { user, role, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!loading) {
-      navigate(user ? "/dashboard" : "/login", { replace: true });
+      if (!user) {
+        navigate("/login", { replace: true });
+      } else if (role) {
+        navigate(role === "nutricionista" ? "/cardapio-semanal" : "/dashboard", { replace: true });
+      }
+      // If user exists but role is still null, wait for it
     }
-  }, [user, loading, navigate]);
+  }, [user, role, loading, navigate]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
