@@ -63,19 +63,6 @@ export default function Desperdicio() {
     setLoading(false);
   };
 
-  const addMenu = async () => {
-    if (!menuForm.nome || !menuForm.data || !menuForm.unidade_id) {
-      toast.error("Preencha todos os campos.");
-      return;
-    }
-    const { error } = await supabase.from("menus").insert({
-      nome: menuForm.nome, data: menuForm.data,
-      descricao: menuForm.descricao || null, unidade_id: menuForm.unidade_id,
-      created_by: user!.id, company_id: profile!.company_id,
-    });
-    if (error) toast.error("Erro: " + error.message);
-    else { toast.success("Cardápio criado!"); setMenuOpen(false); loadData(); }
-  };
 
   const addWaste = async () => {
     if (!form.product_id || !form.unidade_id) {
