@@ -62,7 +62,6 @@ export default function Desperdicio() {
     setUnits((u || []) as Unit[]);
     const defaultUnit = profile?.unidade_id || (u && u.length > 0 ? u[0].id : "");
     setForm((f) => ({ ...f, unidade_id: defaultUnit }));
-    setMenuForm((f) => ({ ...f, unidade_id: defaultUnit }));
     setLoading(false);
   };
 
