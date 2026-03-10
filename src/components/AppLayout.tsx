@@ -154,18 +154,20 @@ export function AppLayout() {
           </button>
         </div>
 
-        <div className="px-3 pt-3 shrink-0">
-          <NavLink
-            to="/dashboard"
-            onClick={() => setSidebarOpen(false)}
-            className={({ isActive }) =>
-              isActive ? "sidebar-item-active" : "sidebar-item"
-            }
-          >
-            <LayoutDashboard className="h-4 w-4" />
-            <span className="text-sm font-medium">Dashboard</span>
-          </NavLink>
-        </div>
+        {!isNutricionista && (
+          <div className="px-3 pt-3 shrink-0">
+            <NavLink
+              to="/dashboard"
+              onClick={() => setSidebarOpen(false)}
+              className={({ isActive }) =>
+                isActive ? "sidebar-item-active" : "sidebar-item"
+              }
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              <span className="text-sm font-medium">Dashboard</span>
+            </NavLink>
+          </div>
+        )}
 
         <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
           {groups.map((group) => (
