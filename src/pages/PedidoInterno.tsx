@@ -199,6 +199,28 @@ export default function PedidoInterno() {
     return () => { cancelled = true; };
   }, [selectedProductId, selectedCdId]);
 
+  // Check contract rules when product + destination are known
+  useEffect(() => {
+    const destId = isAdmin ? selectedKitchenId : kitchenUnitId;
+    if (!selectedProductId || !destId) {
+      setBlockedByContract(false);
+      return;
+    }
+    let cancelled = false;
+    const checkContract = async () => {
+      const { data } = await supabase
+        .from("unit_product_rules")
+        .select("status")
+        .eq("unit_id", destId)
+        .eq("product_id", selectedProductId)
+        .eq("status", "bloqueado")
+        .maybeSingle();
+      if (!cancelled) setBlockedByContract(!!data);
+    };
+    checkContract();
+    return () => { cancelled = true; };
+  }, [selectedProductId, selectedKitchenId, kitchenUnitId, isAdmin]);
+
   const handleSubmit = async () => {
     if (!selectedProductId) {
       toast.error("Selecione um produto.");
