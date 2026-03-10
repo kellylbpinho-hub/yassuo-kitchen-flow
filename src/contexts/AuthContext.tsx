@@ -48,8 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(false);
 
   const fetchProfile = async (userId: string) => {
+    setRoleLoading(true);
     // Ensure profile exists (creates one if missing, using company from user_roles)
     const { data: ensuredProfile, error: ensureError } = await supabase.rpc("rpc_ensure_profile");
 
