@@ -59,6 +59,7 @@ export default function PedidoInterno() {
   const [observacao, setObservacao] = useState("");
   const [saldoCd, setSaldoCd] = useState<number | null>(null);
   const [loadingSaldo, setLoadingSaldo] = useState(false);
+  const [blockedByContract, setBlockedByContract] = useState(false);
 
   // CEO/Ger.Op don't need a unit linked — they can select destination
   const isAdmin = isCeo || isGerenteOperacional;
