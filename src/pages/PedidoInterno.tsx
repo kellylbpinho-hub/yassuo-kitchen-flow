@@ -42,7 +42,7 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
 };
 
 export default function PedidoInterno() {
-  const { profile, isCeo, isGerenteOperacional } = useAuth();
+  const { profile, isCeo, isGerenteOperacional, isNutricionista } = useAuth();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -225,21 +225,30 @@ export default function PedidoInterno() {
       return;
     }
 
-    if (saldoCd === null) {
-      toast.error("Aguarde a consulta de saldo do CD.");
-      return;
-    }
+    if (isNutricionista) {
+      // Nutricionista can request even without stock — just warn
+      if (saldoCd !== null && saldoCd <= 0) {
+        toast.warning("Atenção: estoque indisponível no CD. O pedido será enviado como pendente de cobertura.");
+      } else if (saldoCd !== null && qty > saldoCd) {
+        toast.warning(`Atenção: quantidade excede o saldo disponível (${saldoCd} ${selectedProduct?.unidade_medida || "un"}). Pedido enviado como pendente.`);
+      }
+    } else {
+      if (saldoCd === null) {
+        toast.error("Aguarde a consulta de saldo do CD.");
+        return;
+      }
 
-    if (saldoCd <= 0) {
-      toast.error("Estoque indisponível no CD (saldo zero).");
-      return;
-    }
+      if (saldoCd <= 0) {
+        toast.error("Estoque indisponível no CD (saldo zero).");
+        return;
+      }
 
-    if (qty > saldoCd) {
-      toast.error(
-        `Quantidade solicitada excede o estoque disponível no CD (${saldoCd} ${selectedProduct?.unidade_medida || "un"}).`
-      );
-      return;
+      if (qty > saldoCd) {
+        toast.error(
+          `Quantidade solicitada excede o estoque disponível no CD (${saldoCd} ${selectedProduct?.unidade_medida || "un"}).`
+        );
+        return;
+      }
     }
 
     setSending(true);
@@ -396,14 +405,17 @@ export default function PedidoInterno() {
             placeholder={selectedProduct ? `Em ${selectedProduct.unidade_medida}` : "0.00"}
           />
           {selectedProductId && selectedCdId && (
-            <div className="mt-2 text-sm opacity-80">
+            <div className="mt-2 text-sm">
               {loadingSaldo ? (
-                "Consultando saldo..."
+                <span className="text-muted-foreground">Consultando saldo...</span>
               ) : saldoCd !== null ? (
                 saldoCd > 0 ? (
-                  <>Disponível no CD: <b>{saldoCd}</b> {selectedProduct?.unidade_medida || "un"}</>
+                  <span className="text-muted-foreground">Disponível no CD: <b>{saldoCd}</b> {selectedProduct?.unidade_medida || "un"}</span>
                 ) : (
-                  "Estoque indisponível no CD (saldo zero)."
+                  <span className="text-amber-600 dark:text-amber-400 font-medium">
+                    ⚠ Estoque indisponível no CD (saldo zero).
+                    {isNutricionista && " Você pode solicitar mesmo assim — o item ficará pendente de cobertura."}
+                  </span>
                 )
               ) : null}
             </div>
