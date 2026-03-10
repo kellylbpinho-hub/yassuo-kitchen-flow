@@ -85,8 +85,10 @@ function isBlocked(role: string | null, pathname: string): boolean {
       return matchRoute(FUNCIONARIO_BLOCKED_ROUTES);
     case "gerente_operacional":
       return matchRoute(NON_NUTRI_BLOCKED_ROUTES);
+    case "ceo":
+      return matchRoute(NON_NUTRI_BLOCKED_ROUTES);
     default:
-      return false;
+      return matchRoute(NON_NUTRI_BLOCKED_ROUTES);
   }
 }
 
