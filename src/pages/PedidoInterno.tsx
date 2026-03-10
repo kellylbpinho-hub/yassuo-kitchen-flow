@@ -226,6 +226,10 @@ export default function PedidoInterno() {
       toast.error("Selecione um produto.");
       return;
     }
+    if (blockedByContract) {
+      toast.error("Produto não permitido para esta unidade conforme contrato.");
+      return;
+    }
     if (!selectedCdId) {
       toast.error("Selecione o CD de origem.");
       return;
