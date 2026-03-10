@@ -30,7 +30,7 @@ interface Menu { id: string; nome: string; data: string; unidade_id: string; }
 interface Unit { id: string; name: string; }
 
 export default function Desperdicio() {
-  const { user, profile, isFinanceiro } = useAuth();
+  const { profile, isFinanceiro } = useAuth();
   const [logs, setLogs] = useState<WasteLog[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
