@@ -265,8 +265,6 @@ export default function Desperdicio() {
               </Table>
             </div>
           </div>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }
