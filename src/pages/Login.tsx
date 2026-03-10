@@ -19,11 +19,11 @@ export default function Login() {
     setError("");
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    const { error, role } = await signIn(email, password);
     if (error) {
       setError("Email ou senha inválidos. Tente novamente.");
     } else {
-      navigate("/dashboard");
+      navigate(role === "nutricionista" ? "/cardapio-semanal" : "/dashboard");
     }
     setLoading(false);
   };
