@@ -86,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .maybeSingle();
 
     setRole((roleData?.role as AppRole) || null);
+    setRoleLoading(false);
   };
 
   useEffect(() => {
