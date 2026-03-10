@@ -50,7 +50,10 @@ const FUNCIONARIO_BLOCKED_ROUTES = [
   "/usuarios",
   "/unidades",
   "/configuracoes-acesso",
+  "/painel-nutri",
 ];
+
+const NON_NUTRI_BLOCKED_ROUTES = ["/painel-nutri"];
 
 const CEO_ONLY_ROUTES = ["/configuracoes-acesso"];
 
