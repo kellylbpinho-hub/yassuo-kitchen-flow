@@ -44,7 +44,7 @@ export default function Desperdicio() {
     product_id: "", sobra_prato: "", sobra_limpa_rampa: "", desperdicio_total_organico: "",
     observacao: "", menu_id: "", unidade_id: "",
   });
-  const [menuForm, setMenuForm] = useState({ nome: "", data: "", descricao: "", unidade_id: "" });
+  
 
   useEffect(() => { loadData(); }, []);
 
