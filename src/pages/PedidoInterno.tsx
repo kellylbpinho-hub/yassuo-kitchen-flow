@@ -405,14 +405,17 @@ export default function PedidoInterno() {
             placeholder={selectedProduct ? `Em ${selectedProduct.unidade_medida}` : "0.00"}
           />
           {selectedProductId && selectedCdId && (
-            <div className="mt-2 text-sm opacity-80">
+            <div className="mt-2 text-sm">
               {loadingSaldo ? (
-                "Consultando saldo..."
+                <span className="text-muted-foreground">Consultando saldo...</span>
               ) : saldoCd !== null ? (
                 saldoCd > 0 ? (
-                  <>Disponível no CD: <b>{saldoCd}</b> {selectedProduct?.unidade_medida || "un"}</>
+                  <span className="text-muted-foreground">Disponível no CD: <b>{saldoCd}</b> {selectedProduct?.unidade_medida || "un"}</span>
                 ) : (
-                  "Estoque indisponível no CD (saldo zero)."
+                  <span className="text-amber-600 dark:text-amber-400 font-medium">
+                    ⚠ Estoque indisponível no CD (saldo zero).
+                    {isNutricionista && " Você pode solicitar mesmo assim — o item ficará pendente de cobertura."}
+                  </span>
                 )
               ) : null}
             </div>
