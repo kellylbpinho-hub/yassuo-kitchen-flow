@@ -229,46 +229,7 @@ export default function Desperdicio() {
         </div>
       </div>
 
-      <Tabs defaultValue="cardapios" className="w-full">
-        <TabsList className="bg-muted/50">
-          <TabsTrigger value="cardapios">Cardápios & Fichas Técnicas</TabsTrigger>
-          <TabsTrigger value="registros">Registros de Desperdício</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="cardapios" className="space-y-3 mt-4">
-          {menus.length === 0 ? (
-            <div className="glass-card p-8 text-center text-muted-foreground">
-              <ClipboardList className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>Nenhum cardápio cadastrado. Clique em "+ Cardápio" para começar.</p>
-            </div>
-          ) : (
-            menus.map((m) => (
-              <div key={m.id} className="glass-card overflow-hidden">
-                <button
-                  onClick={() => setExpandedMenu(expandedMenu === m.id ? null : m.id)}
-                  className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors text-left"
-                >
-                  <div>
-                    <h3 className="font-semibold text-foreground">{m.nome}</h3>
-                    <div className="flex gap-2 mt-1">
-                      <Badge variant="secondary" className="text-xs">{new Date(m.data + "T00:00:00").toLocaleDateString("pt-BR")}</Badge>
-                      <Badge variant="outline" className="text-xs">{getUnitName(m.unidade_id)}</Badge>
-                    </div>
-                  </div>
-                  {expandedMenu === m.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-                </button>
-                {expandedMenu === m.id && (
-                  <div className="border-t border-border p-4">
-                    <FichaTecnica menuId={m.id} unidadeId={m.unidade_id} companyId={profile!.company_id} />
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </TabsContent>
-
-        <TabsContent value="registros" className="mt-4">
-          <div className="glass-card overflow-hidden">
+      <div className="glass-card overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
