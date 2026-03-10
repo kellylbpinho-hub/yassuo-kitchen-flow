@@ -89,6 +89,89 @@ export type Database = {
         }
         Relationships: []
       }
+      dish_categories: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dish_categories_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dishes: {
+        Row: {
+          ativo: boolean
+          category_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string
+          descricao: string | null
+          id: string
+          is_padrao: boolean
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          category_id?: string | null
+          company_id: string
+          created_at?: string
+          created_by: string
+          descricao?: string | null
+          id?: string
+          is_padrao?: boolean
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          category_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          descricao?: string | null
+          id?: string
+          is_padrao?: boolean
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dishes_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "dish_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dishes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fornecedores: {
         Row: {
           ativo: boolean
@@ -193,6 +276,55 @@ export type Database = {
             columns: ["unidade_id"]
             isOneToOne: false
             referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_dishes: {
+        Row: {
+          company_id: string
+          created_at: string
+          dish_id: string
+          id: string
+          menu_id: string
+          ordem: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          dish_id: string
+          id?: string
+          menu_id: string
+          ordem?: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          dish_id?: string
+          id?: string
+          menu_id?: string
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_dishes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_dishes_dish_id_fkey"
+            columns: ["dish_id"]
+            isOneToOne: false
+            referencedRelation: "dishes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_dishes_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
             referencedColumns: ["id"]
           },
         ]
