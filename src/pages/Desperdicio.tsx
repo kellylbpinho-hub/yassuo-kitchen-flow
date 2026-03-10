@@ -145,28 +145,6 @@ export default function Desperdicio() {
         <div className="flex gap-2">
           {!isFinanceiro && (
             <>
-              <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="secondary"><Plus className="h-4 w-4 mr-2" />Cardápio</Button>
-                </DialogTrigger>
-                <DialogContent className="bg-card border-border max-w-sm">
-                  <DialogHeader><DialogTitle className="font-display">Novo Cardápio</DialogTitle></DialogHeader>
-                  <div className="space-y-3">
-                    <div><Label>Nome</Label><Input value={menuForm.nome} onChange={(e) => setMenuForm({ ...menuForm, nome: e.target.value })} className="bg-input border-border" /></div>
-                    <div><Label>Data</Label><Input type="date" value={menuForm.data} onChange={(e) => setMenuForm({ ...menuForm, data: e.target.value })} className="bg-input border-border" /></div>
-                    <div>
-                      <Label>Unidade</Label>
-                      <Select value={menuForm.unidade_id} onValueChange={(v) => setMenuForm({ ...menuForm, unidade_id: v })}>
-                        <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
-                        <SelectContent>{units.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div><Label>Descrição</Label><Textarea value={menuForm.descricao} onChange={(e) => setMenuForm({ ...menuForm, descricao: e.target.value })} className="bg-input border-border" /></div>
-                    <Button onClick={addMenu} className="w-full">Criar Cardápio</Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
               <Dialog open={addOpen} onOpenChange={setAddOpen}>
                 <DialogTrigger asChild>
                   <Button><Plus className="h-4 w-4 mr-2" />Registrar Perda</Button>
