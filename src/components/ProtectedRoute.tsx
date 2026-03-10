@@ -14,6 +14,7 @@ const FINANCEIRO_BLOCKED_ROUTES = [
 ];
 
 const NUTRICIONISTA_BLOCKED_ROUTES = [
+  "/dashboard",
   "/compras",
   "/recebimento-digital",
   "/estoque",
