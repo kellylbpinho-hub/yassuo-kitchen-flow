@@ -23,7 +23,7 @@ interface AuthContextType {
   profile: Profile | null;
   role: AppRole | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null; role: AppRole | null }>;
   signOut: () => Promise<void>;
   isCeo: boolean;
   isGerenteOperacional: boolean;
