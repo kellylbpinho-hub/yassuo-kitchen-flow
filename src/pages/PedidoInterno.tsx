@@ -42,7 +42,7 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
 };
 
 export default function PedidoInterno() {
-  const { profile, isCeo, isGerenteOperacional } = useAuth();
+  const { profile, isCeo, isGerenteOperacional, isNutricionista } = useAuth();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
