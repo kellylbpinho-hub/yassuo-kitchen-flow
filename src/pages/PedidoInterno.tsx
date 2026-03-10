@@ -376,9 +376,17 @@ export default function PedidoInterno() {
             </div>
           )}
           {selectedProduct && !search.trim() && (
-            <Badge variant="secondary" className="mt-1">
-              {selectedProduct.nome} ({selectedProduct.unidade_medida})
-            </Badge>
+            <div className="mt-1 space-y-1">
+              <Badge variant="secondary">
+                {selectedProduct.nome} ({selectedProduct.unidade_medida})
+              </Badge>
+              {blockedByContract && (
+                <div className="flex items-center gap-1.5 text-destructive text-sm font-medium">
+                  <ShieldX className="h-4 w-4" />
+                  Produto não permitido para esta unidade conforme contrato.
+                </div>
+              )}
+            </div>
           )}
         </div>
 
