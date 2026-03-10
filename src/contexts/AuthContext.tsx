@@ -48,8 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(false);
 
   const fetchProfile = async (userId: string) => {
+    setRoleLoading(true);
     // Ensure profile exists (creates one if missing, using company from user_roles)
     const { data: ensuredProfile, error: ensureError } = await supabase.rpc("rpc_ensure_profile");
 
@@ -59,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("Usuário sem empresa vinculada.");
         setProfile(null);
         setRole(null);
-        // Sign out so the user sees the error on login
+        setRoleLoading(false);
         await supabase.auth.signOut();
         toast.error("Usuário sem empresa vinculada. Contate o administrador.");
         return;
@@ -86,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .maybeSingle();
 
     setRole((roleData?.role as AppRole) || null);
+    setRoleLoading(false);
   };
 
   useEffect(() => {
@@ -151,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user, session, profile, role, loading, signIn, signOut,
+        user, session, profile, role, loading: loading || roleLoading, signIn, signOut,
         isCeo, isGerenteOperacional, isGerenteFinanceiro, isNutricionista,
         isEstoquista, isComprador, canSeeCosts, canManage, canManageUsers, canApprove,
         isFinanceiro, canWrite, canAccessRecebimento,
