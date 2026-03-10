@@ -26,6 +26,7 @@ import AprovacoesCd from "./pages/AprovacoesCd";
 import MeusPedidos from "./pages/MeusPedidos";
 import ConfiguracoesAcesso from "./pages/ConfiguracoesAcesso";
 import CardapioSemanal from "./pages/CardapioSemanal";
+import Pratos from "./pages/Pratos";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
