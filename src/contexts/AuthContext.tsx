@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("Usuário sem empresa vinculada.");
         setProfile(null);
         setRole(null);
-        // Sign out so the user sees the error on login
+        setRoleLoading(false);
         await supabase.auth.signOut();
         toast.error("Usuário sem empresa vinculada. Contate o administrador.");
         return;
