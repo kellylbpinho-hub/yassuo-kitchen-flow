@@ -53,6 +53,7 @@ export function AppLayout() {
       icon: UtensilsCrossed,
       items: [
         { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
+        { to: "/pratos", icon: UtensilsCrossed, label: "Pratos" },
         { to: "/cardapio-semanal", icon: CalendarDays, label: "Cardápio Semanal" },
       ],
     });
