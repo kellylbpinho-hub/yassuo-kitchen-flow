@@ -26,6 +26,7 @@ import AprovacoesCd from "./pages/AprovacoesCd";
 import MeusPedidos from "./pages/MeusPedidos";
 import ConfiguracoesAcesso from "./pages/ConfiguracoesAcesso";
 import CardapioSemanal from "./pages/CardapioSemanal";
+import PainelNutri from "./pages/PainelNutri";
 import Pratos from "./pages/Pratos";
 import NotFound from "./pages/NotFound";
 
@@ -60,6 +61,8 @@ const App = () => (
               <Route path="/meus-pedidos" element={<MeusPedidos />} />
               <Route path="/configuracoes-acesso" element={<ConfiguracoesAcesso />} />
               <Route path="/cardapio-semanal" element={<CardapioSemanal />} />
+              <Route path="/painel-nutri" element={<PainelNutri />} />
+              <Route path="/pratos" element={<Pratos />} />
               <Route path="/pratos" element={<Pratos />} />
             </Route>
             <Route path="*" element={<NotFound />} />

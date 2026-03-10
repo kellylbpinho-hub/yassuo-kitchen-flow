@@ -47,14 +47,14 @@ export function AppLayout() {
   const groups: NavGroup[] = [];
 
   if (isNutricionista) {
-    // Nutricionista sees only: Desperdício, Cardápio Semanal, Pedido Interno, Meus Pedidos
     groups.push({
       label: "🍎 Nutrição",
       icon: UtensilsCrossed,
       items: [
-        { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
-        { to: "/pratos", icon: UtensilsCrossed, label: "Pratos" },
         { to: "/cardapio-semanal", icon: CalendarDays, label: "Cardápio Semanal" },
+        { to: "/painel-nutri", icon: LayoutDashboard, label: "Painel da Nutri" },
+        { to: "/pratos", icon: UtensilsCrossed, label: "Pratos" },
+        { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
       ],
     });
     groups.push({
@@ -154,18 +154,20 @@ export function AppLayout() {
           </button>
         </div>
 
-        <div className="px-3 pt-3 shrink-0">
-          <NavLink
-            to="/dashboard"
-            onClick={() => setSidebarOpen(false)}
-            className={({ isActive }) =>
-              isActive ? "sidebar-item-active" : "sidebar-item"
-            }
-          >
-            <LayoutDashboard className="h-4 w-4" />
-            <span className="text-sm font-medium">Dashboard</span>
-          </NavLink>
-        </div>
+        {!isNutricionista && (
+          <div className="px-3 pt-3 shrink-0">
+            <NavLink
+              to="/dashboard"
+              onClick={() => setSidebarOpen(false)}
+              className={({ isActive }) =>
+                isActive ? "sidebar-item-active" : "sidebar-item"
+              }
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              <span className="text-sm font-medium">Dashboard</span>
+            </NavLink>
+          </div>
+        )}
 
         <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
           {groups.map((group) => (
