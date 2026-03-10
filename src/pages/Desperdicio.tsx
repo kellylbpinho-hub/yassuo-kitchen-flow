@@ -39,8 +39,6 @@ export default function Desperdicio() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     product_id: "", sobra_prato: "", sobra_limpa_rampa: "", desperdicio_total_organico: "",
