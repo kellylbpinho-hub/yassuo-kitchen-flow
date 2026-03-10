@@ -9,10 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Loader2, ChevronDown, ChevronUp, ClipboardList } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { FichaTecnica } from "@/components/FichaTecnica";
 
 interface WasteLog {
   id: string;
@@ -32,21 +30,19 @@ interface Menu { id: string; nome: string; data: string; unidade_id: string; }
 interface Unit { id: string; name: string; }
 
 export default function Desperdicio() {
-  const { user, profile, isFinanceiro } = useAuth();
+  const { profile, isFinanceiro } = useAuth();
   const [logs, setLogs] = useState<WasteLog[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     product_id: "", sobra_prato: "", sobra_limpa_rampa: "", desperdicio_total_organico: "",
     observacao: "", menu_id: "", unidade_id: "",
   });
-  const [menuForm, setMenuForm] = useState({ nome: "", data: "", descricao: "", unidade_id: "" });
+  
 
   useEffect(() => { loadData(); }, []);
 
@@ -64,23 +60,9 @@ export default function Desperdicio() {
     setUnits((u || []) as Unit[]);
     const defaultUnit = profile?.unidade_id || (u && u.length > 0 ? u[0].id : "");
     setForm((f) => ({ ...f, unidade_id: defaultUnit }));
-    setMenuForm((f) => ({ ...f, unidade_id: defaultUnit }));
     setLoading(false);
   };
 
-  const addMenu = async () => {
-    if (!menuForm.nome || !menuForm.data || !menuForm.unidade_id) {
-      toast.error("Preencha todos os campos.");
-      return;
-    }
-    const { error } = await supabase.from("menus").insert({
-      nome: menuForm.nome, data: menuForm.data,
-      descricao: menuForm.descricao || null, unidade_id: menuForm.unidade_id,
-      created_by: user!.id, company_id: profile!.company_id,
-    });
-    if (error) toast.error("Erro: " + error.message);
-    else { toast.success("Cardápio criado!"); setMenuOpen(false); loadData(); }
-  };
 
   const addWaste = async () => {
     if (!form.product_id || !form.unidade_id) {
@@ -144,32 +126,10 @@ export default function Desperdicio() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-display font-bold text-foreground">Nutrição & Desperdício</h1>
+        <h1 className="text-2xl font-display font-bold text-foreground">Desperdício</h1>
         <div className="flex gap-2">
           {!isFinanceiro && (
             <>
-              <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="secondary"><Plus className="h-4 w-4 mr-2" />Cardápio</Button>
-                </DialogTrigger>
-                <DialogContent className="bg-card border-border max-w-sm">
-                  <DialogHeader><DialogTitle className="font-display">Novo Cardápio</DialogTitle></DialogHeader>
-                  <div className="space-y-3">
-                    <div><Label>Nome</Label><Input value={menuForm.nome} onChange={(e) => setMenuForm({ ...menuForm, nome: e.target.value })} className="bg-input border-border" /></div>
-                    <div><Label>Data</Label><Input type="date" value={menuForm.data} onChange={(e) => setMenuForm({ ...menuForm, data: e.target.value })} className="bg-input border-border" /></div>
-                    <div>
-                      <Label>Unidade</Label>
-                      <Select value={menuForm.unidade_id} onValueChange={(v) => setMenuForm({ ...menuForm, unidade_id: v })}>
-                        <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
-                        <SelectContent>{units.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div><Label>Descrição</Label><Textarea value={menuForm.descricao} onChange={(e) => setMenuForm({ ...menuForm, descricao: e.target.value })} className="bg-input border-border" /></div>
-                    <Button onClick={addMenu} className="w-full">Criar Cardápio</Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
               <Dialog open={addOpen} onOpenChange={setAddOpen}>
                 <DialogTrigger asChild>
                   <Button><Plus className="h-4 w-4 mr-2" />Registrar Perda</Button>
@@ -254,46 +214,7 @@ export default function Desperdicio() {
         </div>
       </div>
 
-      <Tabs defaultValue="cardapios" className="w-full">
-        <TabsList className="bg-muted/50">
-          <TabsTrigger value="cardapios">Cardápios & Fichas Técnicas</TabsTrigger>
-          <TabsTrigger value="registros">Registros de Desperdício</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="cardapios" className="space-y-3 mt-4">
-          {menus.length === 0 ? (
-            <div className="glass-card p-8 text-center text-muted-foreground">
-              <ClipboardList className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>Nenhum cardápio cadastrado. Clique em "+ Cardápio" para começar.</p>
-            </div>
-          ) : (
-            menus.map((m) => (
-              <div key={m.id} className="glass-card overflow-hidden">
-                <button
-                  onClick={() => setExpandedMenu(expandedMenu === m.id ? null : m.id)}
-                  className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors text-left"
-                >
-                  <div>
-                    <h3 className="font-semibold text-foreground">{m.nome}</h3>
-                    <div className="flex gap-2 mt-1">
-                      <Badge variant="secondary" className="text-xs">{new Date(m.data + "T00:00:00").toLocaleDateString("pt-BR")}</Badge>
-                      <Badge variant="outline" className="text-xs">{getUnitName(m.unidade_id)}</Badge>
-                    </div>
-                  </div>
-                  {expandedMenu === m.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-                </button>
-                {expandedMenu === m.id && (
-                  <div className="border-t border-border p-4">
-                    <FichaTecnica menuId={m.id} unidadeId={m.unidade_id} companyId={profile!.company_id} />
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </TabsContent>
-
-        <TabsContent value="registros" className="mt-4">
-          <div className="glass-card overflow-hidden">
+      <div className="glass-card overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -329,8 +250,6 @@ export default function Desperdicio() {
               </Table>
             </div>
           </div>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }
