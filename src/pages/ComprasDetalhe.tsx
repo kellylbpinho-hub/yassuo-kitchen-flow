@@ -508,7 +508,17 @@ export default function ComprasDetalhe() {
                   const equiv = getItemEquivalent(item);
                   return (
                     <TableRow key={item.id} className="border-border">
-                      <TableCell className="font-medium">{getProductName(item.product_id)}</TableCell>
+                      <TableCell>
+                        <div>
+                          <span className="font-medium">{getProductName(item.product_id)}</span>
+                          {getProductMarca(item.product_id) && (
+                            <span className="block text-xs text-muted-foreground">{getProductMarca(item.product_id)}</span>
+                          )}
+                          {!getProductMarca(item.product_id) && (
+                            <span className="block text-xs text-warning">⚠ sem marca</span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>{item.quantidade}</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="text-xs">
