@@ -161,11 +161,11 @@ export default function Estoque() {
 
   const filtered = products.filter((p) => {
     const matchesSearch = fuzzyMatchProduct(p, search);
-    if (filterUnit === "all") return matchesSearch;
-    // Show products that have stock in the selected unit (via view) OR are assigned to that unit
+    const matchesCategory = filterCategory === "all" || getCategoryName(p) === filterCategory;
+    if (filterUnit === "all") return matchesSearch && matchesCategory;
     const hasStock = stockByUnit.some((s) => s.product_id === p.id && s.unidade_id === filterUnit && s.saldo > 0);
     const isAssigned = p.unidade_id === filterUnit;
-    return matchesSearch && (hasStock || isAssigned);
+    return matchesSearch && matchesCategory && (hasStock || isAssigned);
   });
 
   const getUnitName = (id: string) => units.find((u) => u.id === id)?.name || "—";
