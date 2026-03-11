@@ -402,11 +402,26 @@ export default function ComprasDetalhe() {
                     <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
                       {filteredProducts.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.nome} ({p.unidade_medida})</SelectItem>
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.nome}{p.marca ? ` — ${p.marca}` : ""} ({p.unidade_medida})
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Alert: produto sem marca */}
+                {selectedProductId && !selectedProduct?.marca && (
+                  <div className="rounded-md border border-warning/50 bg-warning/10 p-3 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+                    <div className="text-xs">
+                      <p className="font-semibold text-warning">Produto sem marca cadastrada</p>
+                      <p className="text-muted-foreground mt-0.5">
+                        A marca é importante para cotação, comparação de preço e recebimento. Edite o produto no módulo de Estoque para preencher.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Purchase unit selector */}
                 {selectedProductId && (
