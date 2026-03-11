@@ -11,9 +11,12 @@ import { Loader2, Search, Send, Clock, PackageCheck, PackageX, ShieldX } from "l
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+import { fuzzyMatchProduct, formatProductLabel } from "@/lib/fuzzySearch";
+
 interface Product {
   id: string;
   nome: string;
+  marca?: string | null;
   unidade_medida: string;
   category_name?: string;
 }
