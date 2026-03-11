@@ -135,6 +135,7 @@ export default function Compras() {
               ) : (
                 orders.map((o) => (
                   <TableRow key={o.id} className="border-border cursor-pointer hover:bg-muted/30" onClick={() => navigate(`/compras/${o.id}`)}>
+                    <TableCell className="font-mono text-sm font-medium">OC-{new Date(o.created_at).getFullYear()}-{String(o.numero).padStart(4, "0")}</TableCell>
                     <TableCell className="text-sm">{new Date(o.created_at).toLocaleDateString("pt-BR")}</TableCell>
                     <TableCell><Badge variant="secondary" className="text-xs">{getUnitName(o.unidade_id)}</Badge></TableCell>
                     <TableCell>
