@@ -13,7 +13,7 @@ import { toast } from "sonner";
 const CATEGORIAS_FIXAS = ["Grãos", "Proteínas", "Laticínios", "Hortifruti", "Bebidas", "Descartáveis", "Limpeza", "Temperos", "Outros"];
 
 interface EditProductDialogProps {
-  product: { id: string; nome: string; ativo?: boolean; codigo_barras?: string | null; categoria?: string | null } | null;
+  product: { id: string; nome: string; marca?: string | null; ativo?: boolean; codigo_barras?: string | null; categoria?: string | null } | null;
   open: boolean;
   onClose: () => void;
   onSaved: () => void;
@@ -21,6 +21,7 @@ interface EditProductDialogProps {
 
 export function EditProductDialog({ product, open, onClose, onSaved }: EditProductDialogProps) {
   const [nome, setNome] = useState("");
+  const [marca, setMarca] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [categoria, setCategoria] = useState("");
   const [saving, setSaving] = useState(false);
@@ -28,6 +29,7 @@ export function EditProductDialog({ product, open, onClose, onSaved }: EditProdu
   useEffect(() => {
     if (!product) return;
     setNome(product.nome ?? "");
+    setMarca((product as any).marca ?? "");
     setAtivo(product.ativo ?? true);
     setCategoria(product.categoria ?? "");
   }, [product?.id]);
@@ -41,7 +43,7 @@ export function EditProductDialog({ product, open, onClose, onSaved }: EditProdu
     setSaving(true);
     const { error } = await supabase
       .from("products")
-      .update({ nome: nome.trim(), ativo, categoria: categoria || null })
+      .update({ nome: nome.trim(), marca: marca.trim() || null, ativo, categoria: categoria || null })
       .eq("id", product.id);
 
     setSaving(false);
@@ -77,6 +79,15 @@ export function EditProductDialog({ product, open, onClose, onSaved }: EditProdu
               onChange={(e) => setNome(e.target.value)}
               className="bg-input border-border"
               autoFocus
+            />
+          </div>
+          <div>
+            <Label>Marca</Label>
+            <Input
+              value={marca}
+              onChange={(e) => setMarca(e.target.value)}
+              className="bg-input border-border"
+              placeholder="Ex: Nestlé, Sadia..."
             />
           </div>
           <div>

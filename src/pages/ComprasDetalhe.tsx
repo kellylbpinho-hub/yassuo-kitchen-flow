@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Trash2, Send, Check, Package, Loader2, Search, FileDown } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Send, Check, Package, Loader2, Search, FileDown, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { fuzzyMatch } from "@/lib/fuzzySearch";
 import { generatePurchaseOrderPDF } from "@/lib/pdfExport";
@@ -36,6 +36,7 @@ interface PurchaseItem {
 interface Product {
   id: string;
   nome: string;
+  marca: string | null;
   unidade_medida: string;
 }
 
@@ -98,7 +99,7 @@ export default function ComprasDetalhe() {
     const [{ data: o }, { data: itms }, { data: prods }, { data: u }, { data: pu }] = await Promise.all([
       supabase.from("purchase_orders").select("*").eq("id", id!).single(),
       supabase.from("purchase_items").select("*").eq("purchase_order_id", id!),
-      supabase.from("products").select("id, nome, unidade_medida").eq("ativo", true).order("nome"),
+      supabase.from("products").select("id, nome, marca, unidade_medida").eq("ativo", true).order("nome"),
       supabase.from("units").select("id, name, type"),
       supabase.from("product_purchase_units").select("id, product_id, nome, fator_conversao"),
     ]);
@@ -227,6 +228,7 @@ export default function ComprasDetalhe() {
   };
 
   const getProductName = (pid: string) => products.find((p) => p.id === pid)?.nome || "—";
+  const getProductMarca = (pid: string) => products.find((p) => p.id === pid)?.marca || null;
   const getProductUnit = (pid: string) => products.find((p) => p.id === pid)?.unidade_medida || "";
   const getUnitName = (uid: string) => units.find((u) => u.id === uid)?.name || "—";
 
@@ -304,15 +306,19 @@ export default function ComprasDetalhe() {
                 date: new Date(order.created_at).toLocaleDateString("pt-BR"),
                 unitName: getUnitName(order.unidade_id),
                 status: statusLabels[order.status],
-                items: items.map((item) => ({
-                  produto: getProductName(item.product_id),
-                  quantidade: item.quantidade,
-                  unidadeCompra: getItemDisplayUnit(item),
-                  unidadeEstoque: getProductUnit(item.product_id),
-                  equivalenteEstoque: getItemEquivalent(item) || undefined,
-                  custoUnit: item.custo_unitario ? Number(item.custo_unitario) : null,
-                  total: item.custo_unitario ? item.quantidade * Number(item.custo_unitario) : null,
-                })),
+                items: items.map((item) => {
+                  const marca = getProductMarca(item.product_id);
+                  const nome = getProductName(item.product_id);
+                  return {
+                    produto: marca ? `${nome} — ${marca}` : nome,
+                    quantidade: item.quantidade,
+                    unidadeCompra: getItemDisplayUnit(item),
+                    unidadeEstoque: getProductUnit(item.product_id),
+                    equivalenteEstoque: getItemEquivalent(item) || undefined,
+                    custoUnit: item.custo_unitario ? Number(item.custo_unitario) : null,
+                    total: item.custo_unitario ? item.quantidade * Number(item.custo_unitario) : null,
+                  };
+                }),
               });
               toast.success("PDF gerado!");
             }}
@@ -400,11 +406,26 @@ export default function ComprasDetalhe() {
                     <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
                       {filteredProducts.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.nome} ({p.unidade_medida})</SelectItem>
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.nome}{p.marca ? ` — ${p.marca}` : ""} ({p.unidade_medida})
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Alert: produto sem marca */}
+                {selectedProductId && !selectedProduct?.marca && (
+                  <div className="rounded-md border border-warning/50 bg-warning/10 p-3 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+                    <div className="text-xs">
+                      <p className="font-semibold text-warning">Produto sem marca cadastrada</p>
+                      <p className="text-muted-foreground mt-0.5">
+                        A marca é importante para cotação, comparação de preço e recebimento. Edite o produto no módulo de Estoque para preencher.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Purchase unit selector */}
                 {selectedProductId && (
@@ -491,7 +512,17 @@ export default function ComprasDetalhe() {
                   const equiv = getItemEquivalent(item);
                   return (
                     <TableRow key={item.id} className="border-border">
-                      <TableCell className="font-medium">{getProductName(item.product_id)}</TableCell>
+                      <TableCell>
+                        <div>
+                          <span className="font-medium">{getProductName(item.product_id)}</span>
+                          {getProductMarca(item.product_id) && (
+                            <span className="block text-xs text-muted-foreground">{getProductMarca(item.product_id)}</span>
+                          )}
+                          {!getProductMarca(item.product_id) && (
+                            <span className="block text-xs text-warning">⚠ sem marca</span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>{item.quantidade}</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="text-xs">
