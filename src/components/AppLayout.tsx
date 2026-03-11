@@ -40,7 +40,7 @@ interface NavGroup {
 
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { profile, role, signOut, canManageUsers, isNutricionista, isGerenteOperacional, isCeo } = useAuth();
+  const { profile, role, signOut, canManageUsers, isNutricionista, isGerenteOperacional, isCeo, isComprador: isCompradorAuth } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -87,14 +87,17 @@ export function AppLayout() {
     }
     groups.push({ label: "📦 Suprimentos", icon: Package, items: suprimentosItems });
 
-    // Nutrição
+    // Nutrição (hide Desperdício from Comprador)
+    const isComprador = role === "comprador";
+    const nutricaoItems: NavGroup["items"] = [];
+    if (!isComprador) {
+      nutricaoItems.push({ to: "/desperdicio", icon: Trash2, label: "Desperdício" });
+    }
+    nutricaoItems.push({ to: "/alertas", icon: Bell, label: "Alertas" });
     groups.push({
       label: "🍎 Nutrição",
       icon: UtensilsCrossed,
-      items: [
-        { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
-        { to: "/alertas", icon: Bell, label: "Alertas" },
-      ],
+      items: nutricaoItems,
     });
 
     // Administração

@@ -2,11 +2,19 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 interface PurchaseOrderPDFData {
-  orderId: string;
+  orderNumber: string;
   date: string;
   unitName: string;
   status: string;
-  items: { produto: string; quantidade: number; unidade: string; custoUnit: number | null; total: number | null }[];
+  items: {
+    produto: string;
+    quantidade: number;
+    unidadeCompra: string;
+    unidadeEstoque: string;
+    equivalenteEstoque?: string;
+    custoUnit: number | null;
+    total: number | null;
+  }[];
 }
 
 export function generatePurchaseOrderPDF(data: PurchaseOrderPDFData) {
@@ -30,7 +38,7 @@ export function generatePurchaseOrderPDF(data: PurchaseOrderPDFData) {
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Nº Pedido: ${data.orderId.substring(0, 8).toUpperCase()}`, 14, 48);
+  doc.text(`Nº Pedido: ${data.orderNumber}`, 14, 48);
   doc.text(`Data: ${data.date}`, 14, 54);
   doc.text(`Unidade: ${data.unitName}`, 14, 60);
   doc.text(`Status: ${data.status}`, 14, 66);
@@ -39,7 +47,8 @@ export function generatePurchaseOrderPDF(data: PurchaseOrderPDFData) {
   const tableData = data.items.map((item) => [
     item.produto,
     item.quantidade.toString(),
-    item.unidade,
+    item.unidadeCompra,
+    item.equivalenteEstoque || `${item.quantidade} ${item.unidadeEstoque}`,
     item.custoUnit != null ? `R$ ${item.custoUnit.toFixed(2)}` : "—",
     item.total != null ? `R$ ${item.total.toFixed(2)}` : "—",
   ]);
@@ -48,9 +57,9 @@ export function generatePurchaseOrderPDF(data: PurchaseOrderPDFData) {
 
   autoTable(doc, {
     startY: 74,
-    head: [["Produto", "Qtd", "Unidade", "Preço Unit.", "Total"]],
+    head: [["Produto", "Qtd", "Und. Compra", "Equiv. Estoque", "Preço Unit.", "Total"]],
     body: tableData,
-    foot: [["", "", "", "Total Geral:", `R$ ${totalGeral.toFixed(2)}`]],
+    foot: [["", "", "", "", "Total Geral:", `R$ ${totalGeral.toFixed(2)}`]],
     styles: { fontSize: 9, cellPadding: 3 },
     headStyles: { fillColor: [30, 30, 30], textColor: 255 },
     footStyles: { fillColor: [240, 240, 240], textColor: 30, fontStyle: "bold" },
@@ -66,7 +75,7 @@ export function generatePurchaseOrderPDF(data: PurchaseOrderPDFData) {
     doc.text(`Gerado em ${new Date().toLocaleString("pt-BR")} — Yassuo Alimentação`, 14, doc.internal.pageSize.height - 10);
   }
 
-  doc.save(`ordem-compra-${data.orderId.substring(0, 8)}.pdf`);
+  doc.save(`${data.orderNumber}.pdf`);
 }
 
 interface RequisicaoInternaData {

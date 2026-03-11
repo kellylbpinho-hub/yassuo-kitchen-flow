@@ -702,28 +702,40 @@ export type Database = {
           company_id: string
           created_at: string
           custo_unitario: number | null
+          fator_conversao: number | null
           id: string
           product_id: string
           purchase_order_id: string
+          purchase_unit_id: string | null
+          purchase_unit_nome: string | null
           quantidade: number
+          quantidade_estoque: number | null
         }
         Insert: {
           company_id: string
           created_at?: string
           custo_unitario?: number | null
+          fator_conversao?: number | null
           id?: string
           product_id: string
           purchase_order_id: string
+          purchase_unit_id?: string | null
+          purchase_unit_nome?: string | null
           quantidade: number
+          quantidade_estoque?: number | null
         }
         Update: {
           company_id?: string
           created_at?: string
           custo_unitario?: number | null
+          fator_conversao?: number | null
           id?: string
           product_id?: string
           purchase_order_id?: string
+          purchase_unit_id?: string | null
+          purchase_unit_nome?: string | null
           quantidade?: number
+          quantidade_estoque?: number | null
         }
         Relationships: [
           {
@@ -747,6 +759,13 @@ export type Database = {
             referencedRelation: "purchase_orders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "purchase_items_purchase_unit_id_fkey"
+            columns: ["purchase_unit_id"]
+            isOneToOne: false
+            referencedRelation: "product_purchase_units"
+            referencedColumns: ["id"]
+          },
         ]
       }
       purchase_orders: {
@@ -756,6 +775,7 @@ export type Database = {
           created_at: string
           created_by: string
           id: string
+          numero: number
           observacao: string | null
           status: string
           unidade_id: string
@@ -767,6 +787,7 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
+          numero?: number
           observacao?: string | null
           status?: string
           unidade_id: string
@@ -778,6 +799,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           id?: string
+          numero?: number
           observacao?: string | null
           status?: string
           unidade_id?: string

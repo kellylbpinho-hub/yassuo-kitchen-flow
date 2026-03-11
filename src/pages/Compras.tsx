@@ -18,6 +18,7 @@ interface PurchaseOrder {
   unidade_id: string;
   created_at: string;
   created_by: string;
+  numero: number;
 }
 
 interface Unit { id: string; name: string; type: string; }
@@ -118,6 +119,7 @@ export default function Compras() {
           <Table>
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
+                <TableHead>Nº Pedido</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Unidade</TableHead>
                 <TableHead>Status</TableHead>
@@ -127,13 +129,14 @@ export default function Compras() {
             <TableBody>
               {orders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                     Nenhum pedido encontrado.
                   </TableCell>
                 </TableRow>
               ) : (
                 orders.map((o) => (
                   <TableRow key={o.id} className="border-border cursor-pointer hover:bg-muted/30" onClick={() => navigate(`/compras/${o.id}`)}>
+                    <TableCell className="font-mono text-sm font-medium">OC-{new Date(o.created_at).getFullYear()}-{String(o.numero).padStart(4, "0")}</TableCell>
                     <TableCell className="text-sm">{new Date(o.created_at).toLocaleDateString("pt-BR")}</TableCell>
                     <TableCell><Badge variant="secondary" className="text-xs">{getUnitName(o.unidade_id)}</Badge></TableCell>
                     <TableCell>
