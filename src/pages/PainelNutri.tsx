@@ -15,6 +15,7 @@ import { ptBR } from "date-fns/locale";
 
 export default function PainelNutri() {
   const { profile, user } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
   const [pendingOrders, setPendingOrders] = useState(0);
