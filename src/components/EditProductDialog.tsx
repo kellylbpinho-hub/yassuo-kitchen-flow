@@ -43,7 +43,7 @@ export function EditProductDialog({ product, open, onClose, onSaved }: EditProdu
     setSaving(true);
     const { error } = await supabase
       .from("products")
-      .update({ nome: nome.trim(), ativo, categoria: categoria || null })
+      .update({ nome: nome.trim(), marca: marca.trim() || null, ativo, categoria: categoria || null })
       .eq("id", product.id);
 
     setSaving(false);
