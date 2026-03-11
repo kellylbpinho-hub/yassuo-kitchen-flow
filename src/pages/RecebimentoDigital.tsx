@@ -417,10 +417,9 @@ export default function RecebimentoDigital() {
                         className="cursor-pointer"
                       >
                         <div className="flex flex-col">
-                          <span className="font-medium">{p.nome}</span>
-                          {p.marca && (
-                            <span className="text-xs text-muted-foreground">Marca: {p.marca}</span>
-                          )}
+                          <span className="font-medium">
+                            {formatProductLabel(p.nome, p.marca)}
+                          </span>
                           {p.codigo_barras && (
                             <span className="text-xs text-muted-foreground">EAN: {p.codigo_barras}</span>
                           )}
