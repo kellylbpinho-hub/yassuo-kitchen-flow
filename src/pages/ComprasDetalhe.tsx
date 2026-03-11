@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -19,6 +19,7 @@ interface PurchaseOrder {
   status: string;
   unidade_id: string;
   created_at: string;
+  numero: number;
 }
 
 interface PurchaseItem {
@@ -26,6 +27,10 @@ interface PurchaseItem {
   product_id: string;
   quantidade: number;
   custo_unitario: number | null;
+  purchase_unit_id: string | null;
+  purchase_unit_nome: string | null;
+  fator_conversao: number;
+  quantidade_estoque: number | null;
 }
 
 interface Product {
@@ -38,6 +43,13 @@ interface Unit {
   id: string;
   name: string;
   type: string;
+}
+
+interface PurchaseUnit {
+  id: string;
+  product_id: string;
+  nome: string;
+  fator_conversao: number;
 }
 
 const statusLabels: Record<string, string> = {
@@ -62,10 +74,12 @@ export default function ComprasDetalhe() {
   const [items, setItems] = useState<PurchaseItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [purchaseUnits, setPurchaseUnits] = useState<PurchaseUnit[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [selectedProductId, setSelectedProductId] = useState("");
+  const [selectedPurchaseUnitId, setSelectedPurchaseUnitId] = useState("estoque");
   const [quantidade, setQuantidade] = useState("");
   const [custoUnitario, setCustoUnitario] = useState("");
   const [receiving, setReceiving] = useState(false);
@@ -81,18 +95,39 @@ export default function ComprasDetalhe() {
 
   const loadData = async () => {
     setLoading(true);
-    const [{ data: o }, { data: itms }, { data: prods }, { data: u }] = await Promise.all([
+    const [{ data: o }, { data: itms }, { data: prods }, { data: u }, { data: pu }] = await Promise.all([
       supabase.from("purchase_orders").select("*").eq("id", id!).single(),
       supabase.from("purchase_items").select("*").eq("purchase_order_id", id!),
       supabase.from("products").select("id, nome, unidade_medida").eq("ativo", true).order("nome"),
       supabase.from("units").select("id, name, type"),
+      supabase.from("product_purchase_units").select("id, product_id, nome, fator_conversao"),
     ]);
     setOrder(o as PurchaseOrder | null);
     setItems((itms || []) as PurchaseItem[]);
     setProducts((prods || []) as Product[]);
     setUnits((u || []) as Unit[]);
+    setPurchaseUnits((pu || []) as PurchaseUnit[]);
     setLoading(false);
   };
+
+  // Purchase units for selected product
+  const productPurchaseUnits = useMemo(
+    () => purchaseUnits.filter((pu) => pu.product_id === selectedProductId),
+    [purchaseUnits, selectedProductId]
+  );
+
+  // Reset purchase unit when product changes
+  useEffect(() => {
+    setSelectedPurchaseUnitId("estoque");
+  }, [selectedProductId]);
+
+  const selectedPU = purchaseUnits.find((pu) => pu.id === selectedPurchaseUnitId);
+  const currentFator = selectedPU ? selectedPU.fator_conversao : 1;
+  const currentPUName = selectedPU ? selectedPU.nome : null;
+
+  const qtyNum = Number(quantidade) || 0;
+  const equivalenteEstoque = qtyNum * currentFator;
+  const selectedProduct = products.find((p) => p.id === selectedProductId);
 
   const addItem = async () => {
     if (!selectedProductId || !quantidade) {
@@ -104,12 +139,19 @@ export default function ComprasDetalhe() {
       toast.error("Quantidade inválida.");
       return;
     }
+
+    const isUsingPurchaseUnit = selectedPurchaseUnitId !== "estoque" && selectedPU;
+
     const { error } = await supabase.from("purchase_items").insert({
       purchase_order_id: id!,
       product_id: selectedProductId,
       quantidade: qty,
       custo_unitario: custoUnitario ? Number(custoUnitario) : null,
       company_id: profile!.company_id,
+      purchase_unit_id: isUsingPurchaseUnit ? selectedPU!.id : null,
+      purchase_unit_nome: isUsingPurchaseUnit ? selectedPU!.nome : null,
+      fator_conversao: isUsingPurchaseUnit ? selectedPU!.fator_conversao : 1,
+      quantidade_estoque: isUsingPurchaseUnit ? qty * selectedPU!.fator_conversao : qty,
     });
     if (error) {
       toast.error("Erro: " + error.message);
@@ -120,6 +162,7 @@ export default function ComprasDetalhe() {
       setQuantidade("");
       setCustoUnitario("");
       setProductSearch("");
+      setSelectedPurchaseUnitId("estoque");
       loadData();
     }
   };
@@ -158,12 +201,14 @@ export default function ComprasDetalhe() {
     let hasError = false;
 
     for (const item of items) {
+      // Use quantidade_estoque if available (converted), otherwise quantidade
+      const qtyToReceive = item.quantidade_estoque || item.quantidade;
       const { error } = await supabase.rpc("rpc_receive_digital", {
         p_product_id: item.product_id,
         p_unidade_id: order!.unidade_id,
         p_validade: validade,
         p_lote_codigo: `${loteCode.trim()}-${getProductName(item.product_id).substring(0, 10)}`,
-        p_quantidade: item.quantidade,
+        p_quantidade: qtyToReceive,
       });
       if (error) {
         toast.error(`Erro ao receber ${getProductName(item.product_id)}: ${error.message}`);
@@ -185,9 +230,27 @@ export default function ComprasDetalhe() {
   const getProductUnit = (pid: string) => products.find((p) => p.id === pid)?.unidade_medida || "";
   const getUnitName = (uid: string) => units.find((u) => u.id === uid)?.name || "—";
 
+  const formatOrderNumber = (num: number) => {
+    const year = new Date().getFullYear();
+    return `OC-${year}-${String(num).padStart(4, "0")}`;
+  };
+
   const filteredProducts = products.filter((p) =>
     fuzzyMatch(p.nome, productSearch)
   );
+
+  // Build display unit for an item
+  const getItemDisplayUnit = (item: PurchaseItem) => {
+    if (item.purchase_unit_nome) return item.purchase_unit_nome;
+    return getProductUnit(item.product_id);
+  };
+
+  const getItemEquivalent = (item: PurchaseItem) => {
+    if (item.fator_conversao && item.fator_conversao !== 1 && item.quantidade_estoque) {
+      return `≈ ${item.quantidade_estoque} ${getProductUnit(item.product_id)}`;
+    }
+    return null;
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -206,11 +269,17 @@ export default function ComprasDetalhe() {
         <Button variant="ghost" size="sm" onClick={() => navigate("/compras")}>
           <ArrowLeft className="h-4 w-4 mr-1" />Voltar
         </Button>
-        <h1 className="text-2xl font-display font-bold text-foreground">Pedido de Compra</h1>
+        <h1 className="text-2xl font-display font-bold text-foreground">
+          {formatOrderNumber(order.numero)}
+        </h1>
       </div>
 
       {/* Order info */}
       <div className="glass-card p-4 flex flex-wrap items-center gap-4">
+        <div>
+          <p className="text-xs text-muted-foreground">Nº Pedido</p>
+          <p className="text-sm font-medium font-mono">{formatOrderNumber(order.numero)}</p>
+        </div>
         <div>
           <p className="text-xs text-muted-foreground">Data</p>
           <p className="text-sm font-medium">{new Date(order.created_at).toLocaleDateString("pt-BR")}</p>
@@ -231,14 +300,16 @@ export default function ComprasDetalhe() {
             variant="outline"
             onClick={() => {
               generatePurchaseOrderPDF({
-                orderId: order.id,
+                orderNumber: formatOrderNumber(order.numero),
                 date: new Date(order.created_at).toLocaleDateString("pt-BR"),
                 unitName: getUnitName(order.unidade_id),
                 status: statusLabels[order.status],
                 items: items.map((item) => ({
                   produto: getProductName(item.product_id),
                   quantidade: item.quantidade,
-                  unidade: getProductUnit(item.product_id),
+                  unidadeCompra: getItemDisplayUnit(item),
+                  unidadeEstoque: getProductUnit(item.product_id),
+                  equivalenteEstoque: getItemEquivalent(item) || undefined,
                   custoUnit: item.custo_unitario ? Number(item.custo_unitario) : null,
                   total: item.custo_unitario ? item.quantidade * Number(item.custo_unitario) : null,
                 })),
@@ -334,16 +405,59 @@ export default function ComprasDetalhe() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Purchase unit selector */}
+                {selectedProductId && (
+                  <div>
+                    <Label>Unidade de Compra</Label>
+                    <Select value={selectedPurchaseUnitId} onValueChange={setSelectedPurchaseUnitId}>
+                      <SelectTrigger className="bg-input border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="estoque">
+                          {selectedProduct?.unidade_medida || "kg"} (unidade de estoque)
+                        </SelectItem>
+                        {productPurchaseUnits.map((pu) => (
+                          <SelectItem key={pu.id} value={pu.id}>
+                            {pu.nome} (1 {pu.nome} = {pu.fator_conversao} {selectedProduct?.unidade_medida})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Quantidade *</Label>
-                    <Input type="number" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} className="bg-input border-border" />
+                    <Label>Qtd. de Compra *</Label>
+                    <Input
+                      type="number"
+                      value={quantidade}
+                      onChange={(e) => setQuantidade(e.target.value)}
+                      className="bg-input border-border"
+                      placeholder={currentPUName ? `Em ${currentPUName}` : ""}
+                    />
                   </div>
                   <div>
-                    <Label>Custo Unit. (R$)</Label>
+                    <Label>Custo Unit. (R$) {currentPUName ? `por ${currentPUName}` : ""}</Label>
                     <Input type="number" step="0.01" value={custoUnitario} onChange={(e) => setCustoUnitario(e.target.value)} className="bg-input border-border" />
                   </div>
                 </div>
+
+                {/* Equivalente em estoque */}
+                {selectedProductId && qtyNum > 0 && currentFator !== 1 && (
+                  <div className="rounded-md border border-border bg-muted/50 p-3">
+                    <p className="text-xs text-muted-foreground">Equivalente em estoque</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {equivalenteEstoque.toFixed(2)} {selectedProduct?.unidade_medida}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {qtyNum} {currentPUName} × {currentFator} = {equivalenteEstoque.toFixed(2)} {selectedProduct?.unidade_medida}
+                    </p>
+                  </div>
+                )}
+
                 <Button onClick={addItem} className="w-full">Adicionar</Button>
               </div>
             </DialogContent>
@@ -357,7 +471,9 @@ export default function ComprasDetalhe() {
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead>Produto</TableHead>
-                <TableHead>Quantidade</TableHead>
+                <TableHead>Qtd. Compra</TableHead>
+                <TableHead>Und. Compra</TableHead>
+                <TableHead>Equiv. Estoque</TableHead>
                 <TableHead>Custo Unit.</TableHead>
                 <TableHead>Subtotal</TableHead>
                 {isDraft && !isFinanceiro && <TableHead className="w-12"></TableHead>}
@@ -366,30 +482,49 @@ export default function ComprasDetalhe() {
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     Nenhum item adicionado.
                   </TableCell>
                 </TableRow>
               ) : (
-                items.map((item) => (
-                  <TableRow key={item.id} className="border-border">
-                    <TableCell className="font-medium">{getProductName(item.product_id)}</TableCell>
-                    <TableCell>{item.quantidade} {getProductUnit(item.product_id)}</TableCell>
-                    <TableCell>{item.custo_unitario ? `R$ ${Number(item.custo_unitario).toFixed(2)}` : "—"}</TableCell>
-                    <TableCell>
-                      {item.custo_unitario
-                        ? `R$ ${(item.quantidade * Number(item.custo_unitario)).toFixed(2)}`
-                        : "—"}
-                    </TableCell>
-                    {isDraft && !isFinanceiro && (
+                items.map((item) => {
+                  const equiv = getItemEquivalent(item);
+                  return (
+                    <TableRow key={item.id} className="border-border">
+                      <TableCell className="font-medium">{getProductName(item.product_id)}</TableCell>
+                      <TableCell>{item.quantidade}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <Badge variant="secondary" className="text-xs">
+                          {getItemDisplayUnit(item)}
+                        </Badge>
                       </TableCell>
-                    )}
-                  </TableRow>
-                ))
+                      <TableCell>
+                        {equiv ? (
+                          <span className="text-xs text-muted-foreground">{equiv}</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.custo_unitario
+                          ? `R$ ${Number(item.custo_unitario).toFixed(2)}`
+                          : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {item.custo_unitario
+                          ? `R$ ${(item.quantidade * Number(item.custo_unitario)).toFixed(2)}`
+                          : "—"}
+                      </TableCell>
+                      {isDraft && !isFinanceiro && (
+                        <TableCell>
+                          <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

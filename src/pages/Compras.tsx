@@ -119,6 +119,7 @@ export default function Compras() {
           <Table>
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
+                <TableHead>Nº Pedido</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Unidade</TableHead>
                 <TableHead>Status</TableHead>

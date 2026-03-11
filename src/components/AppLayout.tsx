@@ -40,7 +40,7 @@ interface NavGroup {
 
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { profile, role, signOut, canManageUsers, isNutricionista, isGerenteOperacional, isCeo } = useAuth();
+  const { profile, role, signOut, canManageUsers, isNutricionista, isGerenteOperacional, isCeo, isComprador: isCompradorAuth } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 

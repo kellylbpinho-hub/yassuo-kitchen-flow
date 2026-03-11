@@ -40,6 +40,7 @@ const COMPRADOR_BLOCKED_ROUTES = [
   "/usuarios",
   "/unidades",
   "/configuracoes-acesso",
+  "/desperdicio",
 ];
 
 const FUNCIONARIO_BLOCKED_ROUTES = [
