@@ -403,6 +403,9 @@ export default function DesperdicioContrato() {
                       <TableCell className="text-right">{row.sobraRampa.toFixed(1)}</TableCell>
                       <TableCell className="text-right">{row.organico.toFixed(1)}</TableCell>
                       <TableCell className="text-right font-semibold">{row.totalKg.toFixed(1)}</TableCell>
+                      <TableCell className={`text-right font-semibold ${row.percentVsProduced > 10 ? "text-destructive" : row.percentVsProduced > 5 ? "text-warning" : row.percentVsProduced > 0 ? "text-success" : "text-muted-foreground"}`}>
+                        {row.percentVsProduced > 0 ? `${row.percentVsProduced.toFixed(1)}%` : "—"}
+                      </TableCell>
                       <TableCell className="text-right text-warning">
                         R$ {row.custoTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </TableCell>
