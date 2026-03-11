@@ -378,6 +378,7 @@ export default function DesperdicioContrato() {
                   <TableHead className="text-right">Sobra Rampa (kg)</TableHead>
                   <TableHead className="text-right">Orgânico (kg)</TableHead>
                   <TableHead className="text-right">Total (kg)</TableHead>
+                  <TableHead className="text-right">% vs Produzido</TableHead>
                   <TableHead className="text-right">Custo (R$)</TableHead>
                   <TableHead className="text-right">Registros</TableHead>
                 </TableRow>
