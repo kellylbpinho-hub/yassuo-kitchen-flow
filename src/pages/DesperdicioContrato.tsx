@@ -144,10 +144,11 @@ export default function DesperdicioContrato() {
 
   // Data by unit (contract)
   const dataByUnit = useMemo(() => {
-    const map = new Map<string, { unit: string; sobraPrato: number; sobraRampa: number; organico: number; totalKg: number; custoTotal: number; registros: number }>();
+    const map = new Map<string, { unitId: string; unit: string; sobraPrato: number; sobraRampa: number; organico: number; totalKg: number; custoTotal: number; registros: number; days: Set<string> }>();
 
     for (const log of logs) {
       const existing = map.get(log.unidade_id) || {
+        unitId: log.unidade_id,
         unit: getUnitName(log.unidade_id),
         sobraPrato: 0,
         sobraRampa: 0,
@@ -155,6 +156,7 @@ export default function DesperdicioContrato() {
         totalKg: 0,
         custoTotal: 0,
         registros: 0,
+        days: new Set<string>(),
       };
       existing.sobraPrato += Number(log.sobra_prato);
       existing.sobraRampa += Number(log.sobra_limpa_rampa);
@@ -162,10 +164,20 @@ export default function DesperdicioContrato() {
       existing.totalKg += Number(log.quantidade);
       existing.custoTotal += Number(log.quantidade) * getProductCost(log.product_id);
       existing.registros += 1;
+      existing.days.add(log.created_at.slice(0, 10));
       map.set(log.unidade_id, existing);
     }
 
-    return Array.from(map.values()).sort((a, b) => b.totalKg - a.totalKg);
+    return Array.from(map.values())
+      .map((row) => {
+        const u = units.find((u) => u.id === row.unitId);
+        const colab = u?.numero_colaboradores || 0;
+        const distinctDays = row.days.size || 1;
+        const estimatedMeals = colab * distinctDays;
+        const percentVsProduced = estimatedMeals > 0 ? (row.totalKg / (estimatedMeals * 0.5)) * 100 : 0;
+        return { ...row, percentVsProduced };
+      })
+      .sort((a, b) => b.totalKg - a.totalKg);
   }, [logs, products, units]);
 
   // Pie chart data for waste composition
