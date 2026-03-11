@@ -6,6 +6,7 @@ import {
   Package,
   ShoppingCart,
   Trash2,
+  BarChart3,
   Users,
   Building2,
   Tag,
