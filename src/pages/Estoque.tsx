@@ -61,6 +61,7 @@ export default function Estoque() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterUnit, setFilterUnit] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
   const [addOpen, setAddOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [movOpen, setMovOpen] = useState(false);
@@ -160,11 +161,11 @@ export default function Estoque() {
 
   const filtered = products.filter((p) => {
     const matchesSearch = fuzzyMatchProduct(p, search);
-    if (filterUnit === "all") return matchesSearch;
-    // Show products that have stock in the selected unit (via view) OR are assigned to that unit
+    const matchesCategory = filterCategory === "all" || getCategoryName(p) === filterCategory;
+    if (filterUnit === "all") return matchesSearch && matchesCategory;
     const hasStock = stockByUnit.some((s) => s.product_id === p.id && s.unidade_id === filterUnit && s.saldo > 0);
     const isAssigned = p.unidade_id === filterUnit;
-    return matchesSearch && (hasStock || isAssigned);
+    return matchesSearch && matchesCategory && (hasStock || isAssigned);
   });
 
   const getUnitName = (id: string) => units.find((u) => u.id === id)?.name || "—";
@@ -298,6 +299,21 @@ export default function Estoque() {
             </>
           )}
         </div>
+      </div>
+
+      {/* Category filter chips */}
+      <div className="flex flex-wrap gap-2">
+        {["all", ...CATEGORIAS_FIXAS].map((cat) => (
+          <Button
+            key={cat}
+            variant={filterCategory === cat ? "default" : "outline"}
+            size="sm"
+            className="text-xs h-7 px-3"
+            onClick={() => setFilterCategory(cat)}
+          >
+            {cat === "all" ? "Todos" : cat}
+          </Button>
+        ))}
       </div>
 
       {/* Movement dialog */}
