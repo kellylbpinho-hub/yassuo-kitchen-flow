@@ -1118,10 +1118,11 @@ export type Database = {
           company_id: string
           created_at: string
           desperdicio_total_organico: number
+          dish_id: string | null
           id: string
           menu_id: string | null
           observacao: string | null
-          product_id: string
+          product_id: string | null
           quantidade: number
           sobra_limpa_rampa: number
           sobra_prato: number
@@ -1132,10 +1133,11 @@ export type Database = {
           company_id: string
           created_at?: string
           desperdicio_total_organico?: number
+          dish_id?: string | null
           id?: string
           menu_id?: string | null
           observacao?: string | null
-          product_id: string
+          product_id?: string | null
           quantidade: number
           sobra_limpa_rampa?: number
           sobra_prato?: number
@@ -1146,10 +1148,11 @@ export type Database = {
           company_id?: string
           created_at?: string
           desperdicio_total_organico?: number
+          dish_id?: string | null
           id?: string
           menu_id?: string | null
           observacao?: string | null
-          product_id?: string
+          product_id?: string | null
           quantidade?: number
           sobra_limpa_rampa?: number
           sobra_prato?: number
@@ -1162,6 +1165,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waste_logs_dish_id_fkey"
+            columns: ["dish_id"]
+            isOneToOne: false
+            referencedRelation: "dishes"
             referencedColumns: ["id"]
           },
           {
