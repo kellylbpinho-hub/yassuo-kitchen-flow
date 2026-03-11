@@ -64,10 +64,10 @@ export default function PainelNutri() {
         .from("products")
         .select("id, nome, estoque_minimo, validade_minima_dias")
         .eq("ativo", true),
-      // 3. Blocked items count
+      // 3. Blocked items
       supabase
         .from("unit_product_rules")
-        .select("id", { count: "exact", head: true })
+        .select("id, product_id")
         .eq("unit_id", unitId!)
         .eq("status", "bloqueado"),
       // 4. Menus this week
