@@ -114,6 +114,21 @@ export default function DesperdicioContrato() {
     const totalQty = filteredLogs.reduce((s, l) => s + Number(l.quantidade), 0);
     const totalCost = filteredLogs.reduce((s, l) => s + Number(l.quantidade) * getProductCost(l.product_id), 0);
 
+    // Estimate total meals in the period based on numero_colaboradores
+    const relevantUnits = filterUnit === "all"
+      ? kitchenUnits
+      : kitchenUnits.filter((u) => u.id === filterUnit);
+    const totalColaboradores = relevantUnits.reduce((s, u) => s + (u.numero_colaboradores || 0), 0);
+
+    // Count distinct days with waste logs
+    const distinctDays = new Set(filteredLogs.map((l) => l.created_at.slice(0, 10))).size;
+    const estimatedMeals = totalColaboradores * Math.max(distinctDays, 1);
+
+    // kg per meal (per capita waste)
+    const kgPerMeal = estimatedMeals > 0 ? totalQty / estimatedMeals : 0;
+    // percentage: waste vs estimated production (assuming ~0.5kg per meal as production baseline)
+    const percentVsProduced = estimatedMeals > 0 ? (totalQty / (estimatedMeals * 0.5)) * 100 : 0;
+
     return {
       totalKg: totalQty,
       totalCost,
@@ -121,8 +136,11 @@ export default function DesperdicioContrato() {
       sobraRampa: totalSobraRampa,
       organico: totalOrganico,
       totalPesagens: totalSobraPrato + totalSobraRampa + totalOrganico,
+      kgPerMeal,
+      percentVsProduced,
+      estimatedMeals,
     };
-  }, [filteredLogs, products]);
+  }, [filteredLogs, products, kitchenUnits, filterUnit]);
 
   // Data by unit (contract)
   const dataByUnit = useMemo(() => {
@@ -200,8 +218,7 @@ export default function DesperdicioContrato() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
@@ -236,10 +253,24 @@ export default function DesperdicioContrato() {
         <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
-              <Percent className="h-4 w-4 text-success" />
+              <TrendingDown className="h-4 w-4 text-success" />
               <span className="text-xs text-muted-foreground">Sobra Rampa + Orgânico</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{(kpis.sobraRampa + kpis.organico).toFixed(1)} kg</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border col-span-2 lg:col-span-1">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Percent className="h-4 w-4 text-primary" />
+              <span className="text-xs text-muted-foreground">% Desp. vs Produzido</span>
+            </div>
+            <p className={`text-2xl font-bold ${kpis.percentVsProduced > 10 ? "text-destructive" : kpis.percentVsProduced > 5 ? "text-warning" : "text-success"}`}>
+              {kpis.percentVsProduced.toFixed(1)}%
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {kpis.kgPerMeal.toFixed(3)} kg/refeição · {kpis.estimatedMeals.toLocaleString("pt-BR")} ref. est.
+            </p>
           </CardContent>
         </Card>
       </div>
