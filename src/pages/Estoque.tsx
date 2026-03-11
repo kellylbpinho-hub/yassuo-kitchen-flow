@@ -301,6 +301,21 @@ export default function Estoque() {
         </div>
       </div>
 
+      {/* Category filter chips */}
+      <div className="flex flex-wrap gap-2">
+        {["all", ...CATEGORIAS_FIXAS].map((cat) => (
+          <Button
+            key={cat}
+            variant={filterCategory === cat ? "default" : "outline"}
+            size="sm"
+            className="text-xs h-7 px-3"
+            onClick={() => setFilterCategory(cat)}
+          >
+            {cat === "all" ? "Todos" : cat}
+          </Button>
+        ))}
+      </div>
+
       {/* Movement dialog */}
       <Dialog open={movOpen} onOpenChange={setMovOpen}>
         <DialogContent className="bg-card border-border max-w-sm">
