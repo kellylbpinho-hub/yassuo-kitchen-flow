@@ -36,6 +36,7 @@ interface PurchaseItem {
 interface Product {
   id: string;
   nome: string;
+  marca: string | null;
   unidade_medida: string;
 }
 
