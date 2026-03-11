@@ -306,15 +306,19 @@ export default function ComprasDetalhe() {
                 date: new Date(order.created_at).toLocaleDateString("pt-BR"),
                 unitName: getUnitName(order.unidade_id),
                 status: statusLabels[order.status],
-                items: items.map((item) => ({
-                  produto: getProductName(item.product_id),
-                  quantidade: item.quantidade,
-                  unidadeCompra: getItemDisplayUnit(item),
-                  unidadeEstoque: getProductUnit(item.product_id),
-                  equivalenteEstoque: getItemEquivalent(item) || undefined,
-                  custoUnit: item.custo_unitario ? Number(item.custo_unitario) : null,
-                  total: item.custo_unitario ? item.quantidade * Number(item.custo_unitario) : null,
-                })),
+                items: items.map((item) => {
+                  const marca = getProductMarca(item.product_id);
+                  const nome = getProductName(item.product_id);
+                  return {
+                    produto: marca ? `${nome} — ${marca}` : nome,
+                    quantidade: item.quantidade,
+                    unidadeCompra: getItemDisplayUnit(item),
+                    unidadeEstoque: getProductUnit(item.product_id),
+                    equivalenteEstoque: getItemEquivalent(item) || undefined,
+                    custoUnit: item.custo_unitario ? Number(item.custo_unitario) : null,
+                    total: item.custo_unitario ? item.quantidade * Number(item.custo_unitario) : null,
+                  };
+                }),
               });
               toast.success("PDF gerado!");
             }}
