@@ -15,6 +15,7 @@ import Estoque from "./pages/Estoque";
 import Compras from "./pages/Compras";
 import ComprasDetalhe from "./pages/ComprasDetalhe";
 import Desperdicio from "./pages/Desperdicio";
+import DesperdicioContrato from "./pages/DesperdicioContrato";
 import Usuarios from "./pages/Usuarios";
 import Unidades from "./pages/Unidades";
 import Categorias from "./pages/Categorias";
