@@ -365,6 +365,9 @@ export default function PedidoInterno() {
                     }}
                   >
                     <span className="font-medium">{p.nome}</span>
+                    {p.marca && (
+                      <span className="ml-1 text-xs text-muted-foreground">— {p.marca}</span>
+                    )}
                     {p.category_name && (
                       <span className="ml-2 text-xs text-muted-foreground">({p.category_name})</span>
                     )}
