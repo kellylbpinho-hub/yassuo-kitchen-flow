@@ -16,6 +16,7 @@ import Compras from "./pages/Compras";
 import ComprasDetalhe from "./pages/ComprasDetalhe";
 import Desperdicio from "./pages/Desperdicio";
 import DesperdicioContrato from "./pages/DesperdicioContrato";
+import DashboardFinanceiro from "./pages/DashboardFinanceiro";
 import Usuarios from "./pages/Usuarios";
 import Unidades from "./pages/Unidades";
 import Categorias from "./pages/Categorias";
