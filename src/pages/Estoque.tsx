@@ -61,6 +61,7 @@ export default function Estoque() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterUnit, setFilterUnit] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
   const [addOpen, setAddOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [movOpen, setMovOpen] = useState(false);
