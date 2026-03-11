@@ -13,7 +13,7 @@ import { Plus, RefreshCw, Search, Loader2, AlertTriangle, Eye, Pencil, MoreVerti
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { fuzzyMatch } from "@/lib/fuzzySearch";
+import { fuzzyMatchProduct } from "@/lib/fuzzySearch";
 import { ProductDetailDrawer } from "@/components/ProductDetailDrawer";
 import { EditProductDialog } from "@/components/EditProductDialog";
 import { exportEstoqueExcel } from "@/lib/excelExport";

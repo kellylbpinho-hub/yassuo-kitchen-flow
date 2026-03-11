@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ScanBarcode, Keyboard, Package, Loader2, CheckCircle2, Search, Info, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { fuzzyMatch } from "@/lib/fuzzySearch";
+import { fuzzyMatchProduct, formatProductLabel } from "@/lib/fuzzySearch";
 import { parseGS1Barcode, getSuggestedValidityDays, type GS1Data } from "@/lib/gs1Parser";
 
 interface Product {
