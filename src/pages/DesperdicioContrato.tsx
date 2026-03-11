@@ -144,10 +144,11 @@ export default function DesperdicioContrato() {
 
   // Data by unit (contract)
   const dataByUnit = useMemo(() => {
-    const map = new Map<string, { unit: string; sobraPrato: number; sobraRampa: number; organico: number; totalKg: number; custoTotal: number; registros: number }>();
+    const map = new Map<string, { unitId: string; unit: string; sobraPrato: number; sobraRampa: number; organico: number; totalKg: number; custoTotal: number; registros: number; days: Set<string> }>();
 
     for (const log of logs) {
       const existing = map.get(log.unidade_id) || {
+        unitId: log.unidade_id,
         unit: getUnitName(log.unidade_id),
         sobraPrato: 0,
         sobraRampa: 0,
@@ -155,6 +156,7 @@ export default function DesperdicioContrato() {
         totalKg: 0,
         custoTotal: 0,
         registros: 0,
+        days: new Set<string>(),
       };
       existing.sobraPrato += Number(log.sobra_prato);
       existing.sobraRampa += Number(log.sobra_limpa_rampa);
@@ -162,10 +164,20 @@ export default function DesperdicioContrato() {
       existing.totalKg += Number(log.quantidade);
       existing.custoTotal += Number(log.quantidade) * getProductCost(log.product_id);
       existing.registros += 1;
+      existing.days.add(log.created_at.slice(0, 10));
       map.set(log.unidade_id, existing);
     }
 
-    return Array.from(map.values()).sort((a, b) => b.totalKg - a.totalKg);
+    return Array.from(map.values())
+      .map((row) => {
+        const u = units.find((u) => u.id === row.unitId);
+        const colab = u?.numero_colaboradores || 0;
+        const distinctDays = row.days.size || 1;
+        const estimatedMeals = colab * distinctDays;
+        const percentVsProduced = estimatedMeals > 0 ? (row.totalKg / (estimatedMeals * 0.5)) * 100 : 0;
+        return { ...row, percentVsProduced };
+      })
+      .sort((a, b) => b.totalKg - a.totalKg);
   }, [logs, products, units]);
 
   // Pie chart data for waste composition
@@ -366,6 +378,7 @@ export default function DesperdicioContrato() {
                   <TableHead className="text-right">Sobra Rampa (kg)</TableHead>
                   <TableHead className="text-right">Orgânico (kg)</TableHead>
                   <TableHead className="text-right">Total (kg)</TableHead>
+                  <TableHead className="text-right">% vs Produzido</TableHead>
                   <TableHead className="text-right">Custo (R$)</TableHead>
                   <TableHead className="text-right">Registros</TableHead>
                 </TableRow>
@@ -373,7 +386,7 @@ export default function DesperdicioContrato() {
               <TableBody>
                 {dataByUnit.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       Nenhum dado de desperdício no período selecionado.
                     </TableCell>
                   </TableRow>
@@ -390,6 +403,9 @@ export default function DesperdicioContrato() {
                       <TableCell className="text-right">{row.sobraRampa.toFixed(1)}</TableCell>
                       <TableCell className="text-right">{row.organico.toFixed(1)}</TableCell>
                       <TableCell className="text-right font-semibold">{row.totalKg.toFixed(1)}</TableCell>
+                      <TableCell className={`text-right font-semibold ${row.percentVsProduced > 10 ? "text-destructive" : row.percentVsProduced > 5 ? "text-warning" : row.percentVsProduced > 0 ? "text-success" : "text-muted-foreground"}`}>
+                        {row.percentVsProduced > 0 ? `${row.percentVsProduced.toFixed(1)}%` : "—"}
+                      </TableCell>
                       <TableCell className="text-right text-warning">
                         R$ {row.custoTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </TableCell>
