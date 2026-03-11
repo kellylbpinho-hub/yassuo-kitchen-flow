@@ -171,7 +171,7 @@ export default function RecebimentoDigital() {
     if (/^\d{8,}$/.test(code.replace(/[^0-9]/g, ""))) {
       lookupBarcode(code);
     } else {
-      const match = allProducts.find((p) => fuzzyMatch(p.nome, code));
+      const match = allProducts.find((p) => fuzzyMatchProduct(p, code));
       if (match) {
         handleProductSelected(match);
       } else {
