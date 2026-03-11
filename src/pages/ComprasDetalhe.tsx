@@ -99,7 +99,7 @@ export default function ComprasDetalhe() {
     const [{ data: o }, { data: itms }, { data: prods }, { data: u }, { data: pu }] = await Promise.all([
       supabase.from("purchase_orders").select("*").eq("id", id!).single(),
       supabase.from("purchase_items").select("*").eq("purchase_order_id", id!),
-      supabase.from("products").select("id, nome, unidade_medida").eq("ativo", true).order("nome"),
+      supabase.from("products").select("id, nome, marca, unidade_medida").eq("ativo", true).order("nome"),
       supabase.from("units").select("id, name, type"),
       supabase.from("product_purchase_units").select("id, product_id, nome, fator_conversao"),
     ]);
