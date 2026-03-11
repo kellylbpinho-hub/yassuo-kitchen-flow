@@ -357,7 +357,7 @@ export default function Desperdicio() {
                     <TableCell className="text-right">{l.sobra_prato > 0 ? `${l.sobra_prato} kg` : "—"}</TableCell>
                     <TableCell className="text-right">{l.sobra_limpa_rampa > 0 ? `${l.sobra_limpa_rampa} kg` : "—"}</TableCell>
                     <TableCell className="text-right">{l.desperdicio_total_organico > 0 ? `${l.desperdicio_total_organico} kg` : "—"}</TableCell>
-                    <TableCell className="text-right font-semibold">{l.quantidade} kg</TableCell>
+                    <TableCell className="text-right font-semibold">{Number(l.quantidade).toFixed(1)} kg</TableCell>
                     <TableCell><Badge variant="secondary" className="text-xs">{getUnitName(l.unidade_id)}</Badge></TableCell>
                   </TableRow>
                 ))
