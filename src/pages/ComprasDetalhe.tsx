@@ -238,7 +238,7 @@ export default function ComprasDetalhe() {
   };
 
   const filteredProducts = products.filter((p) =>
-    fuzzyMatch(p.nome, productSearch)
+    fuzzyMatchProduct(p, productSearch)
   );
 
   // Build display unit for an item

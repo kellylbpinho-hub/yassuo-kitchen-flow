@@ -159,7 +159,7 @@ export default function Estoque() {
   };
 
   const filtered = products.filter((p) => {
-    const matchesSearch = fuzzyMatch(p.nome, search);
+    const matchesSearch = fuzzyMatchProduct(p, search);
     if (filterUnit === "all") return matchesSearch;
     // Show products that have stock in the selected unit (via view) OR are assigned to that unit
     const hasStock = stockByUnit.some((s) => s.product_id === p.id && s.unidade_id === filterUnit && s.saldo > 0);

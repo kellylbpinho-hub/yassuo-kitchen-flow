@@ -182,7 +182,7 @@ export default function RecebimentoDigital() {
   };
 
   const filteredProducts = searchQuery.length >= 2
-    ? allProducts.filter((p) => fuzzyMatch(p.nome, searchQuery) || (p.codigo_barras && p.codigo_barras.includes(searchQuery)))
+    ? allProducts.filter((p) => fuzzyMatchProduct(p, searchQuery) || (p.codigo_barras && p.codigo_barras.includes(searchQuery)))
     : [];
 
   // Check weight deviation against last 5 entries
