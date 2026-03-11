@@ -15,6 +15,7 @@ import Estoque from "./pages/Estoque";
 import Compras from "./pages/Compras";
 import ComprasDetalhe from "./pages/ComprasDetalhe";
 import Desperdicio from "./pages/Desperdicio";
+import DesperdicioContrato from "./pages/DesperdicioContrato";
 import Usuarios from "./pages/Usuarios";
 import Unidades from "./pages/Unidades";
 import Categorias from "./pages/Categorias";
@@ -50,6 +51,7 @@ const App = () => (
               <Route path="/compras" element={<Compras />} />
               <Route path="/compras/:id" element={<ComprasDetalhe />} />
               <Route path="/desperdicio" element={<Desperdicio />} />
+              <Route path="/desperdicio-contrato" element={<DesperdicioContrato />} />
               <Route path="/usuarios" element={<Usuarios />} />
               <Route path="/unidades" element={<Unidades />} />
               <Route path="/categorias" element={<Categorias />} />
