@@ -114,6 +114,21 @@ export default function DesperdicioContrato() {
     const totalQty = filteredLogs.reduce((s, l) => s + Number(l.quantidade), 0);
     const totalCost = filteredLogs.reduce((s, l) => s + Number(l.quantidade) * getProductCost(l.product_id), 0);
 
+    // Estimate total meals in the period based on numero_colaboradores
+    const relevantUnits = filterUnit === "all"
+      ? kitchenUnits
+      : kitchenUnits.filter((u) => u.id === filterUnit);
+    const totalColaboradores = relevantUnits.reduce((s, u) => s + (u.numero_colaboradores || 0), 0);
+
+    // Count distinct days with waste logs
+    const distinctDays = new Set(filteredLogs.map((l) => l.created_at.slice(0, 10))).size;
+    const estimatedMeals = totalColaboradores * Math.max(distinctDays, 1);
+
+    // kg per meal (per capita waste)
+    const kgPerMeal = estimatedMeals > 0 ? totalQty / estimatedMeals : 0;
+    // percentage: waste vs estimated production (assuming ~0.5kg per meal as production baseline)
+    const percentVsProduced = estimatedMeals > 0 ? (totalQty / (estimatedMeals * 0.5)) * 100 : 0;
+
     return {
       totalKg: totalQty,
       totalCost,
@@ -121,8 +136,11 @@ export default function DesperdicioContrato() {
       sobraRampa: totalSobraRampa,
       organico: totalOrganico,
       totalPesagens: totalSobraPrato + totalSobraRampa + totalOrganico,
+      kgPerMeal,
+      percentVsProduced,
+      estimatedMeals,
     };
-  }, [filteredLogs, products]);
+  }, [filteredLogs, products, kitchenUnits, filterUnit]);
 
   // Data by unit (contract)
   const dataByUnit = useMemo(() => {
