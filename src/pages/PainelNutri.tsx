@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Loader2, Clock, AlertTriangle, ShieldX, CalendarDays, Trash2, Package,
+  Loader2, Clock, AlertTriangle, ShieldX, CalendarDays, Trash2, Package, Bell,
 } from "lucide-react";
 import {
   startOfWeek, endOfWeek, format, eachDayOfInterval, isToday,
