@@ -235,6 +235,13 @@ export function AppLayout() {
           <div className="flex-1 flex justify-center lg:hidden">
             <span className="text-lg font-sans font-bold tracking-tight"><span className="text-white">Yassuo</span> <span className="text-destructive">App</span></span>
           </div>
+          <button
+            onClick={handleSignOut}
+            className="lg:hidden text-muted-foreground hover:text-foreground"
+            title="Sair"
+          >
+            <LogOut className="h-5 w-5" />
+          </button>
           <div className="hidden lg:flex-1 lg:block" />
         </header>
 
