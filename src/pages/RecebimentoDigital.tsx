@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ScanBarcode, Keyboard, Package, Loader2, CheckCircle2, Search, Info, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { fuzzyMatch } from "@/lib/fuzzySearch";
+import { fuzzyMatchProduct, formatProductLabel } from "@/lib/fuzzySearch";
 import { parseGS1Barcode, getSuggestedValidityDays, type GS1Data } from "@/lib/gs1Parser";
 
 interface Product {
@@ -171,7 +171,7 @@ export default function RecebimentoDigital() {
     if (/^\d{8,}$/.test(code.replace(/[^0-9]/g, ""))) {
       lookupBarcode(code);
     } else {
-      const match = allProducts.find((p) => fuzzyMatch(p.nome, code));
+      const match = allProducts.find((p) => fuzzyMatchProduct(p, code));
       if (match) {
         handleProductSelected(match);
       } else {
@@ -182,7 +182,7 @@ export default function RecebimentoDigital() {
   };
 
   const filteredProducts = searchQuery.length >= 2
-    ? allProducts.filter((p) => fuzzyMatch(p.nome, searchQuery) || (p.codigo_barras && p.codigo_barras.includes(searchQuery)))
+    ? allProducts.filter((p) => fuzzyMatchProduct(p, searchQuery) || (p.codigo_barras && p.codigo_barras.includes(searchQuery)))
     : [];
 
   // Check weight deviation against last 5 entries
@@ -417,10 +417,9 @@ export default function RecebimentoDigital() {
                         className="cursor-pointer"
                       >
                         <div className="flex flex-col">
-                          <span className="font-medium">{p.nome}</span>
-                          {p.marca && (
-                            <span className="text-xs text-muted-foreground">Marca: {p.marca}</span>
-                          )}
+                          <span className="font-medium">
+                            {formatProductLabel(p.nome, p.marca)}
+                          </span>
                           {p.codigo_barras && (
                             <span className="text-xs text-muted-foreground">EAN: {p.codigo_barras}</span>
                           )}

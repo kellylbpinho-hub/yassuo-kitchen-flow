@@ -11,9 +11,12 @@ import { Loader2, Search, Send, Clock, PackageCheck, PackageX, ShieldX } from "l
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+import { fuzzyMatchProduct, formatProductLabel } from "@/lib/fuzzySearch";
+
 interface Product {
   id: string;
   nome: string;
+  marca?: string | null;
   unidade_medida: string;
   category_name?: string;
 }
@@ -95,7 +98,7 @@ export default function PedidoInterno() {
     const [productsRes, unitsRes, transfersRes] = await Promise.all([
       supabase
         .from("products")
-        .select("id, nome, unidade_medida, product_categories(name)")
+        .select("id, nome, marca, unidade_medida, product_categories(name)")
         .eq("ativo", true)
         .order("nome"),
       supabase.from("units").select("id, name, type, created_at").order("created_at", { ascending: true }),
@@ -105,6 +108,7 @@ export default function PedidoInterno() {
     const prods = (productsRes.data || []).map((p: any) => ({
       id: p.id,
       nome: p.nome,
+      marca: p.marca || null,
       unidade_medida: p.unidade_medida,
       category_name: p.product_categories?.name || undefined,
     }));
@@ -145,12 +149,7 @@ export default function PedidoInterno() {
 
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return products.slice(0, 20);
-    const q = search.toLowerCase();
-    return products.filter(
-      (p) =>
-        p.nome.toLowerCase().includes(q) ||
-        (p.category_name && p.category_name.toLowerCase().includes(q))
-    );
+    return products.filter((p) => fuzzyMatchProduct(p, search));
   }, [products, search]);
 
   const selectedProduct = products.find((p) => p.id === selectedProductId);
@@ -366,6 +365,9 @@ export default function PedidoInterno() {
                     }}
                   >
                     <span className="font-medium">{p.nome}</span>
+                    {p.marca && (
+                      <span className="ml-1 text-xs text-muted-foreground">— {p.marca}</span>
+                    )}
                     {p.category_name && (
                       <span className="ml-2 text-xs text-muted-foreground">({p.category_name})</span>
                     )}

@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ArrowLeft, Plus, Trash2, Send, Check, Package, Loader2, Search, FileDown, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { fuzzyMatch } from "@/lib/fuzzySearch";
+import { fuzzyMatchProduct } from "@/lib/fuzzySearch";
 import { generatePurchaseOrderPDF } from "@/lib/pdfExport";
 
 interface PurchaseOrder {
@@ -238,7 +238,7 @@ export default function ComprasDetalhe() {
   };
 
   const filteredProducts = products.filter((p) =>
-    fuzzyMatch(p.nome, productSearch)
+    fuzzyMatchProduct(p, productSearch)
   );
 
   // Build display unit for an item
