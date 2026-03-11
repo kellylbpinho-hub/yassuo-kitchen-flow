@@ -21,6 +21,7 @@ interface EditProductDialogProps {
 
 export function EditProductDialog({ product, open, onClose, onSaved }: EditProductDialogProps) {
   const [nome, setNome] = useState("");
+  const [marca, setMarca] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [categoria, setCategoria] = useState("");
   const [saving, setSaving] = useState(false);
@@ -28,6 +29,7 @@ export function EditProductDialog({ product, open, onClose, onSaved }: EditProdu
   useEffect(() => {
     if (!product) return;
     setNome(product.nome ?? "");
+    setMarca((product as any).marca ?? "");
     setAtivo(product.ativo ?? true);
     setCategoria(product.categoria ?? "");
   }, [product?.id]);
