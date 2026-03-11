@@ -237,7 +237,8 @@ export default function PainelNutri() {
               return (
                 <div
                   key={dateStr}
-                  className={`flex items-center justify-between rounded-md px-3 py-1.5 text-sm ${
+                  onClick={() => navigate("/cardapio-semanal")}
+                  className={`flex items-center justify-between rounded-md px-3 py-1.5 text-sm cursor-pointer hover:bg-accent transition-colors ${
                     isTodayDate ? "bg-primary/10 font-medium" : "bg-muted/40"
                   }`}
                 >
