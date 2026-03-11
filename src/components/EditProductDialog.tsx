@@ -13,7 +13,7 @@ import { toast } from "sonner";
 const CATEGORIAS_FIXAS = ["Grãos", "Proteínas", "Laticínios", "Hortifruti", "Bebidas", "Descartáveis", "Limpeza", "Temperos", "Outros"];
 
 interface EditProductDialogProps {
-  product: { id: string; nome: string; ativo?: boolean; codigo_barras?: string | null; categoria?: string | null } | null;
+  product: { id: string; nome: string; marca?: string | null; ativo?: boolean; codigo_barras?: string | null; categoria?: string | null } | null;
   open: boolean;
   onClose: () => void;
   onSaved: () => void;
