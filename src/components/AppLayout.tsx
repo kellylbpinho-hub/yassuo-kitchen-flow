@@ -93,6 +93,7 @@ export function AppLayout() {
     const nutricaoItems: NavGroup["items"] = [];
     if (!isComprador) {
       nutricaoItems.push({ to: "/desperdicio", icon: Trash2, label: "Desperdício" });
+      nutricaoItems.push({ to: "/desperdicio-contrato", icon: BarChart3, label: "Desp. Contrato" });
     }
     nutricaoItems.push({ to: "/alertas", icon: Bell, label: "Alertas" });
     groups.push({
