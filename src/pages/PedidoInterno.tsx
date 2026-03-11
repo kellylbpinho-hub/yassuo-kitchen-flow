@@ -108,6 +108,7 @@ export default function PedidoInterno() {
     const prods = (productsRes.data || []).map((p: any) => ({
       id: p.id,
       nome: p.nome,
+      marca: p.marca || null,
       unidade_medida: p.unidade_medida,
       category_name: p.product_categories?.name || undefined,
     }));
