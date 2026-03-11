@@ -149,12 +149,7 @@ export default function PedidoInterno() {
 
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return products.slice(0, 20);
-    const q = search.toLowerCase();
-    return products.filter(
-      (p) =>
-        p.nome.toLowerCase().includes(q) ||
-        (p.category_name && p.category_name.toLowerCase().includes(q))
-    );
+    return products.filter((p) => fuzzyMatchProduct(p, search));
   }, [products, search]);
 
   const selectedProduct = products.find((p) => p.id === selectedProductId);
