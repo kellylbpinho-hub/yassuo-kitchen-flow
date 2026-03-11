@@ -25,6 +25,7 @@ export default function PainelNutri() {
   const [wasteToday, setWasteToday] = useState(0);
   const [wasteCount, setWasteCount] = useState(0);
   const [expiryAlerts, setExpiryAlerts] = useState<{ nome: string; dias: number; qtd: number }[]>([]);
+  const [blockedProducts, setBlockedProducts] = useState<string[]>([]);
 
   const unitId = profile?.unidade_id;
 
