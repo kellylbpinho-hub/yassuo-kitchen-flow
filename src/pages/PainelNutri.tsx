@@ -112,7 +112,12 @@ export default function PainelNutri() {
     setLowStockItems(low.slice(0, 8));
 
     // 3 - blocked
-    setBlockedItems(blockedRes.count ?? 0);
+    const blockedData = (blockedRes.data || []) as { id: string; product_id: string }[];
+    setBlockedItems(blockedData.length);
+    const blockedNames = blockedData
+      .map((b) => prodMap.get(b.product_id)?.nome)
+      .filter(Boolean) as string[];
+    setBlockedProducts(blockedNames.slice(0, 5));
 
     // 4 - week menu
     const menus = (menusRes.data || []) as { id: string; data: string; nome: string }[];
