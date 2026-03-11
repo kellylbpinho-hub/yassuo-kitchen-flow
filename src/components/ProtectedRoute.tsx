@@ -15,6 +15,7 @@ const FINANCEIRO_BLOCKED_ROUTES = [
 
 const NUTRICIONISTA_BLOCKED_ROUTES = [
   "/dashboard",
+  "/dashboard-financeiro",
   "/compras",
   "/recebimento-digital",
   "/estoque",
@@ -27,6 +28,7 @@ const NUTRICIONISTA_BLOCKED_ROUTES = [
 
 const ESTOQUISTA_BLOCKED_ROUTES = [
   "/compras",
+  "/dashboard-financeiro",
   "/usuarios",
   "/unidades",
   "/aprovacoes-cd",
@@ -35,6 +37,7 @@ const ESTOQUISTA_BLOCKED_ROUTES = [
 
 const COMPRADOR_BLOCKED_ROUTES = [
   "/recebimento-digital",
+  "/dashboard-financeiro",
   "/pedido-interno",
   "/aprovacoes-cd",
   "/usuarios",
@@ -45,6 +48,7 @@ const COMPRADOR_BLOCKED_ROUTES = [
 
 const FUNCIONARIO_BLOCKED_ROUTES = [
   "/compras",
+  "/dashboard-financeiro",
   "/recebimento-digital",
   "/pedido-interno",
   "/aprovacoes-cd",
