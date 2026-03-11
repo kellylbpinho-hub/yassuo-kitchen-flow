@@ -228,6 +228,7 @@ export default function ComprasDetalhe() {
   };
 
   const getProductName = (pid: string) => products.find((p) => p.id === pid)?.nome || "—";
+  const getProductMarca = (pid: string) => products.find((p) => p.id === pid)?.marca || null;
   const getProductUnit = (pid: string) => products.find((p) => p.id === pid)?.unidade_medida || "";
   const getUnitName = (uid: string) => units.find((u) => u.id === uid)?.name || "—";
 
