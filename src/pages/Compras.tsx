@@ -18,6 +18,7 @@ interface PurchaseOrder {
   unidade_id: string;
   created_at: string;
   created_by: string;
+  numero: number;
 }
 
 interface Unit { id: string; name: string; type: string; }
