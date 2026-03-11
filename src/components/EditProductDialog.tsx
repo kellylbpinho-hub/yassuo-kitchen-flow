@@ -82,6 +82,15 @@ export function EditProductDialog({ product, open, onClose, onSaved }: EditProdu
             />
           </div>
           <div>
+            <Label>Marca</Label>
+            <Input
+              value={marca}
+              onChange={(e) => setMarca(e.target.value)}
+              className="bg-input border-border"
+              placeholder="Ex: Nestlé, Sadia..."
+            />
+          </div>
+          <div>
             <Label>Categoria</Label>
             <Select value={categoria} onValueChange={setCategoria}>
               <SelectTrigger className="bg-input border-border">
