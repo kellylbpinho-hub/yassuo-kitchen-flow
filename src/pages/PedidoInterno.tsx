@@ -98,7 +98,7 @@ export default function PedidoInterno() {
     const [productsRes, unitsRes, transfersRes] = await Promise.all([
       supabase
         .from("products")
-        .select("id, nome, unidade_medida, product_categories(name)")
+        .select("id, nome, marca, unidade_medida, product_categories(name)")
         .eq("ativo", true)
         .order("nome"),
       supabase.from("units").select("id, name, type, created_at").order("created_at", { ascending: true }),
