@@ -177,6 +177,19 @@ export default function PainelNutri() {
     start: startOfWeek(today, { weekStartsOn: 1 }),
     end: endOfWeek(today, { weekStartsOn: 1 }),
   });
+  // Build operational alerts
+  const operationalAlerts: { message: string; type: "danger" | "warning" }[] = [];
+  if (pendingOrders > 0) operationalAlerts.push({ message: `${pendingOrders} pedido(s) pendente(s) no CD`, type: "warning" });
+  for (const item of lowStockItems.slice(0, 3)) {
+    operationalAlerts.push({ message: `${item.nome} com estoque baixo (${item.saldo}/${item.minimo})`, type: "danger" });
+  }
+  for (const name of blockedProducts.slice(0, 3)) {
+    operationalAlerts.push({ message: `${name} bloqueado por contrato`, type: "warning" });
+  }
+  for (const a of expiryAlerts.slice(0, 3)) {
+    operationalAlerts.push({ message: `${a.nome} ${a.dias <= 0 ? "vencido" : `vence em ${a.dias}d`}`, type: a.dias <= 0 ? "danger" : "warning" });
+  }
+
   const menuDateSet = new Set(weekMenu.map((m) => m.date));
 
   return (
