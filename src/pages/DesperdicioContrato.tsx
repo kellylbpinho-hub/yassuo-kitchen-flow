@@ -218,8 +218,7 @@ export default function DesperdicioContrato() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
@@ -254,10 +253,24 @@ export default function DesperdicioContrato() {
         <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
-              <Percent className="h-4 w-4 text-success" />
+              <TrendingDown className="h-4 w-4 text-success" />
               <span className="text-xs text-muted-foreground">Sobra Rampa + Orgânico</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{(kpis.sobraRampa + kpis.organico).toFixed(1)} kg</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border col-span-2 lg:col-span-1">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Percent className="h-4 w-4 text-primary" />
+              <span className="text-xs text-muted-foreground">% Desp. vs Produzido</span>
+            </div>
+            <p className={`text-2xl font-bold ${kpis.percentVsProduced > 10 ? "text-destructive" : kpis.percentVsProduced > 5 ? "text-warning" : "text-success"}`}>
+              {kpis.percentVsProduced.toFixed(1)}%
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {kpis.kgPerMeal.toFixed(3)} kg/refeição · {kpis.estimatedMeals.toLocaleString("pt-BR")} ref. est.
+            </p>
           </CardContent>
         </Card>
       </div>
