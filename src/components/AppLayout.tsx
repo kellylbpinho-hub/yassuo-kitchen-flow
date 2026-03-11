@@ -104,6 +104,7 @@ export function AppLayout() {
 
     // Administração
     const adminItems: NavGroup["items"] = [];
+    adminItems.push({ to: "/dashboard-financeiro", icon: DollarSign, label: "Dash Financeiro" });
     adminItems.push({ to: "/compras", icon: ShoppingCart, label: "Compras" });
     adminItems.push({ to: "/categorias", icon: Shield, label: "Contratos" });
     if (canManageUsers) {
