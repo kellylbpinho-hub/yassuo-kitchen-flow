@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Loader2, Clock, AlertTriangle, ShieldX, CalendarDays, Trash2, Package,
+  Loader2, Clock, AlertTriangle, ShieldX, CalendarDays, Trash2, Package, Bell,
 } from "lucide-react";
 import {
   startOfWeek, endOfWeek, format, eachDayOfInterval, isToday,
@@ -14,6 +15,7 @@ import { ptBR } from "date-fns/locale";
 
 export default function PainelNutri() {
   const { profile, user } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
   const [pendingOrders, setPendingOrders] = useState(0);
@@ -23,6 +25,7 @@ export default function PainelNutri() {
   const [wasteToday, setWasteToday] = useState(0);
   const [wasteCount, setWasteCount] = useState(0);
   const [expiryAlerts, setExpiryAlerts] = useState<{ nome: string; dias: number; qtd: number }[]>([]);
+  const [blockedProducts, setBlockedProducts] = useState<string[]>([]);
 
   const unitId = profile?.unidade_id;
 
@@ -61,10 +64,10 @@ export default function PainelNutri() {
         .from("products")
         .select("id, nome, estoque_minimo, validade_minima_dias")
         .eq("ativo", true),
-      // 3. Blocked items count
+      // 3. Blocked items
       supabase
         .from("unit_product_rules")
-        .select("id", { count: "exact", head: true })
+        .select("id, product_id")
         .eq("unit_id", unitId!)
         .eq("status", "bloqueado"),
       // 4. Menus this week
@@ -109,7 +112,12 @@ export default function PainelNutri() {
     setLowStockItems(low.slice(0, 8));
 
     // 3 - blocked
-    setBlockedItems(blockedRes.count ?? 0);
+    const blockedData = (blockedRes.data || []) as { id: string; product_id: string }[];
+    setBlockedItems(blockedData.length);
+    const blockedNames = blockedData
+      .map((b) => prodMap.get(b.product_id)?.nome)
+      .filter(Boolean) as string[];
+    setBlockedProducts(blockedNames.slice(0, 5));
 
     // 4 - week menu
     const menus = (menusRes.data || []) as { id: string; data: string; nome: string }[];
@@ -169,6 +177,19 @@ export default function PainelNutri() {
     start: startOfWeek(today, { weekStartsOn: 1 }),
     end: endOfWeek(today, { weekStartsOn: 1 }),
   });
+  // Build operational alerts
+  const operationalAlerts: { message: string; type: "danger" | "warning" }[] = [];
+  if (pendingOrders > 0) operationalAlerts.push({ message: `${pendingOrders} pedido(s) pendente(s) no CD`, type: "warning" });
+  for (const item of lowStockItems.slice(0, 3)) {
+    operationalAlerts.push({ message: `${item.nome} com estoque baixo (${item.saldo}/${item.minimo})`, type: "danger" });
+  }
+  for (const name of blockedProducts.slice(0, 3)) {
+    operationalAlerts.push({ message: `${name} bloqueado por contrato`, type: "warning" });
+  }
+  for (const a of expiryAlerts.slice(0, 3)) {
+    operationalAlerts.push({ message: `${a.nome} ${a.dias <= 0 ? "vencido" : `vence em ${a.dias}d`}`, type: a.dias <= 0 ? "danger" : "warning" });
+  }
+
   const menuDateSet = new Set(weekMenu.map((m) => m.date));
 
   return (
@@ -229,7 +250,8 @@ export default function PainelNutri() {
               return (
                 <div
                   key={dateStr}
-                  className={`flex items-center justify-between rounded-md px-3 py-1.5 text-sm ${
+                  onClick={() => navigate("/cardapio-semanal")}
+                  className={`flex items-center justify-between rounded-md px-3 py-1.5 text-sm cursor-pointer hover:bg-accent transition-colors ${
                     isTodayDate ? "bg-primary/10 font-medium" : "bg-muted/40"
                   }`}
                 >
@@ -305,6 +327,29 @@ export default function PainelNutri() {
           </Card>
         </div>
       </div>
+
+      {/* Alertas Operacionais */}
+      {operationalAlerts.length > 0 && (
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Bell className="h-4 w-4 text-primary" /> Alertas Operacionais
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1.5">
+              {operationalAlerts.map((alert, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm">
+                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                    alert.type === "danger" ? "bg-destructive" : "bg-amber-500"
+                  }`} />
+                  <span className="text-foreground">{alert.message}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
