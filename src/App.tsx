@@ -70,6 +70,7 @@ const App = () => (
               <Route path="/painel-nutri" element={<PainelNutri />} />
               <Route path="/pratos" element={<Pratos />} />
               <Route path="/pratos" element={<Pratos />} />
+              <Route path="/relatorio-executivo" element={<RelatorioExecutivo />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
