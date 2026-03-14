@@ -302,7 +302,7 @@ export default function Estoque() {
       </div>
 
       {/* Category filter chips */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2" data-guide="category-chips">
         {["all", ...CATEGORIAS_FIXAS].map((cat) => (
           <Button
             key={cat}
