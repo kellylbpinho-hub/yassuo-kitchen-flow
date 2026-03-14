@@ -650,6 +650,8 @@ export type Database = {
           email: string
           full_name: string
           guided_mode: boolean
+          guided_step: number | null
+          guided_task_id: string | null
           id: string
           unidade_id: string | null
           updated_at: string
@@ -664,6 +666,8 @@ export type Database = {
           email: string
           full_name: string
           guided_mode?: boolean
+          guided_step?: number | null
+          guided_task_id?: string | null
           id?: string
           unidade_id?: string | null
           updated_at?: string
@@ -678,6 +682,8 @@ export type Database = {
           email?: string
           full_name?: string
           guided_mode?: boolean
+          guided_step?: number | null
+          guided_task_id?: string | null
           id?: string
           unidade_id?: string | null
           updated_at?: string
