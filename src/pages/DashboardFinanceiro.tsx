@@ -70,7 +70,9 @@ export default function DashboardFinanceiro() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<PeriodMonths>(6);
   const [filterUnit, setFilterUnit] = useState("all");
+  const [mealCostData, setMealCostData] = useState<MealCostSectionData | null>(null);
 
+  const handleMealCostData = useCallback((d: MealCostSectionData) => setMealCostData(d), []);
   const dateRange = useMemo(() => {
     const end = new Date();
     const start = startOfMonth(subMonths(end, period));
