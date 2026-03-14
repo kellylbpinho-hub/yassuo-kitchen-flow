@@ -59,7 +59,7 @@ export default function RealMealCostSection({ period, filterUnit }: Props) {
     const totalFood = data.reduce((s, r) => s + Number(r.total_food_cost), 0);
     const totalWaste = data.reduce((s, r) => s + Number(r.waste_cost), 0);
     const totalMeals = data.reduce((s, r) => s + Number(r.meals_served), 0);
-    const avgCost = totalMeals > 0 ? (totalFood - totalWaste) / totalMeals : 0;
+    const avgCost = totalMeals > 0 ? Math.max(0, (totalFood - totalWaste) / totalMeals) : 0;
 
     // Trend: compare last 30 days vs previous 30 days
     const now = new Date();
@@ -95,7 +95,7 @@ export default function RealMealCostSection({ period, filterUnit }: Props) {
       const food = monthRows.reduce((s, r) => s + Number(r.total_food_cost), 0);
       const waste = monthRows.reduce((s, r) => s + Number(r.waste_cost), 0);
       const meals = monthRows.reduce((s, r) => s + Number(r.meals_served), 0);
-      const realCost = meals > 0 ? (food - waste) / meals : 0;
+      const realCost = meals > 0 ? Math.max(0, (food - waste) / meals) : 0;
 
       months.push({ label, realCost, foodCost: meals > 0 ? food / meals : 0, wasteCost: meals > 0 ? waste / meals : 0 });
     }
@@ -120,7 +120,7 @@ export default function RealMealCostSection({ period, filterUnit }: Props) {
         waste: v.waste,
         meals: v.meals,
         days: v.days.size,
-        realCost: v.meals > 0 ? (v.food - v.waste) / v.meals : 0,
+        realCost: v.meals > 0 ? Math.max(0, (v.food - v.waste) / v.meals) : 0,
         grossCost: v.meals > 0 ? v.food / v.meals : 0,
       }))
       .sort((a, b) => b.realCost - a.realCost);
@@ -142,7 +142,7 @@ export default function RealMealCostSection({ period, filterUnit }: Props) {
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Custo Real/Refeição</span>
             </div>
             <p className="text-2xl font-bold font-display text-foreground">
-              {kpi.avgCost > 0 ? formatCurrency(kpi.avgCost) : "—"}
+              {kpi.totalFood > 0 && kpi.avgCost > 0 ? formatCurrency(kpi.avgCost) : "—"}
             </p>
             {kpi.trend !== 0 && (
               <p className={`text-[11px] mt-0.5 flex items-center gap-1 ${kpi.trend > 0 ? "text-destructive" : "text-success"}`}>
