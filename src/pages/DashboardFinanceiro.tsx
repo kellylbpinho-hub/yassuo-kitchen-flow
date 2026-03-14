@@ -335,7 +335,7 @@ export default function DashboardFinanceiro() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-guide="kpi-cards">
         {/* Custo por refeição */}
         <Card className="relative overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl" />
