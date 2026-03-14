@@ -269,6 +269,8 @@ export function AppLayout() {
       </main>
 
       <MobileBottomNav />
+      <GuidedModePanel />
+      <GuidedModeOverlay />
     </div>
   );
 }
