@@ -32,6 +32,9 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { GuidedModeToggle } from "@/components/GuidedModeToggle";
+import { GuidedModePanel } from "@/components/GuidedModePanel";
+import { GuidedModeOverlay } from "@/components/GuidedModeOverlay";
 
 interface NavGroup {
   label: string;
