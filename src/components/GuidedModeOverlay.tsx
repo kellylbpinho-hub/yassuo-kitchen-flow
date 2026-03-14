@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 export function GuidedModeOverlay() {
-  const { activeTask, currentStep, currentStepIndex, totalSteps, nextStep, prevStep, exitTask, enabled } =
+  const { activeTask, currentStep, currentStepIndex, totalSteps, nextStep, prevStep, exitTask, skipTutorial, enabled } =
     useGuidedMode();
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
@@ -217,6 +217,14 @@ export function GuidedModeOverlay() {
           >
             <ChevronLeft className="h-3 w-3" />
             Anterior
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={skipTutorial}
+            className="h-7 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Pular tutorial
           </Button>
           <Button size="sm" onClick={nextStep} className="h-7 text-xs gap-1">
             {currentStepIndex === totalSteps - 1 ? "Concluir" : "Próximo"}
