@@ -261,7 +261,7 @@ export default function Desperdicio() {
                 {/* Step 3: Weights */}
                 {selectedDishId && (
                   <>
-                    <div className="space-y-3">
+                    <div className="space-y-3" data-guide="input-weights">
                       <h4 className="text-sm font-semibold text-foreground">Pesagens (kg)</h4>
                       <div className="grid grid-cols-3 gap-2">
                         <div className="space-y-1">
