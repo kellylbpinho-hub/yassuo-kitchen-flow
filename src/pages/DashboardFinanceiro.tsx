@@ -9,6 +9,7 @@ import { Loader2, DollarSign, TrendingUp, Percent, UtensilsCrossed, Building2 } 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import RealMealCostSection from "@/components/RealMealCostSection";
 
 interface Unit {
   id: string;
