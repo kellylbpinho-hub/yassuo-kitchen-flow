@@ -352,7 +352,10 @@ export default function DashboardFinanceiro() {
   };
 
   if (loading) {
-    <div className="space-y-6 animate-fade-in">
+    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
+
+  return (
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
