@@ -91,7 +91,7 @@ export default function Compras() {
         {!isFinanceiro && (
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" />Novo Pedido</Button>
+              <Button data-guide="btn-nova-compra"><Plus className="h-4 w-4 mr-2" />Novo Pedido</Button>
             </DialogTrigger>
             <DialogContent className="bg-card border-border max-w-sm">
               <DialogHeader>
@@ -101,13 +101,13 @@ export default function Compras() {
                 <div>
                   <Label>Unidade</Label>
                   <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-                    <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="bg-input border-border" data-guide="select-unit-compra"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {units.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
-                <Button onClick={createOrder} className="w-full">Criar Pedido</Button>
+                <Button onClick={createOrder} className="w-full" data-guide="btn-criar-oc">Criar Pedido</Button>
               </div>
             </DialogContent>
           </Dialog>

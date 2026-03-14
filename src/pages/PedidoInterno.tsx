@@ -338,7 +338,7 @@ export default function PedidoInterno() {
         {/* Product search */}
         <div className="space-y-2">
           <Label>Produto *</Label>
-          <div className="relative">
+          <div className="relative" data-guide="search-product">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por nome ou categoria..."
@@ -394,7 +394,7 @@ export default function PedidoInterno() {
 
         {/* CD origin */}
         {cdUnits.length > 1 && (
-          <div className="space-y-2">
+          <div className="space-y-2" data-guide="select-cd">
             <Label>CD de origem *</Label>
             <Select value={selectedCdId} onValueChange={setSelectedCdId}>
               <SelectTrigger className="bg-input border-border">
@@ -431,7 +431,7 @@ export default function PedidoInterno() {
         )}
 
         {/* Quantity */}
-        <div className="space-y-2">
+        <div className="space-y-2" data-guide="input-qty">
           <Label>Quantidade *</Label>
           <Input
             type="number"
@@ -470,7 +470,7 @@ export default function PedidoInterno() {
           />
         </div>
 
-        <Button onClick={handleSubmit} disabled={sending} className="w-full gap-2">
+        <Button onClick={handleSubmit} disabled={sending} className="w-full gap-2" data-guide="btn-submit-transfer">
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           Enviar Pedido ao CD
         </Button>

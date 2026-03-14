@@ -371,7 +371,7 @@ export default function RecebimentoDigital() {
 
       {/* Idle */}
       {step === "idle" && (
-        <div className="grid gap-4 sm:grid-cols-2 max-w-lg">
+        <div className="grid gap-4 sm:grid-cols-2 max-w-lg" data-guide="btn-scan">
           <Button className="h-24 text-lg gap-3" onClick={() => setStep("scanning")}>
             <ScanBarcode className="h-7 w-7" />
             Escanear código de barras
@@ -593,7 +593,7 @@ export default function RecebimentoDigital() {
           <div className="space-y-3">
             <div>
               <Label>Validade * (data da etiqueta)</Label>
-              <Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} />
+              <Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} data-guide="input-validade" />
               {product.categoria && !gs1Data?.isGS1 && (
                 <p className="text-xs text-muted-foreground mt-1">
                   Referência: ~{getSuggestedValidityDays(product.categoria)} dias para {product.categoria}
@@ -602,9 +602,9 @@ export default function RecebimentoDigital() {
             </div>
             <div>
               <Label>Lote *</Label>
-              <Input value={lote} onChange={(e) => setLote(e.target.value)} placeholder="Ex: L2025-001" />
+              <Input value={lote} onChange={(e) => setLote(e.target.value)} placeholder="Ex: L2025-001" data-guide="input-lote" />
             </div>
-            <div>
+            <div data-guide="input-qty-receb">
               <Label>{quantityLabel} *</Label>
               <Input
                 type="number"
@@ -640,7 +640,7 @@ export default function RecebimentoDigital() {
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={handleReceipt} disabled={loading}>
+            <Button onClick={handleReceipt} disabled={loading} data-guide="btn-confirm-receb">
               {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Confirmar Recebimento
             </Button>

@@ -311,7 +311,7 @@ export default function DashboardFinanceiro() {
         </div>
         <div className="flex gap-2">
           <Select value={String(period)} onValueChange={(v) => setPeriod(Number(v) as PeriodMonths)}>
-            <SelectTrigger className="w-[140px] bg-input border-border">
+            <SelectTrigger className="w-[140px] bg-input border-border" data-guide="filter-period">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -321,7 +321,7 @@ export default function DashboardFinanceiro() {
             </SelectContent>
           </Select>
           <Select value={filterUnit} onValueChange={setFilterUnit}>
-            <SelectTrigger className="w-[160px] bg-input border-border">
+            <SelectTrigger className="w-[160px] bg-input border-border" data-guide="filter-unit-fin">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -335,7 +335,7 @@ export default function DashboardFinanceiro() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-guide="kpi-cards">
         {/* Custo por refeição */}
         <Card className="relative overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl" />
@@ -408,7 +408,7 @@ export default function DashboardFinanceiro() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Monthly evolution */}
-        <Card>
+        <Card data-guide="chart-monthly">
           <CardHeader className="pb-2 p-4">
             <CardTitle className="text-sm font-display">Evolução Mensal de Custos</CardTitle>
           </CardHeader>
@@ -461,7 +461,7 @@ export default function DashboardFinanceiro() {
       </div>
 
       {/* Ranking Table */}
-      <Card>
+      <Card data-guide="ranking-table">
         <CardHeader className="pb-2 p-4">
           <CardTitle className="text-sm font-display flex items-center gap-2">
             <Building2 className="h-4 w-4 text-primary" />

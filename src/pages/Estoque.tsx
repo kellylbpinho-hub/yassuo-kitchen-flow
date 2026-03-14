@@ -184,7 +184,7 @@ export default function Estoque() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-display font-bold text-foreground">Estoque</h1>
         <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-          <div className="relative flex-1 sm:w-48">
+          <div className="relative flex-1 sm:w-48" data-guide="search-estoque">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar produto..."
@@ -194,7 +194,7 @@ export default function Estoque() {
             />
           </div>
           <Select value={filterUnit} onValueChange={setFilterUnit}>
-            <SelectTrigger className="w-40 bg-input border-border">
+            <SelectTrigger className="w-40 bg-input border-border" data-guide="filter-unit">
               <SelectValue placeholder="Todas unidades" />
             </SelectTrigger>
             <SelectContent>
@@ -302,7 +302,7 @@ export default function Estoque() {
       </div>
 
       {/* Category filter chips */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2" data-guide="category-chips">
         {["all", ...CATEGORIAS_FIXAS].map((cat) => (
           <Button
             key={cat}
@@ -407,7 +407,7 @@ export default function Estoque() {
                 </TableRow>
               ) : (
                 filtered.map((p) => (
-                  <TableRow key={p.id} className="border-border">
+                  <TableRow key={p.id} className="border-border" data-guide={filtered.indexOf(p) === 0 ? "product-row" : undefined}>
                     <TableCell>
                       <div>
                         <span className="font-medium">{p.nome}</span>
@@ -461,7 +461,7 @@ export default function Estoque() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" data-guide={filtered.indexOf(p) === 0 ? "product-actions" : undefined}>
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>

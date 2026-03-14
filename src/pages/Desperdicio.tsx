@@ -195,7 +195,7 @@ export default function Desperdicio() {
         {canRegister && (
           <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" />Registrar Perda</Button>
+              <Button data-guide="btn-registrar-perda"><Plus className="h-4 w-4 mr-2" />Registrar Perda</Button>
             </DialogTrigger>
             <DialogContent className="bg-card border-border max-w-md">
               <DialogHeader>
@@ -212,7 +212,7 @@ export default function Desperdicio() {
                     Cardápio do Dia *
                   </Label>
                   <Select value={selectedMenuId} onValueChange={(v) => { setSelectedMenuId(v); setSelectedDishId(""); }}>
-                    <SelectTrigger className="bg-input border-border">
+                    <SelectTrigger className="bg-input border-border" data-guide="select-menu">
                       <SelectValue placeholder="Selecione o cardápio..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -237,7 +237,7 @@ export default function Desperdicio() {
                       Preparação / Item *
                     </Label>
                     <Select value={selectedDishId} onValueChange={setSelectedDishId}>
-                      <SelectTrigger className="bg-input border-border">
+                      <SelectTrigger className="bg-input border-border" data-guide="select-dish">
                         <SelectValue placeholder="Selecione a preparação..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -261,7 +261,7 @@ export default function Desperdicio() {
                 {/* Step 3: Weights */}
                 {selectedDishId && (
                   <>
-                    <div className="space-y-3">
+                    <div className="space-y-3" data-guide="input-weights">
                       <h4 className="text-sm font-semibold text-foreground">Pesagens (kg)</h4>
                       <div className="grid grid-cols-3 gap-2">
                         <div className="space-y-1">
@@ -313,7 +313,7 @@ export default function Desperdicio() {
                       />
                     </div>
 
-                    <Button onClick={addWaste} className="w-full" disabled={saving}>
+                    <Button onClick={addWaste} className="w-full" disabled={saving} data-guide="btn-submit-waste">
                       {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                       Registrar
                     </Button>
