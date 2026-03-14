@@ -519,6 +519,12 @@ export default function DashboardFinanceiro() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Custo Real da Refeição */}
+      <div className="pt-2">
+        <h2 className="text-lg font-display font-bold text-foreground mb-3">Custo Real da Refeição</h2>
+        <RealMealCostSection period={period} filterUnit={filterUnit} />
+      </div>
     </div>
   );
 }
