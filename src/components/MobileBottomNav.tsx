@@ -1,12 +1,14 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingCart, ClipboardList, Trash2, DollarSign } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, ClipboardList, Trash2, DollarSign, ScanBarcode } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function MobileBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isNutricionista, isFinanceiro } = useAuth();
+  const { isNutricionista, isFinanceiro, role } = useAuth();
+
+  const isEstoquista = role === "estoquista";
 
   const navItems = isNutricionista
     ? [
@@ -21,6 +23,13 @@ export function MobileBottomNav() {
         { path: "/estoque", icon: Package, label: "Estoque" },
         { path: "/dashboard-financeiro", icon: DollarSign, label: "Financeiro" },
         { path: "/compras", icon: ShoppingCart, label: "Compras" },
+      ]
+    : isEstoquista
+    ? [
+        { path: "/dashboard", icon: LayoutDashboard, label: "Início" },
+        { path: "/estoque", icon: Package, label: "Estoque" },
+        { path: "/recebimento-digital", icon: ScanBarcode, label: "Recebimento" },
+        { path: "/alertas", icon: ClipboardList, label: "Alertas" },
       ]
     : [
         { path: "/dashboard", icon: LayoutDashboard, label: "Início" },
