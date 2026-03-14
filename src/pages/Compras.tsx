@@ -72,6 +72,7 @@ export default function Compras() {
       toast.error("Erro: " + error.message);
     } else {
       toast.success("Pedido criado!");
+      window.dispatchEvent(new CustomEvent("guided:purchase-order:success"));
       setCreateOpen(false);
       navigate(`/compras/${data.id}`);
     }

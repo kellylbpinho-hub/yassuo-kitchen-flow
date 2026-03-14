@@ -280,6 +280,7 @@ export default function RecebimentoDigital() {
 
     setStep("success");
     toast.success("Recebimento registrado com sucesso!");
+    window.dispatchEvent(new CustomEvent("guided:receipt:success"));
   };
 
   const handleReceipt = async () => {

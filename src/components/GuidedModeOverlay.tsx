@@ -2,39 +2,124 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useGuidedMode } from "@/contexts/GuidedModeContext";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X, Check } from "lucide-react";
+import type { GuidedStep } from "@/lib/guidedSteps";
 
 export function GuidedModeOverlay() {
   const { activeTask, currentStep, currentStepIndex, totalSteps, nextStep, prevStep, exitTask, skipTutorial, enabled } =
     useGuidedMode();
+
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const [arrowStyle, setArrowStyle] = useState<React.CSSProperties>({});
-  const [arrowDir, setArrowDir] = useState<"top" | "bottom" | "left" | "right">("bottom");
-  const [actionDone, setActionDone] = useState(false);
-  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [stepCompleted, setStepCompleted] = useState(false);
+  const [waitingSubmitSuccess, setWaitingSubmitSuccess] = useState(false);
+  const [elementMissing, setElementMissing] = useState(false);
+
   const retryRef = useRef<number>(0);
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const viewedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const baselineValueRef = useRef<string>("");
+  const selectArmedRef = useRef<boolean>(false);
+  const submitClickedRef = useRef<boolean>(false);
 
-  // Reset actionDone when step changes
-  useEffect(() => {
-    setActionDone(false);
+  const clearTimers = () => {
     if (advanceTimerRef.current) {
       clearTimeout(advanceTimerRef.current);
       advanceTimerRef.current = null;
     }
-  }, [currentStepIndex, activeTask?.id]);
+    if (viewedTimerRef.current) {
+      clearTimeout(viewedTimerRef.current);
+      viewedTimerRef.current = null;
+    }
+  };
 
-  // Schedule auto-advance after action is done
-  const scheduleAdvance = useCallback(() => {
-    if (actionDone) return;
-    setActionDone(true);
-    const delay = currentStep?.advanceDelay ?? (currentStep?.trigger === "input" ? 1200 : 600);
+  const getStepRootElement = useCallback((step: GuidedStep | null) => {
+    if (!step) return null;
+    return document.querySelector(step.selector);
+  }, []);
+
+  const getCompletionSourceElement = useCallback((step: GuidedStep, root: Element | null) => {
+    if (step.completionSelector) {
+      return document.querySelector(step.completionSelector);
+    }
+    return root;
+  }, []);
+
+  const readFieldValue = useCallback(
+    (step: GuidedStep, root: Element | null): string => {
+      const source = getCompletionSourceElement(step, root);
+      if (!source) return "";
+
+      const datasetValue = source.getAttribute("data-guide-value");
+      if (datasetValue !== null) return datasetValue;
+
+      if (source instanceof HTMLInputElement || source instanceof HTMLTextAreaElement || source instanceof HTMLSelectElement) {
+        return source.value ?? "";
+      }
+
+      const innerWithData = source.querySelector("[data-guide-value]");
+      if (innerWithData) {
+        return innerWithData.getAttribute("data-guide-value") ?? "";
+      }
+
+      const innerInput = source.querySelector("input, textarea, select") as
+        | HTMLInputElement
+        | HTMLTextAreaElement
+        | HTMLSelectElement
+        | null;
+      if (innerInput) {
+        return innerInput.value ?? "";
+      }
+
+      return (source.textContent || "").trim();
+    },
+    [getCompletionSourceElement]
+  );
+
+  const checkNumericGtZero = useCallback(
+    (step: GuidedStep, root: Element | null) => {
+      const source = getCompletionSourceElement(step, root);
+      if (!source) return false;
+
+      const numericInputs = source.querySelectorAll<HTMLInputElement>("input[type='number'], input");
+      if (numericInputs.length > 0) {
+        const hasPositive = Array.from(numericInputs).some((input) => {
+          const n = parseFloat((input.value || "").replace(",", "."));
+          return Number.isFinite(n) && n > 0;
+        });
+        if (hasPositive) return true;
+      }
+
+      const raw = readFieldValue(step, root);
+      const n = parseFloat(raw.replace(",", "."));
+      return Number.isFinite(n) && n > 0;
+    },
+    [getCompletionSourceElement, readFieldValue]
+  );
+
+  const completeStep = useCallback(() => {
+    if (stepCompleted || !currentStep) return;
+    setStepCompleted(true);
+    const delay = currentStep.advanceDelay ?? 550;
     advanceTimerRef.current = setTimeout(() => {
       nextStep();
     }, delay);
-  }, [actionDone, currentStep, nextStep]);
+  }, [stepCompleted, currentStep, nextStep]);
 
-  // Find and track the target element
+  // Reset per-step state
+  useEffect(() => {
+    clearTimers();
+    setStepCompleted(false);
+    setWaitingSubmitSuccess(false);
+    setElementMissing(false);
+    selectArmedRef.current = false;
+    submitClickedRef.current = false;
+
+    const root = getStepRootElement(currentStep);
+    baselineValueRef.current = currentStep && root ? readFieldValue(currentStep, root) : "";
+  }, [currentStepIndex, activeTask?.id, currentStep, getStepRootElement, readFieldValue]);
+
+  // Find and track target element (scroll + highlight)
   useEffect(() => {
     if (!currentStep || !enabled) {
       setRect(null);
@@ -46,51 +131,141 @@ export function GuidedModeOverlay() {
       if (el) {
         const r = el.getBoundingClientRect();
         setRect(r);
+        setElementMissing(false);
         retryRef.current = 0;
 
         if (r.top < 0 || r.bottom > window.innerHeight) {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
-          setTimeout(() => setRect(el.getBoundingClientRect()), 400);
+          setTimeout(() => {
+            const newRect = el.getBoundingClientRect();
+            setRect(newRect);
+          }, 400);
         }
-      } else if (retryRef.current < 10) {
+      } else if (retryRef.current < 12) {
         retryRef.current++;
-        setTimeout(find, 500);
+        setTimeout(find, 400);
       } else {
         setRect(null);
+        setElementMissing(true);
       }
     };
 
-    const timer = setTimeout(find, 300);
+    const timer = setTimeout(find, 250);
     return () => clearTimeout(timer);
   }, [currentStep, enabled]);
 
-  // Attach event listeners via document-level capture to detect interactions
-  // even when clicks pass through the overlay passthrough div
+  // Auto-skip optional step when element does not exist
   useEffect(() => {
-    if (!currentStep || !enabled || actionDone) return;
-    const trigger = currentStep.trigger || "observe";
-    if (trigger === "observe") return;
+    if (!currentStep || !elementMissing || !currentStep.optional || stepCompleted) return;
+    completeStep();
+  }, [currentStep, elementMissing, stepCompleted, completeStep]);
 
-    const handler = (e: Event) => {
-      const el = document.querySelector(currentStep.selector);
-      if (!el) return;
-      const target = e.target as Node;
-      // Check if the event target is inside or is the guided element
-      if (el.contains(target) || el === target) {
-        scheduleAdvance();
+  // Value-based completion checker (field/select/numeric)
+  useEffect(() => {
+    if (!currentStep || !enabled || stepCompleted) return;
+
+    const type = currentStep.completionType;
+    if (!["field_filled", "select_chosen", "numeric_gt_zero"].includes(type)) return;
+
+    const evaluate = () => {
+      const root = getStepRootElement(currentStep);
+      if (!root) return;
+
+      if (type === "field_filled") {
+        if (readFieldValue(currentStep, root).trim().length > 0) {
+          completeStep();
+        }
+        return;
+      }
+
+      if (type === "numeric_gt_zero") {
+        if (checkNumericGtZero(currentStep, root)) {
+          completeStep();
+        }
+        return;
+      }
+
+      if (type === "select_chosen") {
+        const currentValue = readFieldValue(currentStep, root).trim();
+        const changedFromBaseline = currentValue.length > 0 && currentValue !== baselineValueRef.current;
+        if (changedFromBaseline) {
+          completeStep();
+        }
       }
     };
 
-    // Use capture phase to catch events before they're consumed
-    const events = trigger === "click"
-      ? ["click"]
-      : ["input", "change", "click"];
+    evaluate();
+    const interval = setInterval(evaluate, 250);
+    return () => clearInterval(interval);
+  }, [currentStep, enabled, stepCompleted, getStepRootElement, readFieldValue, checkNumericGtZero, completeStep]);
 
-    events.forEach((evt) => document.addEventListener(evt, handler, { capture: true }));
-    return () => {
-      events.forEach((evt) => document.removeEventListener(evt, handler, { capture: true }));
+  // Click-based completion and select option tracking
+  useEffect(() => {
+    if (!currentStep || !enabled || stepCompleted) return;
+
+    const handleClick = (event: Event) => {
+      const root = getStepRootElement(currentStep);
+      const target = event.target as Element | null;
+      if (!root || !target) return;
+
+      const isInsideStep = root.contains(target);
+      const optionNode = target.closest('[role="option"]');
+
+      if (currentStep.completionType === "button_clicked" && isInsideStep) {
+        completeStep();
+        return;
+      }
+
+      if (currentStep.completionType === "select_chosen") {
+        if (isInsideStep) {
+          selectArmedRef.current = true;
+        }
+        if (selectArmedRef.current && optionNode) {
+          completeStep();
+        }
+        return;
+      }
+
+      if (currentStep.completionType === "submit_success" && isInsideStep) {
+        submitClickedRef.current = true;
+        setWaitingSubmitSuccess(true);
+      }
     };
-  }, [currentStep, enabled, actionDone, scheduleAdvance]);
+
+    document.addEventListener("click", handleClick, { capture: true });
+    return () => document.removeEventListener("click", handleClick, { capture: true });
+  }, [currentStep, enabled, stepCompleted, getStepRootElement, completeStep]);
+
+  // Submit success completion (requires click + success event)
+  useEffect(() => {
+    if (!currentStep || !enabled || stepCompleted || currentStep.completionType !== "submit_success") return;
+    if (!currentStep.successEvent) return;
+
+    const onSuccess = () => {
+      if (!submitClickedRef.current) return;
+      completeStep();
+    };
+
+    window.addEventListener(currentStep.successEvent, onSuccess as EventListener);
+    return () => window.removeEventListener(currentStep.successEvent!, onSuccess as EventListener);
+  }, [currentStep, enabled, stepCompleted, completeStep]);
+
+  // View-only completion after being highlighted
+  useEffect(() => {
+    if (!currentStep || !enabled || stepCompleted || currentStep.completionType !== "viewed" || !rect) return;
+
+    const wait = currentStep.advanceDelay ?? 1200;
+    viewedTimerRef.current = setTimeout(() => {
+      completeStep();
+    }, wait);
+
+    return () => {
+      if (viewedTimerRef.current) {
+        clearTimeout(viewedTimerRef.current);
+        viewedTimerRef.current = null;
+      }
+    };
+  }, [currentStep, enabled, stepCompleted, rect, completeStep]);
 
   // Position tooltip
   useEffect(() => {
@@ -98,9 +273,8 @@ export function GuidedModeOverlay() {
 
     const pos = currentStep.position || "bottom";
     const pad = 16;
-    const tooltipW = 320;
-    const tooltipH = 120;
-    setArrowDir(pos);
+    const tooltipW = 340;
+    const tooltipH = 128;
 
     let top = 0;
     let left = 0;
@@ -130,34 +304,37 @@ export function GuidedModeOverlay() {
     setTooltipStyle({ top, left, width: tooltipW });
 
     const arrowS: React.CSSProperties = { position: "absolute" };
-    switch (pos) {
-      case "bottom":
-        arrowS.top = -8;
-        arrowS.left = "50%";
-        arrowS.transform = "translateX(-50%)";
-        break;
-      case "top":
-        arrowS.bottom = -8;
-        arrowS.left = "50%";
-        arrowS.transform = "translateX(-50%) rotate(180deg)";
-        break;
-      case "left":
-        arrowS.right = -8;
-        arrowS.top = "50%";
-        arrowS.transform = "translateY(-50%) rotate(90deg)";
-        break;
-      case "right":
-        arrowS.left = -8;
-        arrowS.top = "50%";
-        arrowS.transform = "translateY(-50%) rotate(-90deg)";
-        break;
+    if (pos === "bottom") {
+      arrowS.top = -8;
+      arrowS.left = "50%";
+      arrowS.transform = "translateX(-50%)";
+    } else if (pos === "top") {
+      arrowS.bottom = -8;
+      arrowS.left = "50%";
+      arrowS.transform = "translateX(-50%) rotate(180deg)";
+    } else if (pos === "left") {
+      arrowS.right = -8;
+      arrowS.top = "50%";
+      arrowS.transform = "translateY(-50%) rotate(90deg)";
+    } else {
+      arrowS.left = -8;
+      arrowS.top = "50%";
+      arrowS.transform = "translateY(-50%) rotate(-90deg)";
     }
+
     setArrowStyle(arrowS);
   }, [rect, currentStep]);
 
   if (!enabled || !activeTask || !currentStep) return null;
 
-  const trigger = currentStep.trigger || "observe";
+  const completionLabel: Record<GuidedStep["completionType"], string> = {
+    field_filled: "Preencha o campo para continuar",
+    select_chosen: "Escolha uma opção para continuar",
+    numeric_gt_zero: "Informe um valor maior que zero",
+    button_clicked: "Clique no elemento destacado para continuar",
+    submit_success: waitingSubmitSuccess ? "Aguardando confirmação de sucesso..." : "Execute a ação e aguarde a confirmação",
+    viewed: "Visualizando...",
+  };
 
   return (
     <>
@@ -179,21 +356,13 @@ export function GuidedModeOverlay() {
               )}
             </mask>
           </defs>
-          <rect
-            x="0"
-            y="0"
-            width="100%"
-            height="100%"
-            fill="hsl(240 3% 5% / 0.7)"
-            mask="url(#guided-mask)"
-          />
+          <rect x="0" y="0" width="100%" height="100%" fill="hsl(240 3% 5% / 0.7)" mask="url(#guided-mask)" />
         </svg>
 
-        {/* Highlight ring */}
         {rect && (
           <div
             className={`absolute border-2 rounded-lg pointer-events-none ${
-              actionDone
+              stepCompleted
                 ? "border-[hsl(var(--success))] shadow-[0_0_0_4px_hsl(142_71%_45%/0.3)]"
                 : "border-primary shadow-[0_0_0_4px_hsl(350_95%_43%/0.2)] animate-pulse"
             }`}
@@ -207,15 +376,11 @@ export function GuidedModeOverlay() {
         )}
       </div>
 
-      {/* The SVG mask cutout already allows clicks to pass through to the real element */}
-
       {/* Tooltip */}
       <div
-        ref={tooltipRef}
         className="fixed z-[72] bg-card border border-border rounded-xl shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-200"
         style={tooltipStyle}
       >
-        {/* Arrow */}
         <div style={arrowStyle}>
           <svg width="16" height="8" viewBox="0 0 16 8">
             <polygon points="8,0 16,8 0,8" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1" />
@@ -238,20 +403,14 @@ export function GuidedModeOverlay() {
 
         <p className="text-sm text-foreground leading-relaxed mb-1">{currentStep.instruction}</p>
 
-        {/* Action hint */}
-        {actionDone ? (
+        {stepCompleted ? (
           <p className="text-xs text-[hsl(var(--success))] font-medium flex items-center gap-1 mb-2">
-            <Check className="h-3 w-3" /> Feito! Avançando...
-          </p>
-        ) : trigger !== "observe" ? (
-          <p className="text-xs text-muted-foreground mb-2 italic">
-            {trigger === "click" ? "👆 Execute a ação para continuar" : "✏️ Preencha para continuar"}
+            <Check className="h-3 w-3" /> Passo concluído. Avançando...
           </p>
         ) : (
-          <div className="mb-2" />
+          <p className="text-xs text-muted-foreground mb-2 italic">{completionLabel[currentStep.completionType]}</p>
         )}
 
-        {/* Progress bar */}
         <div className="w-full h-1 bg-muted rounded-full mb-3 overflow-hidden">
           <div
             className="h-full bg-primary rounded-full transition-all duration-300"
@@ -268,7 +427,7 @@ export function GuidedModeOverlay() {
             className="h-7 text-xs gap-1"
           >
             <ChevronLeft className="h-3 w-3" />
-            Anterior
+            Voltar
           </Button>
           <Button
             variant="ghost"
@@ -276,9 +435,9 @@ export function GuidedModeOverlay() {
             onClick={skipTutorial}
             className="h-7 text-xs text-muted-foreground hover:text-foreground"
           >
-            Pular
+            Pular tutorial
           </Button>
-          <Button size="sm" onClick={nextStep} className="h-7 text-xs gap-1">
+          <Button size="sm" onClick={nextStep} disabled={!stepCompleted} className="h-7 text-xs gap-1">
             {currentStepIndex === totalSteps - 1 ? "Concluir" : "Próximo"}
             {currentStepIndex < totalSteps - 1 && <ChevronRight className="h-3 w-3" />}
           </Button>

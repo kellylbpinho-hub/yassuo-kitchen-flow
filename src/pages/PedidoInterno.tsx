@@ -294,6 +294,7 @@ export default function PedidoInterno() {
     }
 
     toast.success("Pedido enviado com sucesso!");
+    window.dispatchEvent(new CustomEvent("guided:transfer:success"));
     setSelectedProductId("");
     setQuantidade("");
     setObservacao("");

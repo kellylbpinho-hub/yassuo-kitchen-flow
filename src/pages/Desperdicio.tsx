@@ -162,6 +162,7 @@ export default function Desperdicio() {
     }
 
     toast.success("Desperdício registrado!");
+    window.dispatchEvent(new CustomEvent("guided:waste:success"));
     setAddOpen(false);
     resetForm();
     loadData();
