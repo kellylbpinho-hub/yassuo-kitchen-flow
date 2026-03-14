@@ -431,7 +431,7 @@ export default function PedidoInterno() {
         )}
 
         {/* Quantity */}
-        <div className="space-y-2">
+        <div className="space-y-2" data-guide="input-qty">
           <Label>Quantidade *</Label>
           <Input
             type="number"
