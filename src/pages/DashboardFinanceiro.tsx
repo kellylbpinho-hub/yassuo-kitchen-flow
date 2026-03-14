@@ -591,7 +591,7 @@ export default function DashboardFinanceiro() {
       {/* Custo Real da Refeição */}
       <div className="pt-2">
         <h2 className="text-lg font-display font-bold text-foreground mb-3">Custo Real da Refeição</h2>
-        <RealMealCostSection period={period} filterUnit={filterUnit} />
+        <RealMealCostSection period={period} filterUnit={filterUnit} onDataReady={handleMealCostData} />
       </div>
     </div>
   );
