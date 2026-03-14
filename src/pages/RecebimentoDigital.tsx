@@ -604,7 +604,7 @@ export default function RecebimentoDigital() {
               <Label>Lote *</Label>
               <Input value={lote} onChange={(e) => setLote(e.target.value)} placeholder="Ex: L2025-001" data-guide="input-lote" />
             </div>
-            <div>
+            <div data-guide="input-qty-receb">
               <Label>{quantityLabel} *</Label>
               <Input
                 type="number"
