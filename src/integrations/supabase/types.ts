@@ -1020,6 +1020,7 @@ export type Database = {
           id: string
           name: string
           numero_colaboradores: number
+          target_meal_cost: number | null
           type: string
         }
         Insert: {
@@ -1028,6 +1029,7 @@ export type Database = {
           id?: string
           name: string
           numero_colaboradores?: number
+          target_meal_cost?: number | null
           type?: string
         }
         Update: {
@@ -1036,6 +1038,7 @@ export type Database = {
           id?: string
           name?: string
           numero_colaboradores?: number
+          target_meal_cost?: number | null
           type?: string
         }
         Relationships: [
