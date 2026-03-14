@@ -142,7 +142,7 @@ export default function RealMealCostSection({ period, filterUnit }: Props) {
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Custo Real/Refeição</span>
             </div>
             <p className="text-2xl font-bold font-display text-foreground">
-              {kpi.avgCost > 0 ? formatCurrency(kpi.avgCost) : "—"}
+              {kpi.totalFood > 0 && kpi.avgCost > 0 ? formatCurrency(kpi.avgCost) : "—"}
             </p>
             {kpi.trend !== 0 && (
               <p className={`text-[11px] mt-0.5 flex items-center gap-1 ${kpi.trend > 0 ? "text-destructive" : "text-success"}`}>
