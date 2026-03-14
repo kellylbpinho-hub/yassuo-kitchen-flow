@@ -1202,6 +1202,20 @@ export type Database = {
       }
     }
     Views: {
+      meal_cost_daily: {
+        Row: {
+          company_id: string | null
+          date: string | null
+          meals_served: number | null
+          real_meal_cost: number | null
+          total_food_cost: number | null
+          unit_id: string | null
+          unit_name: string | null
+          waste_cost: number | null
+          waste_kg: number | null
+        }
+        Relationships: []
+      }
       v_estoque_por_unidade: {
         Row: {
           company_id: string | null
