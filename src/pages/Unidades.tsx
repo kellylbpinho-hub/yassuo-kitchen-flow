@@ -49,14 +49,17 @@ export default function Unidades() {
 
   const createUnit = async () => {
     if (!form.name) { toast.error("Informe o nome."); return; }
+    const targetVal = form.target_meal_cost ? parseFloat(form.target_meal_cost.replace(",", ".")) : null;
+    if (targetVal !== null && targetVal < 0) { toast.error("Meta não pode ser negativa."); return; }
     const { error } = await supabase.from("units").insert({
       name: form.name,
       type: form.type,
       numero_colaboradores: Number(form.numero_colaboradores) || 0,
+      target_meal_cost: targetVal,
       company_id: profile!.company_id,
     });
     if (error) toast.error("Erro: " + error.message);
-    else { toast.success("Unidade criada!"); setCreateOpen(false); setForm({ name: "", type: "kitchen", numero_colaboradores: "0" }); loadData(); }
+    else { toast.success("Unidade criada!"); setCreateOpen(false); setForm({ name: "", type: "kitchen", numero_colaboradores: "0", target_meal_cost: "" }); loadData(); }
   };
 
   const updateUnit = async () => {
