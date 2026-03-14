@@ -95,7 +95,7 @@ export default function RealMealCostSection({ period, filterUnit }: Props) {
       const food = monthRows.reduce((s, r) => s + Number(r.total_food_cost), 0);
       const waste = monthRows.reduce((s, r) => s + Number(r.waste_cost), 0);
       const meals = monthRows.reduce((s, r) => s + Number(r.meals_served), 0);
-      const realCost = meals > 0 ? (food - waste) / meals : 0;
+      const realCost = meals > 0 ? Math.max(0, (food - waste) / meals) : 0;
 
       months.push({ label, realCost, foodCost: meals > 0 ? food / meals : 0, wasteCost: meals > 0 ? waste / meals : 0 });
     }
