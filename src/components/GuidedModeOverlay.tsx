@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 export function GuidedModeOverlay() {
-  const { activeTask, currentStep, currentStepIndex, totalSteps, nextStep, prevStep, exitTask, enabled } =
+  const { activeTask, currentStep, currentStepIndex, totalSteps, nextStep, prevStep, exitTask, skipTutorial, enabled } =
     useGuidedMode();
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
