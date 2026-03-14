@@ -394,7 +394,7 @@ export default function PedidoInterno() {
 
         {/* CD origin */}
         {cdUnits.length > 1 && (
-          <div className="space-y-2">
+          <div className="space-y-2" data-guide="select-cd">
             <Label>CD de origem *</Label>
             <Select value={selectedCdId} onValueChange={setSelectedCdId}>
               <SelectTrigger className="bg-input border-border">
