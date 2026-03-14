@@ -315,7 +315,7 @@ export default function DashboardFinanceiro() {
           <h1 className="text-2xl font-display font-bold text-foreground">Dashboard Financeiro</h1>
           <p className="text-sm text-muted-foreground mt-1">Análise de custos e eficiência operacional</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Select value={String(period)} onValueChange={(v) => setPeriod(Number(v) as PeriodMonths)}>
             <SelectTrigger className="w-[140px] bg-input border-border" data-guide="filter-period">
               <SelectValue />
@@ -337,6 +337,21 @@ export default function DashboardFinanceiro() {
               ))}
             </SelectContent>
           </Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="default" className="gap-1.5">
+                <Download className="h-4 w-4" /> Exportar Relatório
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExport("pdf")} className="gap-2 cursor-pointer">
+                <FileText className="h-4 w-4" /> Exportar PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("excel")} className="gap-2 cursor-pointer">
+                <FileSpreadsheet className="h-4 w-4" /> Exportar Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
