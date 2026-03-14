@@ -73,7 +73,7 @@ function DeviationBadge({ real, target }: { real: number; target: number | null 
   );
 }
 
-export default function RealMealCostSection({ period, filterUnit }: Props) {
+export default function RealMealCostSection({ period, filterUnit, onDataReady }: Props) {
   const [data, setData] = useState<MealCostRow[]>([]);
   const [targets, setTargets] = useState<UnitTarget[]>([]);
   const [loading, setLoading] = useState(true);
