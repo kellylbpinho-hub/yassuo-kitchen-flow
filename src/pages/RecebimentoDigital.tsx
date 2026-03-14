@@ -593,7 +593,7 @@ export default function RecebimentoDigital() {
           <div className="space-y-3">
             <div>
               <Label>Validade * (data da etiqueta)</Label>
-              <Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} />
+              <Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} data-guide="input-validade" />
               {product.categoria && !gs1Data?.isGS1 && (
                 <p className="text-xs text-muted-foreground mt-1">
                   Referência: ~{getSuggestedValidityDays(product.categoria)} dias para {product.categoria}
