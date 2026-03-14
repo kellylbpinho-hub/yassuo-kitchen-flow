@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Pencil, Warehouse, UtensilsCrossed, Users } from "lucide-react";
+import { Plus, Loader2, Pencil, Warehouse, UtensilsCrossed, Users, Target } from "lucide-react";
 import { toast } from "sonner";
 
 interface Unit {
@@ -17,6 +17,7 @@ interface Unit {
   type: string;
   company_id: string;
   numero_colaboradores: number;
+  target_meal_cost: number | null;
 }
 
 const typeLabels: Record<string, string> = {
@@ -35,7 +36,7 @@ export default function Unidades() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [editUnit, setEditUnit] = useState<Unit | null>(null);
-  const [form, setForm] = useState({ name: "", type: "kitchen", numero_colaboradores: "0" });
+  const [form, setForm] = useState({ name: "", type: "kitchen", numero_colaboradores: "0", target_meal_cost: "" });
 
   useEffect(() => { loadData(); }, []);
 
@@ -48,22 +49,28 @@ export default function Unidades() {
 
   const createUnit = async () => {
     if (!form.name) { toast.error("Informe o nome."); return; }
+    const targetVal = form.target_meal_cost ? parseFloat(form.target_meal_cost.replace(",", ".")) : null;
+    if (targetVal !== null && targetVal < 0) { toast.error("Meta não pode ser negativa."); return; }
     const { error } = await supabase.from("units").insert({
       name: form.name,
       type: form.type,
       numero_colaboradores: Number(form.numero_colaboradores) || 0,
+      target_meal_cost: targetVal,
       company_id: profile!.company_id,
     });
     if (error) toast.error("Erro: " + error.message);
-    else { toast.success("Unidade criada!"); setCreateOpen(false); setForm({ name: "", type: "kitchen", numero_colaboradores: "0" }); loadData(); }
+    else { toast.success("Unidade criada!"); setCreateOpen(false); setForm({ name: "", type: "kitchen", numero_colaboradores: "0", target_meal_cost: "" }); loadData(); }
   };
 
   const updateUnit = async () => {
     if (!editUnit || !form.name) return;
+    const targetVal = form.target_meal_cost ? parseFloat(form.target_meal_cost.replace(",", ".")) : null;
+    if (targetVal !== null && targetVal < 0) { toast.error("Meta não pode ser negativa."); return; }
     const { error } = await supabase.from("units").update({
       name: form.name,
       type: form.type,
       numero_colaboradores: Number(form.numero_colaboradores) || 0,
+      target_meal_cost: targetVal,
     }).eq("id", editUnit.id);
     if (error) toast.error("Erro: " + error.message);
     else { toast.success("Unidade atualizada!"); setEditUnit(null); loadData(); }
@@ -71,7 +78,7 @@ export default function Unidades() {
 
   const openEdit = (unit: Unit) => {
     setEditUnit(unit);
-    setForm({ name: unit.name, type: unit.type, numero_colaboradores: String(unit.numero_colaboradores || 0) });
+    setForm({ name: unit.name, type: unit.type, numero_colaboradores: String(unit.numero_colaboradores || 0), target_meal_cost: unit.target_meal_cost != null ? String(unit.target_meal_cost) : "" });
   };
 
   if (loading) {
@@ -105,6 +112,23 @@ export default function Unidades() {
           onChange={(e) => setForm({ ...form, numero_colaboradores: e.target.value })}
           className="bg-input border-border"
           placeholder="Ex: 150"
+        />
+      </div>
+      <div>
+        <Label className="flex items-center gap-1.5">
+          <Target className="h-3.5 w-3.5 text-muted-foreground" />
+          Meta de Custo/Refeição (R$)
+        </Label>
+        <Input
+          type="text"
+          inputMode="decimal"
+          value={form.target_meal_cost}
+          onChange={(e) => {
+            const v = e.target.value.replace(/[^0-9.,]/g, "");
+            setForm({ ...form, target_meal_cost: v });
+          }}
+          className="bg-input border-border"
+          placeholder="Ex: 18.50"
         />
       </div>
       <Button onClick={onSubmit} className="w-full">{submitLabel}</Button>
@@ -143,12 +167,13 @@ export default function Unidades() {
                 <TableHead>Nome</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead className="text-center">Colaboradores</TableHead>
+                <TableHead className="text-right">Meta/Refeição</TableHead>
                 {canManage && <TableHead className="w-20">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {units.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhuma unidade.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma unidade.</TableCell></TableRow>
               ) : (
                 units.map((u) => {
                   const Icon = typeIcons[u.type] || UtensilsCrossed;
@@ -168,6 +193,13 @@ export default function Unidades() {
                           <Users className="h-3.5 w-3.5 text-muted-foreground" />
                           <span className="font-medium">{u.numero_colaboradores || 0}</span>
                         </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {u.target_meal_cost != null && u.target_meal_cost > 0 ? (
+                          <span className="font-medium">R$ {Number(u.target_meal_cost).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">Sem meta</span>
+                        )}
                       </TableCell>
                       {canManage && (
                         <TableCell>
