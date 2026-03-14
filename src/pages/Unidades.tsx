@@ -173,7 +173,7 @@ export default function Unidades() {
             </TableHeader>
             <TableBody>
               {units.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhuma unidade.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma unidade.</TableCell></TableRow>
               ) : (
                 units.map((u) => {
                   const Icon = typeIcons[u.type] || UtensilsCrossed;
