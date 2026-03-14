@@ -408,7 +408,7 @@ export default function DashboardFinanceiro() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Monthly evolution */}
-        <Card>
+        <Card data-guide="chart-monthly">
           <CardHeader className="pb-2 p-4">
             <CardTitle className="text-sm font-display">Evolução Mensal de Custos</CardTitle>
           </CardHeader>
