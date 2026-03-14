@@ -106,9 +106,16 @@ export function AppLayout() {
     });
 
     // Administração
+    const showDashFinanceiro = isCeo || isFinanceiroRole || isGerenteOperacional;
     const adminItems: NavGroup["items"] = [];
-    adminItems.push({ to: "/dashboard-financeiro", icon: DollarSign, label: "Dash Financeiro" });
-    adminItems.push({ to: "/compras", icon: ShoppingCart, label: "Compras" });
+    if (showDashFinanceiro) {
+      adminItems.push({ to: "/dashboard-financeiro", icon: DollarSign, label: "Dash Financeiro" });
+    }
+    const isEstoquistaRole = role === "estoquista";
+    const isFuncionarioRole = role === "funcionario";
+    if (!isEstoquistaRole && !isFuncionarioRole) {
+      adminItems.push({ to: "/compras", icon: ShoppingCart, label: "Compras" });
+    }
     adminItems.push({ to: "/categorias", icon: Shield, label: "Contratos" });
     if (canManageUsers) {
       adminItems.push({ to: "/usuarios", icon: Users, label: "Usuários" });
