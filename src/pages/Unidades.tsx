@@ -114,6 +114,23 @@ export default function Unidades() {
           placeholder="Ex: 150"
         />
       </div>
+      <div>
+        <Label className="flex items-center gap-1.5">
+          <Target className="h-3.5 w-3.5 text-muted-foreground" />
+          Meta de Custo/Refeição (R$)
+        </Label>
+        <Input
+          type="text"
+          inputMode="decimal"
+          value={form.target_meal_cost}
+          onChange={(e) => {
+            const v = e.target.value.replace(/[^0-9.,]/g, "");
+            setForm({ ...form, target_meal_cost: v });
+          }}
+          className="bg-input border-border"
+          placeholder="Ex: 18.50"
+        />
+      </div>
       <Button onClick={onSubmit} className="w-full">{submitLabel}</Button>
     </div>
   );
