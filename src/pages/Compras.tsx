@@ -101,7 +101,7 @@ export default function Compras() {
                 <div>
                   <Label>Unidade</Label>
                   <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-                    <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="bg-input border-border" data-guide="select-unit-compra"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {units.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
                     </SelectContent>
