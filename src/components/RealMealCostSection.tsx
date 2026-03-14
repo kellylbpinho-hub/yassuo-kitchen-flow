@@ -46,7 +46,7 @@ export default function RealMealCostSection({ period, filterUnit }: Props) {
       }
 
       const { data: rows } = await query;
-      setData((rows || []) as MealCostRow[]);
+      setData((rows || []) as unknown as MealCostRow[]);
       setLoading(false);
     };
     load();
