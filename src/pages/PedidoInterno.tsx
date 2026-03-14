@@ -338,7 +338,7 @@ export default function PedidoInterno() {
         {/* Product search */}
         <div className="space-y-2">
           <Label>Produto *</Label>
-          <div className="relative">
+          <div className="relative" data-guide="search-product">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por nome ou categoria..."
