@@ -194,7 +194,7 @@ export default function Estoque() {
             />
           </div>
           <Select value={filterUnit} onValueChange={setFilterUnit}>
-            <SelectTrigger className="w-40 bg-input border-border">
+            <SelectTrigger className="w-40 bg-input border-border" data-guide="filter-unit">
               <SelectValue placeholder="Todas unidades" />
             </SelectTrigger>
             <SelectContent>
