@@ -175,12 +175,38 @@ export default function RealMealCostSection({ period, filterUnit }: Props) {
       .sort((a, b) => b.realCost - a.realCost);
   }, [data, targetMap]);
 
+  const buildExportData = (): MealCostExportData => ({
+    period: `Últimos ${period} meses`,
+    filterUnitName: filterUnit === "all" ? "Todas as unidades" : (unitTable.find(u => u.id === filterUnit)?.name || filterUnit),
+    kpi,
+    avgTarget,
+    chartData,
+    unitTable: unitTable.map(u => ({
+      name: u.name,
+      grossCost: u.grossCost,
+      realCost: u.realCost,
+      waste: u.waste,
+      meals: u.meals,
+      days: u.days,
+      target: u.target,
+    })),
+  });
+
   if (loading) {
     return <div className="flex items-center justify-center h-32"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
 
   return (
     <div className="space-y-4">
+      {/* Export buttons */}
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => generateMealCostPDF(buildExportData())}>
+          <FileText className="h-3.5 w-3.5" /> Exportar PDF
+        </Button>
+        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => generateMealCostExcel(buildExportData())}>
+          <FileSpreadsheet className="h-3.5 w-3.5" /> Exportar Excel
+        </Button>
+      </div>
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <Card className="relative overflow-hidden" data-guide="kpi-real-meal-cost">
