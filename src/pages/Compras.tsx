@@ -91,7 +91,7 @@ export default function Compras() {
         {!isFinanceiro && (
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" />Novo Pedido</Button>
+              <Button data-guide="btn-nova-compra"><Plus className="h-4 w-4 mr-2" />Novo Pedido</Button>
             </DialogTrigger>
             <DialogContent className="bg-card border-border max-w-sm">
               <DialogHeader>
