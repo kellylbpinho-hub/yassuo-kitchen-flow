@@ -64,36 +64,32 @@ export function GuidedModeOverlay() {
     return () => clearTimeout(timer);
   }, [currentStep, enabled]);
 
-  // Attach event listeners to the target element for auto-advance
+  // Attach event listeners via document-level capture to detect interactions
+  // even when clicks pass through the overlay passthrough div
   useEffect(() => {
     if (!currentStep || !enabled || actionDone) return;
     const trigger = currentStep.trigger || "observe";
-    if (trigger === "observe") return; // no auto-advance for observe steps
+    if (trigger === "observe") return;
 
-    const el = document.querySelector(currentStep.selector);
-    if (!el) return;
+    const handler = (e: Event) => {
+      const el = document.querySelector(currentStep.selector);
+      if (!el) return;
+      const target = e.target as Node;
+      // Check if the event target is inside or is the guided element
+      if (el.contains(target) || el === target) {
+        scheduleAdvance();
+      }
+    };
 
-    const handleClick = () => scheduleAdvance();
-    const handleInput = () => scheduleAdvance();
+    // Use capture phase to catch events before they're consumed
+    const events = trigger === "click"
+      ? ["click"]
+      : ["input", "change", "click"];
 
-    if (trigger === "click") {
-      // Listen on the element and all descendants
-      el.addEventListener("click", handleClick, { capture: true });
-      return () => el.removeEventListener("click", handleClick, { capture: true });
-    }
-
-    if (trigger === "input") {
-      // Listen for input, change, and focus events on inputs within
-      el.addEventListener("input", handleInput, { capture: true });
-      el.addEventListener("change", handleInput, { capture: true });
-      // Also listen for clicks (for selects/dropdowns)
-      el.addEventListener("click", handleClick, { capture: true });
-      return () => {
-        el.removeEventListener("input", handleInput, { capture: true });
-        el.removeEventListener("change", handleInput, { capture: true });
-        el.removeEventListener("click", handleClick, { capture: true });
-      };
-    }
+    events.forEach((evt) => document.addEventListener(evt, handler, { capture: true }));
+    return () => {
+      events.forEach((evt) => document.removeEventListener(evt, handler, { capture: true }));
+    };
   }, [currentStep, enabled, actionDone, scheduleAdvance]);
 
   // Position tooltip
