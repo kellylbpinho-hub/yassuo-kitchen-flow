@@ -3,10 +3,12 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, UtensilsCrossed, TrendingDown, TrendingUp, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, UtensilsCrossed, TrendingDown, TrendingUp, Target, FileText, FileSpreadsheet } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from "recharts";
 import { format, subMonths, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { generateMealCostPDF, generateMealCostExcel, type MealCostExportData } from "@/lib/mealCostExport";
 
 interface MealCostRow {
   date: string;
