@@ -407,7 +407,7 @@ export default function Estoque() {
                 </TableRow>
               ) : (
                 filtered.map((p) => (
-                  <TableRow key={p.id} className="border-border">
+                  <TableRow key={p.id} className="border-border" data-guide={filtered.indexOf(p) === 0 ? "product-row" : undefined}>
                     <TableCell>
                       <div>
                         <span className="font-medium">{p.nome}</span>
