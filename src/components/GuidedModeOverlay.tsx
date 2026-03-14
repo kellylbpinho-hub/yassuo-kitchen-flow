@@ -207,19 +207,7 @@ export function GuidedModeOverlay() {
         )}
       </div>
 
-      {/* Allow clicks on the highlighted element — pass through to real element */}
-      {rect && (
-        <div
-          className="fixed z-[71]"
-          style={{
-            top: rect.top,
-            left: rect.left,
-            width: rect.width,
-            height: rect.height,
-            pointerEvents: "auto",
-          }}
-        />
-      )}
+      {/* The SVG mask cutout already allows clicks to pass through to the real element */}
 
       {/* Tooltip */}
       <div
