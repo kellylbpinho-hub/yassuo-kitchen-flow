@@ -120,7 +120,7 @@ export default function RealMealCostSection({ period, filterUnit }: Props) {
         waste: v.waste,
         meals: v.meals,
         days: v.days.size,
-        realCost: v.meals > 0 ? (v.food - v.waste) / v.meals : 0,
+        realCost: v.meals > 0 ? Math.max(0, (v.food - v.waste) / v.meals) : 0,
         grossCost: v.meals > 0 ? v.food / v.meals : 0,
       }))
       .sort((a, b) => b.realCost - a.realCost);
