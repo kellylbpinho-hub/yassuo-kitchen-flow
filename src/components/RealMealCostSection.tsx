@@ -189,6 +189,34 @@ export default function RealMealCostSection({ period, filterUnit, onDataReady }:
       .sort((a, b) => b.realCost - a.realCost);
   }, [data, targetMap]);
 
+  // Expose data to parent
+  useEffect(() => {
+    if (!loading && onDataReady) {
+      const grossPerMeal = kpi.totalMeals > 0 ? kpi.totalFood / kpi.totalMeals : 0;
+      const wastePerMeal = kpi.totalMeals > 0 ? kpi.totalWaste / kpi.totalMeals : 0;
+      const deviationPct = avgTarget && avgTarget > 0 && kpi.avgCost > 0
+        ? ((kpi.avgCost - avgTarget) / avgTarget * 100) : null;
+      const deviationR = avgTarget && avgTarget > 0 && kpi.avgCost > 0
+        ? kpi.avgCost - avgTarget : null;
+      onDataReady({
+        avgCost: kpi.avgCost,
+        grossPerMeal,
+        wastePerMeal,
+        avgTarget,
+        deviationPct,
+        deviationR,
+        trend: kpi.trend,
+        totalMeals: kpi.totalMeals,
+        chartData,
+        unitTable: unitTable.map(u => ({
+          name: u.name, grossCost: u.grossCost, realCost: u.realCost,
+          waste: u.waste, meals: u.meals, days: u.days, target: u.target,
+        })),
+      });
+    }
+  }, [loading, kpi, avgTarget, chartData, unitTable, onDataReady]);
+
+
   const buildExportData = (): MealCostExportData => ({
     period: `Últimos ${period} meses`,
     filterUnitName: filterUnit === "all" ? "Todas as unidades" : (unitTable.find(u => u.id === filterUnit)?.name || filterUnit),
