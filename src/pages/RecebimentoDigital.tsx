@@ -371,7 +371,7 @@ export default function RecebimentoDigital() {
 
       {/* Idle */}
       {step === "idle" && (
-        <div className="grid gap-4 sm:grid-cols-2 max-w-lg">
+        <div className="grid gap-4 sm:grid-cols-2 max-w-lg" data-guide="btn-scan">
           <Button className="h-24 text-lg gap-3" onClick={() => setStep("scanning")}>
             <ScanBarcode className="h-7 w-7" />
             Escanear código de barras
