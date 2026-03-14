@@ -649,6 +649,7 @@ export type Database = {
           created_at: string
           email: string
           full_name: string
+          guided_mode: boolean
           id: string
           unidade_id: string | null
           updated_at: string
@@ -662,6 +663,7 @@ export type Database = {
           created_at?: string
           email: string
           full_name: string
+          guided_mode?: boolean
           id?: string
           unidade_id?: string | null
           updated_at?: string
@@ -675,6 +677,7 @@ export type Database = {
           created_at?: string
           email?: string
           full_name?: string
+          guided_mode?: boolean
           id?: string
           unidade_id?: string | null
           updated_at?: string
