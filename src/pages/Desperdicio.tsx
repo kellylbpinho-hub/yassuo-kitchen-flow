@@ -195,7 +195,7 @@ export default function Desperdicio() {
         {canRegister && (
           <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" />Registrar Perda</Button>
+              <Button data-guide="btn-registrar-perda"><Plus className="h-4 w-4 mr-2" />Registrar Perda</Button>
             </DialogTrigger>
             <DialogContent className="bg-card border-border max-w-md">
               <DialogHeader>
