@@ -31,6 +31,7 @@ import ConfiguracoesAcesso from "./pages/ConfiguracoesAcesso";
 import CardapioSemanal from "./pages/CardapioSemanal";
 import PainelNutri from "./pages/PainelNutri";
 import Pratos from "./pages/Pratos";
+import RelatorioExecutivo from "./pages/RelatorioExecutivo";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
