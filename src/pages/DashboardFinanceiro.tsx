@@ -321,7 +321,7 @@ export default function DashboardFinanceiro() {
             </SelectContent>
           </Select>
           <Select value={filterUnit} onValueChange={setFilterUnit}>
-            <SelectTrigger className="w-[160px] bg-input border-border">
+            <SelectTrigger className="w-[160px] bg-input border-border" data-guide="filter-unit-fin">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
