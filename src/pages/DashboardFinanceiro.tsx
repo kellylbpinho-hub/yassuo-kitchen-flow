@@ -311,7 +311,7 @@ export default function DashboardFinanceiro() {
         </div>
         <div className="flex gap-2">
           <Select value={String(period)} onValueChange={(v) => setPeriod(Number(v) as PeriodMonths)}>
-            <SelectTrigger className="w-[140px] bg-input border-border">
+            <SelectTrigger className="w-[140px] bg-input border-border" data-guide="filter-period">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
