@@ -237,7 +237,7 @@ export default function Desperdicio() {
                       Preparação / Item *
                     </Label>
                     <Select value={selectedDishId} onValueChange={setSelectedDishId}>
-                      <SelectTrigger className="bg-input border-border">
+                      <SelectTrigger className="bg-input border-border" data-guide="select-dish">
                         <SelectValue placeholder="Selecione a preparação..." />
                       </SelectTrigger>
                       <SelectContent>
