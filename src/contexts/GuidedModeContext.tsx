@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, useCallback, ReactNode, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -17,6 +17,7 @@ interface GuidedModeContextType {
   nextStep: () => void;
   prevStep: () => void;
   exitTask: () => void;
+  skipTutorial: () => void;
   availableTasks: GuidedTask[];
 }
 
@@ -30,13 +31,46 @@ export function GuidedModeProvider({ children }: { children: ReactNode }) {
   const [showPanel, setShowPanel] = useState(false);
   const [activeTask, setActiveTask] = useState<GuidedTask | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const restoredRef = useRef(false);
 
-  // Load preference from profile
+  // Load preference and restore progress from profile
   useEffect(() => {
-    if (profile && (profile as any).guided_mode) {
+    if (!profile || restoredRef.current) return;
+    const p = profile as any;
+    if (p.guided_mode) {
       setEnabled(true);
+      // Restore saved task progress
+      if (p.guided_task_id && typeof p.guided_step === "number") {
+        const task = guidedTasks.find((t) => t.id === p.guided_task_id);
+        if (task && p.guided_step < task.steps.length) {
+          setActiveTask(task);
+          setCurrentStepIndex(p.guided_step);
+          // Navigate to the task's route if not already there
+          if (location.pathname !== task.route) {
+            navigate(task.route);
+          }
+        } else {
+          // Task finished or invalid, show panel
+          setShowPanel(true);
+        }
+      } else {
+        setShowPanel(true);
+      }
     }
+    restoredRef.current = true;
   }, [profile]);
+
+  // Persist progress whenever step or task changes
+  const persistProgress = useCallback(
+    async (taskId: string | null, step: number) => {
+      if (!profile) return;
+      await supabase
+        .from("profiles")
+        .update({ guided_task_id: taskId, guided_step: step } as any)
+        .eq("user_id", profile.user_id);
+    },
+    [profile]
+  );
 
   const toggleEnabled = useCallback(async () => {
     const next = !enabled;
@@ -45,15 +79,20 @@ export function GuidedModeProvider({ children }: { children: ReactNode }) {
       setShowPanel(false);
       setActiveTask(null);
       setCurrentStepIndex(0);
+      if (profile) {
+        await supabase
+          .from("profiles")
+          .update({ guided_mode: next, guided_task_id: null, guided_step: 0 } as any)
+          .eq("user_id", profile.user_id);
+      }
     } else {
       setShowPanel(true);
-    }
-    // Persist
-    if (profile) {
-      await supabase
-        .from("profiles")
-        .update({ guided_mode: next } as any)
-        .eq("user_id", profile.user_id);
+      if (profile) {
+        await supabase
+          .from("profiles")
+          .update({ guided_mode: next } as any)
+          .eq("user_id", profile.user_id);
+      }
     }
   }, [enabled, profile]);
 
@@ -71,34 +110,57 @@ export function GuidedModeProvider({ children }: { children: ReactNode }) {
       setActiveTask(task);
       setCurrentStepIndex(0);
       setShowPanel(false);
+      persistProgress(taskId, 0);
       if (location.pathname !== task.route) {
         navigate(task.route);
       }
     },
-    [navigate, location.pathname]
+    [navigate, location.pathname, persistProgress]
   );
 
   const nextStep = useCallback(() => {
     if (!activeTask) return;
     if (currentStepIndex < activeTask.steps.length - 1) {
-      setCurrentStepIndex((i) => i + 1);
+      const next = currentStepIndex + 1;
+      setCurrentStepIndex(next);
+      persistProgress(activeTask.id, next);
     } else {
       // Finished
       setActiveTask(null);
       setCurrentStepIndex(0);
       setShowPanel(true);
+      persistProgress(null, 0);
     }
-  }, [activeTask, currentStepIndex]);
+  }, [activeTask, currentStepIndex, persistProgress]);
 
   const prevStep = useCallback(() => {
-    if (currentStepIndex > 0) setCurrentStepIndex((i) => i - 1);
-  }, [currentStepIndex]);
+    if (currentStepIndex > 0) {
+      const prev = currentStepIndex - 1;
+      setCurrentStepIndex(prev);
+      if (activeTask) persistProgress(activeTask.id, prev);
+    }
+  }, [currentStepIndex, activeTask, persistProgress]);
 
   const exitTask = useCallback(() => {
+    // Save progress so user can resume later
+    if (activeTask) persistProgress(activeTask.id, currentStepIndex);
     setActiveTask(null);
     setCurrentStepIndex(0);
     setShowPanel(true);
-  }, []);
+  }, [activeTask, currentStepIndex, persistProgress]);
+
+  const skipTutorial = useCallback(async () => {
+    setActiveTask(null);
+    setCurrentStepIndex(0);
+    setShowPanel(false);
+    setEnabled(false);
+    if (profile) {
+      await supabase
+        .from("profiles")
+        .update({ guided_mode: false, guided_task_id: null, guided_step: 0 } as any)
+        .eq("user_id", profile.user_id);
+    }
+  }, [profile]);
 
   const currentStep = activeTask ? activeTask.steps[currentStepIndex] ?? null : null;
   const totalSteps = activeTask ? activeTask.steps.length : 0;
@@ -118,6 +180,7 @@ export function GuidedModeProvider({ children }: { children: ReactNode }) {
         nextStep,
         prevStep,
         exitTask,
+        skipTutorial,
         availableTasks,
       }}
     >

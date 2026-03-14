@@ -218,6 +218,14 @@ export function GuidedModeOverlay() {
             <ChevronLeft className="h-3 w-3" />
             Anterior
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={skipTutorial}
+            className="h-7 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Pular tutorial
+          </Button>
           <Button size="sm" onClick={nextStep} className="h-7 text-xs gap-1">
             {currentStepIndex === totalSteps - 1 ? "Concluir" : "Próximo"}
             {currentStepIndex < totalSteps - 1 && <ChevronRight className="h-3 w-3" />}
