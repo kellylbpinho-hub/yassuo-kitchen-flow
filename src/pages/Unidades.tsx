@@ -78,7 +78,7 @@ export default function Unidades() {
 
   const openEdit = (unit: Unit) => {
     setEditUnit(unit);
-    setForm({ name: unit.name, type: unit.type, numero_colaboradores: String(unit.numero_colaboradores || 0) });
+    setForm({ name: unit.name, type: unit.type, numero_colaboradores: String(unit.numero_colaboradores || 0), target_meal_cost: unit.target_meal_cost != null ? String(unit.target_meal_cost) : "" });
   };
 
   if (loading) {
