@@ -59,7 +59,7 @@ export default function RealMealCostSection({ period, filterUnit }: Props) {
     const totalFood = data.reduce((s, r) => s + Number(r.total_food_cost), 0);
     const totalWaste = data.reduce((s, r) => s + Number(r.waste_cost), 0);
     const totalMeals = data.reduce((s, r) => s + Number(r.meals_served), 0);
-    const avgCost = totalMeals > 0 ? (totalFood - totalWaste) / totalMeals : 0;
+    const avgCost = totalMeals > 0 ? Math.max(0, (totalFood - totalWaste) / totalMeals) : 0;
 
     // Trend: compare last 30 days vs previous 30 days
     const now = new Date();
