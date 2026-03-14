@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Pencil, Warehouse, UtensilsCrossed, Users } from "lucide-react";
+import { Plus, Loader2, Pencil, Warehouse, UtensilsCrossed, Users, Target } from "lucide-react";
 import { toast } from "sonner";
 
 interface Unit {
@@ -17,6 +17,7 @@ interface Unit {
   type: string;
   company_id: string;
   numero_colaboradores: number;
+  target_meal_cost: number | null;
 }
 
 const typeLabels: Record<string, string> = {
