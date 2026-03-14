@@ -212,7 +212,7 @@ export default function Desperdicio() {
                     Cardápio do Dia *
                   </Label>
                   <Select value={selectedMenuId} onValueChange={(v) => { setSelectedMenuId(v); setSelectedDishId(""); }}>
-                    <SelectTrigger className="bg-input border-border">
+                    <SelectTrigger className="bg-input border-border" data-guide="select-menu">
                       <SelectValue placeholder="Selecione o cardápio..." />
                     </SelectTrigger>
                     <SelectContent>
