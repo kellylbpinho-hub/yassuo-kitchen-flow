@@ -1,15 +1,18 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, DollarSign, TrendingUp, Percent, UtensilsCrossed, Building2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Loader2, DollarSign, TrendingUp, Percent, UtensilsCrossed, Building2, Download, FileText, FileSpreadsheet } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import RealMealCostSection from "@/components/RealMealCostSection";
+import RealMealCostSection, { type MealCostSectionData } from "@/components/RealMealCostSection";
+import { generateDashboardPDF, generateDashboardExcel, type DashboardExportData } from "@/lib/dashboardFinanceiroExport";
 
 interface Unit {
   id: string;
@@ -67,7 +70,9 @@ export default function DashboardFinanceiro() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<PeriodMonths>(6);
   const [filterUnit, setFilterUnit] = useState("all");
+  const [mealCostData, setMealCostData] = useState<MealCostSectionData | null>(null);
 
+  const handleMealCostData = useCallback((d: MealCostSectionData) => setMealCostData(d), []);
   const dateRange = useMemo(() => {
     const end = new Date();
     const start = startOfMonth(subMonths(end, period));
@@ -298,6 +303,54 @@ export default function DashboardFinanceiro() {
   const formatCurrency = (value: number) =>
     `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+  const filterUnitName = filterUnit === "all" ? "Todas as unidades" : (units.find(u => u.id === filterUnit)?.name || filterUnit);
+
+  const handleExport = (type: "pdf" | "excel") => {
+    const mc = mealCostData;
+    const exportData: DashboardExportData = {
+      period: `Últimos ${period} meses`,
+      filterUnitName,
+      kpis: {
+        costPerMeal,
+        totalPurchaseCost,
+        totalWasteCost,
+        totalWasteKg,
+        wastePercentage,
+        totalMeals,
+      },
+      mealCost: {
+        avgCost: mc?.avgCost || 0,
+        grossPerMeal: mc?.grossPerMeal || 0,
+        wastePerMeal: mc?.wastePerMeal || 0,
+        avgTarget: mc?.avgTarget ?? null,
+        deviationPct: mc?.deviationPct ?? null,
+        deviationR: mc?.deviationR ?? null,
+        trend: mc?.trend || 0,
+        totalMeals: mc?.totalMeals || 0,
+      },
+      monthlyData,
+      mealCostChart: mc?.chartData || [],
+      ranking: costByUnit.map(u => {
+        const mcUnit = mc?.unitTable.find(ut => ut.name === u.name);
+        return {
+          name: u.name,
+          type: u.type,
+          purchases: u.purchases,
+          waste: u.waste,
+          wastePercent: u.wastePercent,
+          costPerMeal: u.costPerMeal,
+          meals: u.meals,
+          target: mcUnit?.target ?? null,
+          realCost: mcUnit?.realCost ?? 0,
+          grossCost: mcUnit?.grossCost ?? 0,
+          days: mcUnit?.days ?? 0,
+        };
+      }),
+    };
+    if (type === "pdf") generateDashboardPDF(exportData);
+    else generateDashboardExcel(exportData);
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -310,7 +363,7 @@ export default function DashboardFinanceiro() {
           <h1 className="text-2xl font-display font-bold text-foreground">Dashboard Financeiro</h1>
           <p className="text-sm text-muted-foreground mt-1">Análise de custos e eficiência operacional</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Select value={String(period)} onValueChange={(v) => setPeriod(Number(v) as PeriodMonths)}>
             <SelectTrigger className="w-[140px] bg-input border-border" data-guide="filter-period">
               <SelectValue />
@@ -332,6 +385,21 @@ export default function DashboardFinanceiro() {
               ))}
             </SelectContent>
           </Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="default" className="gap-1.5">
+                <Download className="h-4 w-4" /> Exportar Relatório
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExport("pdf")} className="gap-2 cursor-pointer">
+                <FileText className="h-4 w-4" /> Exportar PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("excel")} className="gap-2 cursor-pointer">
+                <FileSpreadsheet className="h-4 w-4" /> Exportar Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -523,7 +591,7 @@ export default function DashboardFinanceiro() {
       {/* Custo Real da Refeição */}
       <div className="pt-2">
         <h2 className="text-lg font-display font-bold text-foreground mb-3">Custo Real da Refeição</h2>
-        <RealMealCostSection period={period} filterUnit={filterUnit} />
+        <RealMealCostSection period={period} filterUnit={filterUnit} onDataReady={handleMealCostData} />
       </div>
     </div>
   );
