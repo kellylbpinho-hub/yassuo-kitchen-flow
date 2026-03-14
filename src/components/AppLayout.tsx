@@ -73,10 +73,13 @@ export function AppLayout() {
     const showMeusPedidos = isGerenteOperacional || isCeo;
 
     // Suprimentos
+    const isFinanceiroRole = role === "gerente_financeiro";
     const suprimentosItems: NavGroup["items"] = [
       { to: "/estoque", icon: Package, label: "Estoque" },
     ];
-    suprimentosItems.push({ to: "/recebimento-digital", icon: ScanBarcode, label: "Recebimento" });
+    if (!isFinanceiroRole) {
+      suprimentosItems.push({ to: "/recebimento-digital", icon: ScanBarcode, label: "Recebimento" });
+    }
     if (showPedidoInterno) {
       suprimentosItems.push({ to: "/pedido-interno", icon: ClipboardList, label: "Transferência" });
     }
