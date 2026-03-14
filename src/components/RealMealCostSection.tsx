@@ -26,9 +26,23 @@ interface UnitTarget {
   target_meal_cost: number | null;
 }
 
+export interface MealCostSectionData {
+  avgCost: number;
+  grossPerMeal: number;
+  wastePerMeal: number;
+  avgTarget: number | null;
+  deviationPct: number | null;
+  deviationR: number | null;
+  trend: number;
+  totalMeals: number;
+  chartData: { label: string; realCost: number; foodCost: number; wasteCost: number }[];
+  unitTable: { name: string; grossCost: number; realCost: number; waste: number; meals: number; days: number; target: number | null }[];
+}
+
 interface Props {
   period: number;
   filterUnit: string;
+  onDataReady?: (data: MealCostSectionData) => void;
 }
 
 const formatCurrency = (v: number) =>
