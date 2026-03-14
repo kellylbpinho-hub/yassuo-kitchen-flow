@@ -1,3 +1,11 @@
+export type GuidedCompletionType =
+  | "field_filled"
+  | "select_chosen"
+  | "numeric_gt_zero"
+  | "button_clicked"
+  | "submit_success"
+  | "viewed";
+
 export interface GuidedStep {
   /** CSS selector for the element to highlight */
   selector: string;
@@ -5,14 +13,15 @@ export interface GuidedStep {
   instruction: string;
   /** Position of the tooltip relative to the element */
   position?: "top" | "bottom" | "left" | "right";
-  /**
-   * How this step auto-advances after user interaction:
-   * - "click": advances when element is clicked
-   * - "input": advances when element receives input/change (with debounce)
-   * - "observe": no auto-advance, user reads and clicks Próximo manually
-   */
-  trigger?: "click" | "input" | "observe";
-  /** Delay in ms before auto-advancing (default: 600 for click, 1200 for input) */
+  /** Completion rule for this step */
+  completionType: GuidedCompletionType;
+  /** Optional selector to read value from (inside or outside selector root) */
+  completionSelector?: string;
+  /** Required for submit_success; event dispatched by page after successful action */
+  successEvent?: string;
+  /** If step element does not exist, auto-skip (useful for conditional UI) */
+  optional?: boolean;
+  /** Delay in ms before auto-advance after completion */
   advanceDelay?: number;
 }
 
@@ -40,32 +49,33 @@ export const guidedTasks: GuidedTask[] = [
         selector: '[data-guide="btn-registrar-perda"]',
         instruction: "Clique em 'Registrar Perda' para abrir o formulário de desperdício.",
         position: "bottom",
-        trigger: "click",
+        completionType: "button_clicked",
       },
       {
         selector: '[data-guide="select-menu"]',
         instruction: "Selecione o cardápio do dia correspondente.",
         position: "bottom",
-        trigger: "click",
+        completionType: "select_chosen",
       },
       {
         selector: '[data-guide="select-dish"]',
         instruction: "Escolha a preparação (prato) que teve desperdício.",
         position: "bottom",
-        trigger: "click",
+        completionType: "select_chosen",
       },
       {
         selector: '[data-guide="input-weights"]',
         instruction: "Informe as 3 pesagens: Sobra Prato, Sobra Rampa e Orgânico (em kg).",
         position: "top",
-        trigger: "input",
-        advanceDelay: 2000,
+        completionType: "numeric_gt_zero",
+        advanceDelay: 1200,
       },
       {
         selector: '[data-guide="btn-submit-waste"]',
         instruction: "Clique em 'Registrar' para salvar o desperdício.",
         position: "top",
-        trigger: "click",
+        completionType: "submit_success",
+        successEvent: "guided:waste:success",
       },
     ],
   },
@@ -78,27 +88,31 @@ export const guidedTasks: GuidedTask[] = [
     steps: [
       {
         selector: '[data-guide="search-product"]',
-        instruction: "Busque o produto desejado por nome ou categoria.",
+        completionSelector: '[data-guide="search-product"] input',
+        instruction: "Busque e selecione o produto desejado por nome ou categoria.",
         position: "bottom",
-        trigger: "input",
+        completionType: "field_filled",
       },
       {
         selector: '[data-guide="select-cd"]',
         instruction: "Selecione o Centro de Distribuição (CD) de origem.",
         position: "bottom",
-        trigger: "click",
+        completionType: "select_chosen",
+        optional: true,
       },
       {
         selector: '[data-guide="input-qty"]',
+        completionSelector: '[data-guide="input-qty"] input',
         instruction: "Informe a quantidade desejada na unidade de medida do produto.",
         position: "bottom",
-        trigger: "input",
+        completionType: "numeric_gt_zero",
       },
       {
         selector: '[data-guide="btn-submit-transfer"]',
         instruction: "Clique em 'Enviar Pedido ao CD' para solicitar a transferência.",
         position: "top",
-        trigger: "click",
+        completionType: "submit_success",
+        successEvent: "guided:transfer:success",
       },
     ],
   },
@@ -110,33 +124,35 @@ export const guidedTasks: GuidedTask[] = [
     steps: [
       {
         selector: '[data-guide="search-estoque"]',
+        completionSelector: '[data-guide="search-estoque"] input',
         instruction: "Use o campo de busca para encontrar um produto pelo nome.",
         position: "bottom",
-        trigger: "input",
+        completionType: "field_filled",
       },
       {
         selector: '[data-guide="filter-unit"]',
         instruction: "Filtre por unidade para ver o saldo específico de cada local.",
         position: "bottom",
-        trigger: "click",
+        completionType: "select_chosen",
       },
       {
         selector: '[data-guide="category-chips"]',
-        instruction: "Filtre por categoria clicando nos chips (ex: Proteínas, Hortifruti).",
+        instruction: "Filtre por categoria clicando em um chip (ex: Proteínas, Hortifruti).",
         position: "bottom",
-        trigger: "click",
+        completionType: "button_clicked",
       },
       {
         selector: '[data-guide="product-row"]',
         instruction: "Veja os dados do produto na tabela: saldo, mínimo e unidade.",
         position: "bottom",
-        trigger: "observe",
+        completionType: "viewed",
+        advanceDelay: 1400,
       },
       {
         selector: '[data-guide="product-actions"]',
         instruction: "Clique nos 3 pontos para ver Detalhes, Editar ou Movimentar o produto.",
         position: "left",
-        trigger: "click",
+        completionType: "button_clicked",
       },
     ],
   },
@@ -151,31 +167,33 @@ export const guidedTasks: GuidedTask[] = [
         selector: '[data-guide="btn-scan"]',
         instruction: "Escaneie o código de barras do produto ou clique em 'Buscar produto' para buscar manualmente.",
         position: "bottom",
-        trigger: "click",
+        completionType: "button_clicked",
       },
       {
         selector: '[data-guide="input-validade"]',
         instruction: "Informe a data de validade conforme a etiqueta do produto.",
         position: "bottom",
-        trigger: "input",
+        completionType: "field_filled",
       },
       {
         selector: '[data-guide="input-lote"]',
         instruction: "Digite o código do lote impresso na embalagem.",
         position: "bottom",
-        trigger: "input",
+        completionType: "field_filled",
       },
       {
         selector: '[data-guide="input-qty-receb"]',
+        completionSelector: '[data-guide="input-qty-receb"] input',
         instruction: "Informe a quantidade (ou peso) recebida.",
         position: "bottom",
-        trigger: "input",
+        completionType: "numeric_gt_zero",
       },
       {
         selector: '[data-guide="btn-confirm-receb"]',
         instruction: "Clique em 'Confirmar Recebimento' para finalizar a entrada no estoque.",
         position: "top",
-        trigger: "click",
+        completionType: "submit_success",
+        successEvent: "guided:receipt:success",
       },
     ],
   },
@@ -190,19 +208,20 @@ export const guidedTasks: GuidedTask[] = [
         selector: '[data-guide="btn-nova-compra"]',
         instruction: "Clique em 'Novo Pedido' para iniciar uma ordem de compra.",
         position: "bottom",
-        trigger: "click",
+        completionType: "button_clicked",
       },
       {
         selector: '[data-guide="select-unit-compra"]',
         instruction: "Selecione a unidade de destino da compra.",
         position: "bottom",
-        trigger: "click",
+        completionType: "select_chosen",
       },
       {
         selector: '[data-guide="btn-criar-oc"]',
-        instruction: "Clique em 'Criar Pedido' para gerar a OC. Depois adicione itens na tela de detalhes.",
+        instruction: "Clique em 'Criar Pedido' para gerar a OC.",
         position: "top",
-        trigger: "click",
+        completionType: "submit_success",
+        successEvent: "guided:purchase-order:success",
       },
     ],
   },
@@ -217,31 +236,34 @@ export const guidedTasks: GuidedTask[] = [
         selector: '[data-guide="filter-period"]',
         instruction: "Selecione o período de análise (3, 6 ou 12 meses).",
         position: "bottom",
-        trigger: "click",
+        completionType: "select_chosen",
       },
       {
         selector: '[data-guide="filter-unit-fin"]',
         instruction: "Filtre por unidade específica ou veja todas.",
         position: "bottom",
-        trigger: "click",
+        completionType: "select_chosen",
       },
       {
         selector: '[data-guide="kpi-cards"]',
         instruction: "Aqui estão os KPIs: custo por refeição, custo total, desperdício e % desp/custo.",
         position: "bottom",
-        trigger: "observe",
+        completionType: "viewed",
+        advanceDelay: 1400,
       },
       {
         selector: '[data-guide="chart-monthly"]',
         instruction: "Acompanhe a evolução mensal de compras vs desperdício.",
         position: "top",
-        trigger: "observe",
+        completionType: "viewed",
+        advanceDelay: 1400,
       },
       {
         selector: '[data-guide="ranking-table"]',
         instruction: "Veja o ranking por contrato/unidade com custo e eficiência.",
         position: "top",
-        trigger: "observe",
+        completionType: "viewed",
+        advanceDelay: 1400,
       },
     ],
   },
