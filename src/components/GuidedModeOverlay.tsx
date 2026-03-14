@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useGuidedMode } from "@/contexts/GuidedModeContext";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Check } from "lucide-react";
 
 export function GuidedModeOverlay() {
   const { activeTask, currentStep, currentStepIndex, totalSteps, nextStep, prevStep, exitTask, skipTutorial, enabled } =
@@ -10,9 +10,31 @@ export function GuidedModeOverlay() {
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const [arrowStyle, setArrowStyle] = useState<React.CSSProperties>({});
   const [arrowDir, setArrowDir] = useState<"top" | "bottom" | "left" | "right">("bottom");
+  const [actionDone, setActionDone] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const retryRef = useRef<number>(0);
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Reset actionDone when step changes
+  useEffect(() => {
+    setActionDone(false);
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current);
+      advanceTimerRef.current = null;
+    }
+  }, [currentStepIndex, activeTask?.id]);
+
+  // Schedule auto-advance after action is done
+  const scheduleAdvance = useCallback(() => {
+    if (actionDone) return;
+    setActionDone(true);
+    const delay = currentStep?.advanceDelay ?? (currentStep?.trigger === "input" ? 1200 : 600);
+    advanceTimerRef.current = setTimeout(() => {
+      nextStep();
+    }, delay);
+  }, [actionDone, currentStep, nextStep]);
+
+  // Find and track the target element
   useEffect(() => {
     if (!currentStep || !enabled) {
       setRect(null);
@@ -26,10 +48,8 @@ export function GuidedModeOverlay() {
         setRect(r);
         retryRef.current = 0;
 
-        // Scroll into view if needed
         if (r.top < 0 || r.bottom > window.innerHeight) {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
-          // Re-measure after scroll
           setTimeout(() => setRect(el.getBoundingClientRect()), 400);
         }
       } else if (retryRef.current < 10) {
@@ -40,10 +60,41 @@ export function GuidedModeOverlay() {
       }
     };
 
-    // Small delay for DOM to render after navigation
     const timer = setTimeout(find, 300);
     return () => clearTimeout(timer);
   }, [currentStep, enabled]);
+
+  // Attach event listeners to the target element for auto-advance
+  useEffect(() => {
+    if (!currentStep || !enabled || actionDone) return;
+    const trigger = currentStep.trigger || "observe";
+    if (trigger === "observe") return; // no auto-advance for observe steps
+
+    const el = document.querySelector(currentStep.selector);
+    if (!el) return;
+
+    const handleClick = () => scheduleAdvance();
+    const handleInput = () => scheduleAdvance();
+
+    if (trigger === "click") {
+      // Listen on the element and all descendants
+      el.addEventListener("click", handleClick, { capture: true });
+      return () => el.removeEventListener("click", handleClick, { capture: true });
+    }
+
+    if (trigger === "input") {
+      // Listen for input, change, and focus events on inputs within
+      el.addEventListener("input", handleInput, { capture: true });
+      el.addEventListener("change", handleInput, { capture: true });
+      // Also listen for clicks (for selects/dropdowns)
+      el.addEventListener("click", handleClick, { capture: true });
+      return () => {
+        el.removeEventListener("input", handleInput, { capture: true });
+        el.removeEventListener("change", handleInput, { capture: true });
+        el.removeEventListener("click", handleClick, { capture: true });
+      };
+    }
+  }, [currentStep, enabled, actionDone, scheduleAdvance]);
 
   // Position tooltip
   useEffect(() => {
@@ -77,13 +128,11 @@ export function GuidedModeOverlay() {
         break;
     }
 
-    // Clamp to viewport
     left = Math.max(8, Math.min(left, window.innerWidth - tooltipW - 8));
     top = Math.max(8, Math.min(top, window.innerHeight - tooltipH - 8));
 
     setTooltipStyle({ top, left, width: tooltipW });
 
-    // Arrow
     const arrowS: React.CSSProperties = { position: "absolute" };
     switch (pos) {
       case "bottom":
@@ -111,6 +160,8 @@ export function GuidedModeOverlay() {
   }, [rect, currentStep]);
 
   if (!enabled || !activeTask || !currentStep) return null;
+
+  const trigger = currentStep.trigger || "observe";
 
   return (
     <>
@@ -145,7 +196,11 @@ export function GuidedModeOverlay() {
         {/* Highlight ring */}
         {rect && (
           <div
-            className="absolute border-2 border-primary rounded-lg shadow-[0_0_0_4px_hsl(350_95%_43%/0.2)] pointer-events-none animate-pulse"
+            className={`absolute border-2 rounded-lg pointer-events-none ${
+              actionDone
+                ? "border-[hsl(var(--success))] shadow-[0_0_0_4px_hsl(142_71%_45%/0.3)]"
+                : "border-primary shadow-[0_0_0_4px_hsl(350_95%_43%/0.2)] animate-pulse"
+            }`}
             style={{
               top: rect.top - 6,
               left: rect.left - 6,
@@ -156,7 +211,7 @@ export function GuidedModeOverlay() {
         )}
       </div>
 
-      {/* Allow clicks on the highlighted element */}
+      {/* Allow clicks on the highlighted element — pass through to real element */}
       {rect && (
         <div
           className="fixed z-[71]"
@@ -197,7 +252,20 @@ export function GuidedModeOverlay() {
           </button>
         </div>
 
-        <p className="text-sm text-foreground leading-relaxed mb-3">{currentStep.instruction}</p>
+        <p className="text-sm text-foreground leading-relaxed mb-1">{currentStep.instruction}</p>
+
+        {/* Action hint */}
+        {actionDone ? (
+          <p className="text-xs text-[hsl(var(--success))] font-medium flex items-center gap-1 mb-2">
+            <Check className="h-3 w-3" /> Feito! Avançando...
+          </p>
+        ) : trigger !== "observe" ? (
+          <p className="text-xs text-muted-foreground mb-2 italic">
+            {trigger === "click" ? "👆 Execute a ação para continuar" : "✏️ Preencha para continuar"}
+          </p>
+        ) : (
+          <div className="mb-2" />
+        )}
 
         {/* Progress bar */}
         <div className="w-full h-1 bg-muted rounded-full mb-3 overflow-hidden">
@@ -224,7 +292,7 @@ export function GuidedModeOverlay() {
             onClick={skipTutorial}
             className="h-7 text-xs text-muted-foreground hover:text-foreground"
           >
-            Pular tutorial
+            Pular
           </Button>
           <Button size="sm" onClick={nextStep} className="h-7 text-xs gap-1">
             {currentStepIndex === totalSteps - 1 ? "Concluir" : "Próximo"}
