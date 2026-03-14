@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { GuidedModeProvider } from "@/contexts/GuidedModeContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
 import Index from "./pages/Index";
@@ -46,7 +47,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/esqueci-senha" element={<ForgotPassword />} />
             <Route path="/redefinir-senha" element={<ResetPassword />} />
-            <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+            <Route element={<ProtectedRoute><GuidedModeProvider><AppLayout /></GuidedModeProvider></ProtectedRoute>}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/estoque" element={<Estoque />} />
               <Route path="/compras" element={<Compras />} />

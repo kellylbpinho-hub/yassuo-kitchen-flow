@@ -15,6 +15,7 @@ interface Profile {
   avatar_url: string | null;
   ativo: boolean;
   company_id: string;
+  guided_mode?: boolean;
 }
 
 interface AuthContextType {

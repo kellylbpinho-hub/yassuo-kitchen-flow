@@ -32,6 +32,9 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { GuidedModeToggle } from "@/components/GuidedModeToggle";
+import { GuidedModePanel } from "@/components/GuidedModePanel";
+import { GuidedModeOverlay } from "@/components/GuidedModeOverlay";
 
 interface NavGroup {
   label: string;
@@ -255,7 +258,9 @@ export function AppLayout() {
           >
             <LogOut className="h-5 w-5" />
           </button>
-          <div className="hidden lg:flex-1 lg:block" />
+          <div className="hidden lg:flex lg:flex-1 lg:justify-end">
+            <GuidedModeToggle />
+          </div>
         </header>
 
         <div className="flex-1 overflow-auto p-3 pb-16 lg:p-5 lg:pb-5">
@@ -264,6 +269,8 @@ export function AppLayout() {
       </main>
 
       <MobileBottomNav />
+      <GuidedModePanel />
+      <GuidedModeOverlay />
     </div>
   );
 }
