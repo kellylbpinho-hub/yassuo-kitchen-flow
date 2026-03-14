@@ -640,7 +640,7 @@ export default function RecebimentoDigital() {
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={handleReceipt} disabled={loading}>
+            <Button onClick={handleReceipt} disabled={loading} data-guide="btn-confirm-receb">
               {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Confirmar Recebimento
             </Button>

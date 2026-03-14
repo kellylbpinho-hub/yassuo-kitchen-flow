@@ -461,7 +461,7 @@ export default function DashboardFinanceiro() {
       </div>
 
       {/* Ranking Table */}
-      <Card>
+      <Card data-guide="ranking-table">
         <CardHeader className="pb-2 p-4">
           <CardTitle className="text-sm font-display flex items-center gap-2">
             <Building2 className="h-4 w-4 text-primary" />

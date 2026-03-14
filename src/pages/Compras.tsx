@@ -107,7 +107,7 @@ export default function Compras() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button onClick={createOrder} className="w-full">Criar Pedido</Button>
+                <Button onClick={createOrder} className="w-full" data-guide="btn-criar-oc">Criar Pedido</Button>
               </div>
             </DialogContent>
           </Dialog>
