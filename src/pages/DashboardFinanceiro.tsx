@@ -303,11 +303,55 @@ export default function DashboardFinanceiro() {
   const formatCurrency = (value: number) =>
     `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-  }
+  const filterUnitName = filterUnit === "all" ? "Todas as unidades" : (units.find(u => u.id === filterUnit)?.name || filterUnit);
 
-  return (
+  const handleExport = (type: "pdf" | "excel") => {
+    const mc = mealCostData;
+    const exportData: DashboardExportData = {
+      period: `Últimos ${period} meses`,
+      filterUnitName,
+      kpis: {
+        costPerMeal,
+        totalPurchaseCost,
+        totalWasteCost,
+        totalWasteKg,
+        wastePercentage,
+        totalMeals,
+      },
+      mealCost: {
+        avgCost: mc?.avgCost || 0,
+        grossPerMeal: mc?.grossPerMeal || 0,
+        wastePerMeal: mc?.wastePerMeal || 0,
+        avgTarget: mc?.avgTarget ?? null,
+        deviationPct: mc?.deviationPct ?? null,
+        deviationR: mc?.deviationR ?? null,
+        trend: mc?.trend || 0,
+        totalMeals: mc?.totalMeals || 0,
+      },
+      monthlyData,
+      mealCostChart: mc?.chartData || [],
+      ranking: costByUnit.map(u => {
+        const mcUnit = mc?.unitTable.find(ut => ut.name === u.name);
+        return {
+          name: u.name,
+          type: u.type,
+          purchases: u.purchases,
+          waste: u.waste,
+          wastePercent: u.wastePercent,
+          costPerMeal: u.costPerMeal,
+          meals: u.meals,
+          target: mcUnit?.target ?? null,
+          realCost: mcUnit?.realCost ?? 0,
+          grossCost: mcUnit?.grossCost ?? 0,
+          days: mcUnit?.days ?? 0,
+        };
+      }),
+    };
+    if (type === "pdf") generateDashboardPDF(exportData);
+    else generateDashboardExcel(exportData);
+  };
+
+  if (loading) {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
