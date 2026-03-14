@@ -470,7 +470,7 @@ export default function PedidoInterno() {
           />
         </div>
 
-        <Button onClick={handleSubmit} disabled={sending} className="w-full gap-2">
+        <Button onClick={handleSubmit} disabled={sending} className="w-full gap-2" data-guide="btn-submit-transfer">
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           Enviar Pedido ao CD
         </Button>

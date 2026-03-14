@@ -313,7 +313,7 @@ export default function Desperdicio() {
                       />
                     </div>
 
-                    <Button onClick={addWaste} className="w-full" disabled={saving}>
+                    <Button onClick={addWaste} className="w-full" disabled={saving} data-guide="btn-submit-waste">
                       {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                       Registrar
                     </Button>
