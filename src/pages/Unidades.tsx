@@ -194,6 +194,13 @@ export default function Unidades() {
                           <span className="font-medium">{u.numero_colaboradores || 0}</span>
                         </div>
                       </TableCell>
+                      <TableCell className="text-right">
+                        {u.target_meal_cost != null && u.target_meal_cost > 0 ? (
+                          <span className="font-medium">R$ {Number(u.target_meal_cost).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">Sem meta</span>
+                        )}
+                      </TableCell>
                       {canManage && (
                         <TableCell>
                           <Button variant="ghost" size="sm" onClick={() => openEdit(u)}>
