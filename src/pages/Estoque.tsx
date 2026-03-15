@@ -66,6 +66,7 @@ export default function Estoque() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [stockByUnit, setStockByUnit] = useState<StockByUnit[]>([]);
+  const [consumptionMovements, setConsumptionMovements] = useState<MovementRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterUnit, setFilterUnit] = useState("all");
