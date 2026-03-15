@@ -310,6 +310,194 @@ export function generateMenuWeekPDF(data: MenuPDFData) {
   doc.save(`cardapio-semanal-${data.weekLabel.replace(/\//g, "-")}.pdf`);
 }
 
+// ──────────────────── Menu Técnico PDF ────────────────────
+
+interface MenuTecnicoPDFDay {
+  dayLabel: string;
+  dateLabel: string;
+  status: string;
+  dishes: { nome: string; category: string; descricao?: string }[];
+}
+
+interface MenuTecnicoPDFData {
+  weekLabel: string;
+  unitName: string;
+  numColaboradores: number;
+  observacao?: string;
+  days: MenuTecnicoPDFDay[];
+}
+
+export function generateMenuTecnicoPDF(data: MenuTecnicoPDFData) {
+  const doc = new jsPDF();
+  addHeader(doc, "Cardápio Técnico");
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Período: ${data.weekLabel}`, 14, 48);
+  doc.text(`Unidade / Contrato: ${data.unitName}`, 14, 54);
+  doc.text(`Qtd. Prevista de Refeições: ${data.numColaboradores}`, 14, 60);
+  if (data.observacao) doc.text(`Observação: ${data.observacao}`, 14, 66);
+
+  let yPos = data.observacao ? 74 : 68;
+
+  for (const day of data.days) {
+    if (yPos > 255) { doc.addPage(); yPos = 20; }
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0);
+    doc.text(`${day.dayLabel} — ${day.dateLabel}`, 14, yPos);
+    yPos += 2;
+
+    if (day.status !== "Com cardápio" && day.status !== "com_cardapio") {
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(120);
+      doc.text(day.status, 18, yPos + 4);
+      yPos += 10;
+      continue;
+    }
+
+    if (day.dishes.length === 0) {
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(120);
+      doc.text("Nenhuma preparação definida", 18, yPos + 4);
+      yPos += 10;
+      continue;
+    }
+
+    // Table for the day
+    const tableBody = day.dishes.map((d) => [d.category || "Geral", d.nome, d.descricao || ""]);
+
+    autoTable(doc, {
+      startY: yPos + 2,
+      head: [["Categoria", "Preparação", "Observação"]],
+      body: tableBody,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [50, 50, 50], textColor: 255 },
+      theme: "grid",
+      margin: { left: 14, right: 14 },
+      columnStyles: { 0: { cellWidth: 35 }, 2: { cellWidth: 50, fontStyle: "italic" } },
+    });
+
+    yPos = ((doc as any).lastAutoTable?.finalY || yPos + 20) + 6;
+  }
+
+  // Signature area
+  if (yPos > 250) { doc.addPage(); yPos = 20; }
+  doc.setFontSize(9);
+  doc.setTextColor(0);
+  doc.text("Nutricionista Responsável: ___________________________  CRN: __________", 14, yPos + 10);
+  doc.text("Data: ___/___/______", 14, yPos + 20);
+
+  addFooter(doc);
+  doc.save(`cardapio-tecnico-${data.weekLabel.replace(/\//g, "-")}.pdf`);
+}
+
+// ──────────────────── Ficha Técnica PDF ────────────────────
+
+interface FichaTecnicaPDFData {
+  dishName: string;
+  category: string;
+  rendimentoKg: number;
+  numPorcoes: number;
+  modoPreparo?: string;
+  observacoes?: string;
+  ingredients: {
+    produto: string;
+    quantidade: number;
+    unidade: string;
+    custoUnitario: number | null;
+    custoTotal: number | null;
+  }[];
+}
+
+export function generateFichaTecnicaPDF(data: FichaTecnicaPDFData) {
+  const doc = new jsPDF();
+  addHeader(doc, "Ficha Técnica de Preparação");
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Preparação: ${data.dishName}`, 14, 48);
+  doc.text(`Categoria: ${data.category}`, 14, 54);
+  doc.text(`Rendimento: ${data.rendimentoKg.toFixed(3)} kg`, 14, 60);
+  doc.text(`Nº de Porções: ${data.numPorcoes}`, 14, 66);
+  if (data.numPorcoes > 0) {
+    doc.text(`Porção: ${(data.rendimentoKg / data.numPorcoes * 1000).toFixed(0)}g`, 110, 66);
+  }
+
+  const custoTotal = data.ingredients.reduce((s, i) => s + (i.custoTotal || 0), 0);
+  const custoPorcao = data.numPorcoes > 0 ? custoTotal / data.numPorcoes : 0;
+
+  doc.setFont("helvetica", "bold");
+  doc.text(`Custo Total: R$ ${custoTotal.toFixed(2)}`, 14, 74);
+  doc.text(`Custo por Porção: R$ ${custoPorcao.toFixed(2)}`, 110, 74);
+
+  // Ingredients table
+  const tableBody = data.ingredients.map((i) => [
+    i.produto,
+    i.quantidade.toFixed(3),
+    i.unidade,
+    i.custoUnitario != null ? `R$ ${i.custoUnitario.toFixed(2)}` : "—",
+    i.custoTotal != null ? `R$ ${i.custoTotal.toFixed(2)}` : "—",
+  ]);
+
+  autoTable(doc, {
+    startY: 82,
+    head: [["Ingrediente", "Quantidade", "Unidade", "Custo Unit.", "Custo Total"]],
+    body: tableBody,
+    foot: [["", "", "", "Total:", `R$ ${custoTotal.toFixed(2)}`]],
+    styles: { fontSize: 9, cellPadding: 3 },
+    headStyles: { fillColor: [30, 30, 30], textColor: 255 },
+    footStyles: { fillColor: [240, 240, 240], textColor: 30, fontStyle: "bold" },
+    theme: "grid",
+    columnStyles: { 1: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" } },
+  });
+
+  let yPos = ((doc as any).lastAutoTable?.finalY || 130) + 8;
+
+  // Modo de preparo
+  if (data.modoPreparo) {
+    if (yPos > 240) { doc.addPage(); yPos = 20; }
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0);
+    doc.text("Modo de Preparo", 14, yPos);
+    yPos += 6;
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    const lines = doc.splitTextToSize(data.modoPreparo, 180);
+    doc.text(lines, 14, yPos);
+    yPos += lines.length * 4.5 + 6;
+  }
+
+  // Observações
+  if (data.observacoes) {
+    if (yPos > 250) { doc.addPage(); yPos = 20; }
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0);
+    doc.text("Observações", 14, yPos);
+    yPos += 6;
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    const lines = doc.splitTextToSize(data.observacoes, 180);
+    doc.text(lines, 14, yPos);
+    yPos += lines.length * 4.5 + 6;
+  }
+
+  // Signature
+  if (yPos > 250) { doc.addPage(); yPos = 20; }
+  doc.setFontSize(9);
+  doc.setTextColor(0);
+  doc.text("Nutricionista Responsável: ___________________________  CRN: __________", 14, yPos + 6);
+  doc.text("Data: ___/___/______", 14, yPos + 16);
+
+  addFooter(doc);
+  doc.save(`ficha-tecnica-${data.dishName.replace(/\s/g, "-").substring(0, 30)}.pdf`);
+}
+
 // ──────────────────── Shared helpers ────────────────────
 
 function addHeader(doc: jsPDF, subtitle: string) {

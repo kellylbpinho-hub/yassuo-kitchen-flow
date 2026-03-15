@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CardapioDiaSheet from "@/components/CardapioDiaSheet";
-import { generateMenuWeekPDF } from "@/lib/pdfExport";
+import { generateMenuWeekPDF, generateMenuTecnicoPDF } from "@/lib/pdfExport";
 
 interface MenuData {
   id: string;
@@ -179,7 +179,43 @@ export default function CardapioSemanal() {
             }}
           >
             <FileText className="h-4 w-4" />
-            PDF
+            PDF Simples
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={async () => {
+              // Get unit info for num colaboradores
+              const unitIds = [...new Set(menus.map(m => m.unidade_id))];
+              let unitName = "—";
+              let numColab = 0;
+              if (unitIds.length > 0) {
+                const { data: unitData } = await supabase.from("units").select("name, numero_colaboradores").eq("id", unitIds[0]).single();
+                if (unitData) { unitName = unitData.name; numColab = unitData.numero_colaboradores || 0; }
+              }
+              const days = weekDates.map((date) => {
+                const menu = getMenuForDate(date);
+                const dishes = getDishesForMenu(menu?.id);
+                const status = getDayStatus(menu, dishes.length);
+                const cfg = STATUS_CONFIG[status];
+                const dishesWithNames = dishes.map((md) => {
+                  const dish = allDishes.find((d) => d.id === md.dish_id);
+                  const cat = dish?.category_id ? categories.find((c) => c.id === dish.category_id)?.nome || "Geral" : "Geral";
+                  return { nome: dish?.nome || "", category: cat, descricao: dish ? undefined : undefined };
+                });
+                return {
+                  dayLabel: format(date, "EEEE", { locale: ptBR }),
+                  dateLabel: format(date, "dd/MM"),
+                  status: cfg.label,
+                  dishes: dishesWithNames,
+                };
+              });
+              generateMenuTecnicoPDF({ weekLabel, unitName, numColaboradores: numColab, days });
+            }}
+          >
+            <FileText className="h-4 w-4" />
+            PDF Técnico
           </Button>
         </div>
       </div>
