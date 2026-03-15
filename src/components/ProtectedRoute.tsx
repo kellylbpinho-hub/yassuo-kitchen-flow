@@ -11,6 +11,7 @@ const FINANCEIRO_BLOCKED_ROUTES = [
   "/usuarios",
   "/unidades",
   "/configuracoes-acesso",
+  "/radar-operacao",
 ];
 
 const NUTRICIONISTA_BLOCKED_ROUTES = [
