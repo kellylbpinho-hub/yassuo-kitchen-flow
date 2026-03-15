@@ -107,6 +107,10 @@ export default function Estoque() {
       toast.error("Preencha nome e unidade.");
       return;
     }
+    if (!form.marca.trim()) {
+      toast.error("Marca é obrigatória.");
+      return;
+    }
     if (!form.categoria) {
       toast.error("Selecione uma categoria.");
       return;
@@ -256,7 +260,7 @@ export default function Estoque() {
                       <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="bg-input border-border" />
                     </div>
                     <div>
-                      <Label>Marca</Label>
+                      <Label>Marca *</Label>
                       <Input value={form.marca} onChange={(e) => setForm({ ...form, marca: e.target.value })} className="bg-input border-border" placeholder="Ex: Nestlé, Sadia..." />
                     </div>
                     <div>

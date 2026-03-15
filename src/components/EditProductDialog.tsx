@@ -40,6 +40,14 @@ export function EditProductDialog({ product, open, onClose, onSaved }: EditProdu
       toast.error("Nome do produto é obrigatório.");
       return;
     }
+    if (!marca.trim()) {
+      toast.error("Marca é obrigatória.");
+      return;
+    }
+    if (!categoria) {
+      toast.error("Categoria é obrigatória.");
+      return;
+    }
     setSaving(true);
     const { error } = await supabase
       .from("products")
@@ -82,7 +90,7 @@ export function EditProductDialog({ product, open, onClose, onSaved }: EditProdu
             />
           </div>
           <div>
-            <Label>Marca</Label>
+            <Label>Marca *</Label>
             <Input
               value={marca}
               onChange={(e) => setMarca(e.target.value)}
@@ -91,7 +99,7 @@ export function EditProductDialog({ product, open, onClose, onSaved }: EditProdu
             />
           </div>
           <div>
-            <Label>Categoria</Label>
+            <Label>Categoria *</Label>
             <Select value={categoria} onValueChange={setCategoria}>
               <SelectTrigger className="bg-input border-border">
                 <SelectValue placeholder="Selecione..." />
