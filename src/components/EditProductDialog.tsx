@@ -90,7 +90,7 @@ export function EditProductDialog({ product, open, onClose, onSaved }: EditProdu
             />
           </div>
           <div>
-            <Label>Marca</Label>
+            <Label>Marca *</Label>
             <Input
               value={marca}
               onChange={(e) => setMarca(e.target.value)}
