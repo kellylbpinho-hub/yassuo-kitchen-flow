@@ -192,6 +192,7 @@ export default function Unidades() {
                 <TableHead>Tipo</TableHead>
                 <TableHead className="text-center">Colaboradores</TableHead>
                 <TableHead className="text-right">Meta/Refeição</TableHead>
+                <TableHead className="text-right">Contrato Mensal</TableHead>
                 {canManage && <TableHead className="w-20">Ações</TableHead>}
               </TableRow>
             </TableHeader>
