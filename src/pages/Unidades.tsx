@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Pencil, Warehouse, UtensilsCrossed, Users, Target } from "lucide-react";
+import { Plus, Loader2, Pencil, Warehouse, UtensilsCrossed, Users, Target, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
 interface Unit {
