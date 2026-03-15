@@ -99,7 +99,7 @@ export function EditProductDialog({ product, open, onClose, onSaved }: EditProdu
             />
           </div>
           <div>
-            <Label>Categoria</Label>
+            <Label>Categoria *</Label>
             <Select value={categoria} onValueChange={setCategoria}>
               <SelectTrigger className="bg-input border-border">
                 <SelectValue placeholder="Selecione..." />
