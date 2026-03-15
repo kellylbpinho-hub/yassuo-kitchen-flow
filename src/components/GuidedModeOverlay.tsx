@@ -514,7 +514,11 @@ export function GuidedModeOverlay() {
 
       {/* Tooltip */}
       <div
-        className="fixed z-[72] bg-card border border-border rounded-xl shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-200"
+        ref={tooltipRef}
+        data-guided-overlay="true"
+        className={`fixed z-[72] bg-card border border-border shadow-2xl animate-in fade-in zoom-in-95 duration-200 transition-all ${
+          compactMode ? "rounded-lg p-3" : "rounded-xl p-4"
+        }`}
         style={tooltipStyle}
       >
         <div style={arrowStyle}>
@@ -523,7 +527,7 @@ export function GuidedModeOverlay() {
           </svg>
         </div>
 
-        <div className="flex items-start justify-between gap-2 mb-3">
+        <div className={`flex items-start justify-between gap-2 ${compactMode ? "mb-2" : "mb-3"}`}>
           <div>
             <p className="text-xs font-semibold text-primary">
               {activeTask.emoji} {activeTask.label}
@@ -537,7 +541,9 @@ export function GuidedModeOverlay() {
           </button>
         </div>
 
-        <p className="text-sm text-foreground leading-relaxed mb-1">{currentStep.instruction}</p>
+        <p className={`text-foreground leading-relaxed ${compactMode ? "text-xs mb-1 line-clamp-2" : "text-sm mb-1"}`}>
+          {currentStep.instruction}
+        </p>
 
         {stepCompleted ? (
           <p className="text-xs text-[hsl(var(--success))] font-medium flex items-center gap-1 mb-2">
@@ -547,37 +553,41 @@ export function GuidedModeOverlay() {
           <p className="text-xs text-muted-foreground mb-2 italic">{completionLabel[currentStep.completionType]}</p>
         )}
 
-        <div className="w-full h-1 bg-muted rounded-full mb-3 overflow-hidden">
-          <div
-            className="h-full bg-primary rounded-full transition-all duration-300"
-            style={{ width: `${((currentStepIndex + 1) / totalSteps) * 100}%` }}
-          />
-        </div>
+        {!compactMode && (
+          <>
+            <div className="w-full h-1 bg-muted rounded-full mb-3 overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-300"
+                style={{ width: `${((currentStepIndex + 1) / totalSteps) * 100}%` }}
+              />
+            </div>
 
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={prevStep}
-            disabled={currentStepIndex === 0}
-            className="h-7 text-xs gap-1"
-          >
-            <ChevronLeft className="h-3 w-3" />
-            Voltar
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={skipTutorial}
-            className="h-7 text-xs text-muted-foreground hover:text-foreground"
-          >
-            Pular tutorial
-          </Button>
-          <Button size="sm" onClick={nextStep} disabled={!stepCompleted} className="h-7 text-xs gap-1">
-            {currentStepIndex === totalSteps - 1 ? "Concluir" : "Próximo"}
-            {currentStepIndex < totalSteps - 1 && <ChevronRight className="h-3 w-3" />}
-          </Button>
-        </div>
+            <div className="flex items-center justify-between">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={prevStep}
+                disabled={currentStepIndex === 0}
+                className="h-7 text-xs gap-1"
+              >
+                <ChevronLeft className="h-3 w-3" />
+                Voltar
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={skipTutorial}
+                className="h-7 text-xs text-muted-foreground hover:text-foreground"
+              >
+                Pular tutorial
+              </Button>
+              <Button size="sm" onClick={nextStep} disabled={!stepCompleted} className="h-7 text-xs gap-1">
+                {currentStepIndex === totalSteps - 1 ? "Concluir" : "Próximo"}
+                {currentStepIndex < totalSteps - 1 && <ChevronRight className="h-3 w-3" />}
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </>
   );
