@@ -20,7 +20,7 @@ interface RecipeIngredient {
   fator_correcao: number;
 }
 
-interface Product { id: string; nome: string; unidade_medida: string; }
+interface Product { id: string; nome: string; unidade_medida: string; custo_unitario: number | null; }
 
 interface Props {
   menuId: string;
