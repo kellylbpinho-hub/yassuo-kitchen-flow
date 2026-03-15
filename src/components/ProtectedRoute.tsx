@@ -25,6 +25,7 @@ const NUTRICIONISTA_BLOCKED_ROUTES = [
   "/unidades",
   "/aprovacoes-cd",
   "/configuracoes-acesso",
+  "/radar-operacao",
 ];
 
 const ESTOQUISTA_BLOCKED_ROUTES = [
