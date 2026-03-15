@@ -1,6 +1,8 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// ──────────────────── Purchase Order PDF ────────────────────
+
 interface PurchaseOrderPDFData {
   orderNumber: string;
   date: string;
@@ -19,22 +21,7 @@ interface PurchaseOrderPDFData {
 
 export function generatePurchaseOrderPDF(data: PurchaseOrderPDFData) {
   const doc = new jsPDF();
-
-  // Header
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.text("Yassuo Alimentação", 14, 20);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text("Sistema de Gestão de Food Service", 14, 26);
-
-  doc.setDrawColor(200);
-  doc.line(14, 30, 196, 30);
-
-  // Order info
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text("Ordem de Compra", 14, 40);
+  addHeader(doc, "Ordem de Compra");
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -43,7 +30,6 @@ export function generatePurchaseOrderPDF(data: PurchaseOrderPDFData) {
   doc.text(`Unidade: ${data.unitName}`, 14, 60);
   doc.text(`Status: ${data.status}`, 14, 66);
 
-  // Table
   const tableData = data.items.map((item) => [
     item.produto,
     item.quantidade.toString(),
@@ -66,17 +52,11 @@ export function generatePurchaseOrderPDF(data: PurchaseOrderPDFData) {
     theme: "grid",
   });
 
-  // Footer
-  const pageCount = doc.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text(`Gerado em ${new Date().toLocaleString("pt-BR")} — Yassuo Alimentação`, 14, doc.internal.pageSize.height - 10);
-  }
-
+  addFooter(doc);
   doc.save(`${data.orderNumber}.pdf`);
 }
+
+// ──────────────────── Requisição Interna PDF ────────────────────
 
 interface RequisicaoInternaData {
   menuName: string;
@@ -88,20 +68,7 @@ interface RequisicaoInternaData {
 
 export function generateRequisicaoInternaPDF(data: RequisicaoInternaData) {
   const doc = new jsPDF();
-
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.text("Yassuo Alimentação", 14, 20);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text("Requisição Interna de Insumos", 14, 26);
-
-  doc.setDrawColor(200);
-  doc.line(14, 30, 196, 30);
-
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("Requisição para Produção", 14, 40);
+  addHeader(doc, "Requisição Interna de Insumos");
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -119,19 +86,18 @@ export function generateRequisicaoInternaPDF(data: RequisicaoInternaData) {
     theme: "grid",
   });
 
-  // Signature area
   const finalY = (doc as any).lastAutoTable?.finalY || 120;
   doc.setFontSize(9);
+  doc.setTextColor(0);
   doc.text("Solicitado por: ___________________________", 14, finalY + 20);
   doc.text("Liberado por: ___________________________", 14, finalY + 30);
   doc.text("Data: ___/___/______", 14, finalY + 40);
 
-  doc.setFontSize(8);
-  doc.setTextColor(150);
-  doc.text(`Gerado em ${new Date().toLocaleString("pt-BR")} — Yassuo Alimentação`, 14, doc.internal.pageSize.height - 10);
-
+  addFooter(doc);
   doc.save(`requisicao-interna-${data.menuName.replace(/\s/g, "-").substring(0, 20)}.pdf`);
 }
+
+// ──────────────────── Performance PDF ────────────────────
 
 export function generatePerformancePDF(dashData: {
   sobraLimpa: number;
@@ -142,22 +108,10 @@ export function generatePerformancePDF(dashData: {
   canSeeCosts: boolean;
 }) {
   const doc = new jsPDF();
-
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.text("Yassuo Alimentação", 14, 20);
+  addHeader(doc, "Relatório de Performance");
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text("Relatório de Performance", 14, 26);
-  doc.text(`Período: ${new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`, 14, 32);
-
-  doc.setDrawColor(200);
-  doc.line(14, 36, 196, 36);
-
-  // KPIs
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("Indicadores do Mês", 14, 46);
+  doc.text(`Período: ${new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`, 14, 48);
 
   const kpis: string[][] = [
     ["Sobra Limpa (kg)", dashData.sobraLimpa.toFixed(2)],
@@ -169,7 +123,7 @@ export function generatePerformancePDF(dashData: {
   }
 
   autoTable(doc, {
-    startY: 52,
+    startY: 56,
     head: [["Indicador", "Valor"]],
     body: kpis,
     styles: { fontSize: 10, cellPadding: 4 },
@@ -178,7 +132,6 @@ export function generatePerformancePDF(dashData: {
     columnStyles: { 1: { halign: "right" } },
   });
 
-  // Ranking
   if (dashData.rankingUnidades.length > 0) {
     const y2 = (doc as any).lastAutoTable?.finalY || 90;
     doc.setFontSize(12);
@@ -196,9 +149,195 @@ export function generatePerformancePDF(dashData: {
     });
   }
 
-  doc.setFontSize(8);
-  doc.setTextColor(150);
-  doc.text(`Gerado em ${new Date().toLocaleString("pt-BR")} — Yassuo Alimentação`, 14, doc.internal.pageSize.height - 10);
-
+  addFooter(doc);
   doc.save(`relatorio-performance-${new Date().toISOString().slice(0, 7)}.pdf`);
+}
+
+// ──────────────────── Internal Order PDF ────────────────────
+
+interface InternalOrderPDFData {
+  numero: number;
+  date: string;
+  originName: string;
+  destName: string;
+  solicitante: string;
+  observacao: string | null;
+  status: string;
+  items: {
+    produto: string;
+    unidade: string;
+    qtdSolicitada: number;
+    qtdAprovada: number | null;
+    status: string;
+    observacao: string | null;
+  }[];
+}
+
+export function generateInternalOrderPDF(data: InternalOrderPDFData) {
+  const doc = new jsPDF();
+  addHeader(doc, "Pedido Interno");
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Pedido Nº: ${data.numero}`, 14, 48);
+  doc.text(`Data/Hora: ${data.date}`, 14, 54);
+  doc.text(`Unidade Solicitante: ${data.destName}`, 14, 60);
+  doc.text(`CD de Origem: ${data.originName}`, 14, 66);
+  doc.text(`Solicitante: ${data.solicitante}`, 14, 72);
+  doc.text(`Status: ${data.status}`, 14, 78);
+  if (data.observacao) {
+    doc.text(`Observação: ${data.observacao}`, 14, 84);
+  }
+
+  const startY = data.observacao ? 92 : 86;
+
+  autoTable(doc, {
+    startY,
+    head: [["Produto", "Und", "Qtd Solicitada", "Qtd Aprovada", "Status", "Obs"]],
+    body: data.items.map((i) => [
+      i.produto,
+      i.unidade,
+      i.qtdSolicitada.toString(),
+      i.qtdAprovada != null ? i.qtdAprovada.toString() : "—",
+      i.status,
+      i.observacao || "",
+    ]),
+    styles: { fontSize: 9, cellPadding: 3 },
+    headStyles: { fillColor: [30, 30, 30], textColor: 255 },
+    theme: "grid",
+    columnStyles: { 2: { halign: "right" }, 3: { halign: "right" } },
+  });
+
+  // Signature area
+  const finalY = (doc as any).lastAutoTable?.finalY || 140;
+  doc.setFontSize(9);
+  doc.setTextColor(0);
+  doc.text("Conferido por: ___________________________", 14, finalY + 20);
+  doc.text("Assinatura: ___________________________", 14, finalY + 30);
+  doc.text("Data: ___/___/______", 14, finalY + 40);
+
+  addFooter(doc);
+  doc.save(`pedido-interno-${data.numero}.pdf`);
+}
+
+// ──────────────────── Menu PDF (Simple) ────────────────────
+
+interface MenuPDFDay {
+  dayLabel: string;
+  dateLabel: string;
+  status: string;
+  dishes: { nome: string; category: string }[];
+}
+
+interface MenuPDFData {
+  weekLabel: string;
+  unitName?: string;
+  days: MenuPDFDay[];
+}
+
+export function generateMenuWeekPDF(data: MenuPDFData) {
+  const doc = new jsPDF();
+  addHeader(doc, "Cardápio Semanal");
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Semana: ${data.weekLabel}`, 14, 48);
+  if (data.unitName) doc.text(`Unidade: ${data.unitName}`, 14, 54);
+
+  let yPos = data.unitName ? 62 : 56;
+
+  for (const day of data.days) {
+    // Check page break
+    if (yPos > 260) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0);
+    doc.text(`${day.dayLabel} — ${day.dateLabel}`, 14, yPos);
+    yPos += 5;
+
+    if (day.status !== "Com cardápio" && day.status !== "com_cardapio") {
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(120);
+      doc.text(day.status, 18, yPos);
+      yPos += 8;
+      continue;
+    }
+
+    if (day.dishes.length === 0) {
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(120);
+      doc.text("Nenhum prato definido", 18, yPos);
+      yPos += 8;
+      continue;
+    }
+
+    // Group by category
+    const groups: Record<string, string[]> = {};
+    for (const d of day.dishes) {
+      const cat = d.category || "Geral";
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(d.nome);
+    }
+
+    for (const [cat, dishes] of Object.entries(groups)) {
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(80);
+      doc.text(cat.toUpperCase(), 18, yPos);
+      yPos += 4;
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0);
+      for (const dish of dishes) {
+        if (yPos > 275) { doc.addPage(); yPos = 20; }
+        doc.text(`• ${dish}`, 22, yPos);
+        yPos += 4.5;
+      }
+      yPos += 2;
+    }
+
+    yPos += 4;
+  }
+
+  addFooter(doc);
+  doc.save(`cardapio-semanal-${data.weekLabel.replace(/\//g, "-")}.pdf`);
+}
+
+// ──────────────────── Shared helpers ────────────────────
+
+function addHeader(doc: jsPDF, subtitle: string) {
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(0);
+  doc.text("Yassuo Alimentação", 14, 20);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(subtitle, 14, 26);
+  doc.setDrawColor(200);
+  doc.line(14, 30, 196, 30);
+
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text(subtitle, 14, 40);
+}
+
+function addFooter(doc: jsPDF) {
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(
+      `Gerado em ${new Date().toLocaleString("pt-BR")} — Yassuo Alimentação`,
+      14,
+      doc.internal.pageSize.height - 10
+    );
+  }
 }

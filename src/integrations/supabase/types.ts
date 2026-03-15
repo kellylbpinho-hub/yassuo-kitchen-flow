@@ -216,6 +216,128 @@ export type Database = {
           },
         ]
       }
+      internal_order_items: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          observacao: string | null
+          order_id: string
+          product_id: string
+          quantidade: number
+          quantidade_aprovada: number | null
+          status: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          order_id: string
+          product_id: string
+          quantidade: number
+          quantidade_aprovada?: number | null
+          status?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          order_id?: string
+          product_id?: string
+          quantidade?: number
+          quantidade_aprovada?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_order_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "internal_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_orders: {
+        Row: {
+          aprovado_por: string | null
+          company_id: string
+          created_at: string
+          id: string
+          numero: number
+          observacao: string | null
+          solicitado_por: string
+          status: string
+          unidade_destino_id: string
+          unidade_origem_id: string
+          updated_at: string
+        }
+        Insert: {
+          aprovado_por?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          numero?: number
+          observacao?: string | null
+          solicitado_por: string
+          status?: string
+          unidade_destino_id: string
+          unidade_origem_id: string
+          updated_at?: string
+        }
+        Update: {
+          aprovado_por?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          numero?: number
+          observacao?: string | null
+          solicitado_por?: string
+          status?: string
+          unidade_destino_id?: string
+          unidade_origem_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_orders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_orders_unidade_destino_id_fkey"
+            columns: ["unidade_destino_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_orders_unidade_origem_id_fkey"
+            columns: ["unidade_origem_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lotes: {
         Row: {
           codigo: string | null
