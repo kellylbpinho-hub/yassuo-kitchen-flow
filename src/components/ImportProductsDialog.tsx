@@ -312,7 +312,7 @@ export function ImportProductsDialog({ open, onClose, onImported, units, default
                           <span className="text-destructive">{v.errors.join("; ")}</span>
                         )}
                         {v.errors.length === 0 && v.warnings.length > 0 && (
-                          <span className="text-amber-500">{v.warnings.join("; ")}</span>
+                          <span className="text-accent-foreground">{v.warnings.join("; ")}</span>
                         )}
                         {v.errors.length === 0 && v.warnings.length === 0 && (
                           <span className="text-primary">OK</span>
