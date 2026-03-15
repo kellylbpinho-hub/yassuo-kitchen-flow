@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Loader2, DollarSign, TrendingUp, Percent, UtensilsCrossed, Building2, Download, FileText, FileSpreadsheet, TrendingDown } from "lucide-react";
+import { Loader2, DollarSign, TrendingUp, Percent, UtensilsCrossed, Building2, Download, FileText, FileSpreadsheet, TrendingDown, AlertTriangle } from "lucide-react";
 import { LastUpdated } from "@/components/LastUpdated";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";

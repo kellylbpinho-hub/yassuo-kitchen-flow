@@ -179,6 +179,7 @@ export function AlertCenter() {
     estoque: { icon: Package, color: "text-warning" },
     validade: { icon: Clock, color: "text-destructive" },
     pedido: { icon: ClipboardList, color: "text-primary" },
+    financeiro: { icon: AlertTriangle, color: "text-destructive" },
   };
 
   const handleClick = (route: string) => {
