@@ -138,6 +138,23 @@ export default function Unidades() {
           placeholder="Ex: 18.50"
         />
       </div>
+      <div>
+        <Label className="flex items-center gap-1.5">
+          <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+          Valor do Contrato Mensal (R$)
+        </Label>
+        <Input
+          type="text"
+          inputMode="decimal"
+          value={form.contract_value}
+          onChange={(e) => {
+            const v = e.target.value.replace(/[^0-9.,]/g, "");
+            setForm({ ...form, contract_value: v });
+          }}
+          className="bg-input border-border"
+          placeholder="Ex: 50000.00"
+        />
+      </div>
       <Button onClick={onSubmit} className="w-full">{submitLabel}</Button>
     </div>
   );
