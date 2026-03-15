@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Pencil, Warehouse, UtensilsCrossed, Users, Target } from "lucide-react";
+import { Plus, Loader2, Pencil, Warehouse, UtensilsCrossed, Users, Target, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
 interface Unit {
@@ -18,6 +18,7 @@ interface Unit {
   company_id: string;
   numero_colaboradores: number;
   target_meal_cost: number | null;
+  contract_value: number | null;
 }
 
 const typeLabels: Record<string, string> = {
@@ -36,7 +37,7 @@ export default function Unidades() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [editUnit, setEditUnit] = useState<Unit | null>(null);
-  const [form, setForm] = useState({ name: "", type: "kitchen", numero_colaboradores: "0", target_meal_cost: "" });
+  const [form, setForm] = useState({ name: "", type: "kitchen", numero_colaboradores: "0", target_meal_cost: "", contract_value: "" });
 
   useEffect(() => { loadData(); }, []);
 
@@ -51,26 +52,32 @@ export default function Unidades() {
     if (!form.name) { toast.error("Informe o nome."); return; }
     const targetVal = form.target_meal_cost ? parseFloat(form.target_meal_cost.replace(",", ".")) : null;
     if (targetVal !== null && targetVal < 0) { toast.error("Meta não pode ser negativa."); return; }
+    const contractVal = form.contract_value ? parseFloat(form.contract_value.replace(",", ".")) : null;
+    if (contractVal !== null && contractVal < 0) { toast.error("Valor do contrato não pode ser negativo."); return; }
     const { error } = await supabase.from("units").insert({
       name: form.name,
       type: form.type,
       numero_colaboradores: Number(form.numero_colaboradores) || 0,
       target_meal_cost: targetVal,
+      contract_value: contractVal,
       company_id: profile!.company_id,
     });
     if (error) toast.error("Erro: " + error.message);
-    else { toast.success("Unidade criada!"); setCreateOpen(false); setForm({ name: "", type: "kitchen", numero_colaboradores: "0", target_meal_cost: "" }); loadData(); }
+    else { toast.success("Unidade criada!"); setCreateOpen(false); setForm({ name: "", type: "kitchen", numero_colaboradores: "0", target_meal_cost: "", contract_value: "" }); loadData(); }
   };
 
   const updateUnit = async () => {
     if (!editUnit || !form.name) return;
     const targetVal = form.target_meal_cost ? parseFloat(form.target_meal_cost.replace(",", ".")) : null;
     if (targetVal !== null && targetVal < 0) { toast.error("Meta não pode ser negativa."); return; }
+    const contractVal = form.contract_value ? parseFloat(form.contract_value.replace(",", ".")) : null;
+    if (contractVal !== null && contractVal < 0) { toast.error("Valor do contrato não pode ser negativo."); return; }
     const { error } = await supabase.from("units").update({
       name: form.name,
       type: form.type,
       numero_colaboradores: Number(form.numero_colaboradores) || 0,
       target_meal_cost: targetVal,
+      contract_value: contractVal,
     }).eq("id", editUnit.id);
     if (error) toast.error("Erro: " + error.message);
     else { toast.success("Unidade atualizada!"); setEditUnit(null); loadData(); }
@@ -78,7 +85,7 @@ export default function Unidades() {
 
   const openEdit = (unit: Unit) => {
     setEditUnit(unit);
-    setForm({ name: unit.name, type: unit.type, numero_colaboradores: String(unit.numero_colaboradores || 0), target_meal_cost: unit.target_meal_cost != null ? String(unit.target_meal_cost) : "" });
+    setForm({ name: unit.name, type: unit.type, numero_colaboradores: String(unit.numero_colaboradores || 0), target_meal_cost: unit.target_meal_cost != null ? String(unit.target_meal_cost) : "", contract_value: unit.contract_value != null ? String(unit.contract_value) : "" });
   };
 
   if (loading) {
@@ -131,6 +138,23 @@ export default function Unidades() {
           placeholder="Ex: 18.50"
         />
       </div>
+      <div>
+        <Label className="flex items-center gap-1.5">
+          <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+          Valor do Contrato Mensal (R$)
+        </Label>
+        <Input
+          type="text"
+          inputMode="decimal"
+          value={form.contract_value}
+          onChange={(e) => {
+            const v = e.target.value.replace(/[^0-9.,]/g, "");
+            setForm({ ...form, contract_value: v });
+          }}
+          className="bg-input border-border"
+          placeholder="Ex: 50000.00"
+        />
+      </div>
       <Button onClick={onSubmit} className="w-full">{submitLabel}</Button>
     </div>
   );
@@ -168,12 +192,13 @@ export default function Unidades() {
                 <TableHead>Tipo</TableHead>
                 <TableHead className="text-center">Colaboradores</TableHead>
                 <TableHead className="text-right">Meta/Refeição</TableHead>
+                <TableHead className="text-right">Contrato Mensal</TableHead>
                 {canManage && <TableHead className="w-20">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {units.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma unidade.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhuma unidade.</TableCell></TableRow>
               ) : (
                 units.map((u) => {
                   const Icon = typeIcons[u.type] || UtensilsCrossed;
@@ -199,6 +224,13 @@ export default function Unidades() {
                           <span className="font-medium">R$ {Number(u.target_meal_cost).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         ) : (
                           <span className="text-muted-foreground text-xs">Sem meta</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {u.contract_value != null && u.contract_value > 0 ? (
+                          <span className="font-medium">R$ {Number(u.contract_value).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
                         )}
                       </TableCell>
                       {canManage && (

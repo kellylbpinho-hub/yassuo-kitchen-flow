@@ -1166,6 +1166,7 @@ export type Database = {
       units: {
         Row: {
           company_id: string
+          contract_value: number | null
           created_at: string
           id: string
           name: string
@@ -1175,6 +1176,7 @@ export type Database = {
         }
         Insert: {
           company_id: string
+          contract_value?: number | null
           created_at?: string
           id?: string
           name: string
@@ -1184,6 +1186,7 @@ export type Database = {
         }
         Update: {
           company_id?: string
+          contract_value?: number | null
           created_at?: string
           id?: string
           name?: string

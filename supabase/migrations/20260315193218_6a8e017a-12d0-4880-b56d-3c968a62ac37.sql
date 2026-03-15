@@ -1,0 +1,1 @@
+ALTER TABLE public.units ADD COLUMN contract_value numeric NULL DEFAULT NULL;
