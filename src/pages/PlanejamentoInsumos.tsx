@@ -301,10 +301,54 @@ export default function PlanejamentoInsumos() {
             </Card>
           )}
 
-          {/* Table */}
+          {/* Export + Table */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-base">Consolidação de Insumos</CardTitle>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="gap-1" onClick={() => {
+                  exportInsumosExcel({
+                    weekLabel,
+                    unitName: selectedUnit?.name || "",
+                    numColaboradores: selectedUnit?.numero_colaboradores || 0,
+                    items: consolidated.map(i => ({
+                      ingrediente: i.productName,
+                      unidade: i.unidadeMedida,
+                      necessario: i.totalNeeded,
+                      estoque: i.stockAvailable,
+                      falta: i.deficit,
+                      custoUnit: i.custoUnitario,
+                      custoTotal: i.custoTotal,
+                    })),
+                  });
+                  toast.success("Excel exportado.");
+                }}>
+                  <Download className="h-4 w-4" />
+                  Excel
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1" onClick={() => {
+                  generateInsumosPDF({
+                    weekLabel,
+                    unitName: selectedUnit?.name || "",
+                    numColaboradores: selectedUnit?.numero_colaboradores || 0,
+                    totalCost,
+                    purchaseCost,
+                    items: consolidated.map(i => ({
+                      ingrediente: i.productName,
+                      unidade: i.unidadeMedida,
+                      necessario: i.totalNeeded,
+                      estoque: i.stockAvailable,
+                      falta: i.deficit,
+                      custoUnit: i.custoUnitario,
+                      custoTotal: i.custoTotal,
+                    })),
+                  });
+                  toast.success("PDF exportado.");
+                }}>
+                  <FileText className="h-4 w-4" />
+                  PDF
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
