@@ -88,16 +88,24 @@ export default function Estoque() {
 
   const loadData = async () => {
     setLoading(true);
-    const [{ data: prods }, { data: u }, { data: cats }, { data: sbu }] = await Promise.all([
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
+
+    const [{ data: prods }, { data: u }, { data: cats }, { data: sbu }, { data: mvs }] = await Promise.all([
       supabase.from("products").select("*, product_categories(name)").eq("ativo", true).order("nome"),
       supabase.from("units").select("id, name, type"),
       supabase.from("product_categories").select("id, name").order("name"),
       supabase.from("v_estoque_por_unidade").select("product_id, unidade_id, saldo"),
+      supabase.from("movements").select("product_id, quantidade, created_at, tipo")
+        .in("tipo", ["consumo", "saida", "perda"])
+        .gte("created_at", thirtyDaysAgoISO),
     ]);
     setProducts((prods || []) as Product[]);
     setUnits((u || []) as Unit[]);
     setCategories((cats || []) as Category[]);
     setStockByUnit((sbu || []) as StockByUnit[]);
+    setConsumptionMovements((mvs || []) as MovementRow[]);
     if (u && u.length > 0 && !form.unidade_id) {
       setForm((f) => ({ ...f, unidade_id: profile?.unidade_id || u[0].id }));
     }
