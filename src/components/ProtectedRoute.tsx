@@ -46,6 +46,7 @@ const COMPRADOR_BLOCKED_ROUTES = [
   "/unidades",
   "/configuracoes-acesso",
   "/desperdicio",
+  "/radar-operacao",
 ];
 
 const FUNCIONARIO_BLOCKED_ROUTES = [
