@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Package, Clock, ClipboardList, ChevronRight } from "lucide-react";
+import { Bell, Package, Clock, ClipboardList, ChevronRight, AlertTriangle } from "lucide-react";
 import {
   Popover,
   PopoverContent,
