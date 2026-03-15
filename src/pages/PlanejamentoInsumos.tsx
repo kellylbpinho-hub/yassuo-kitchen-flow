@@ -93,16 +93,33 @@ export default function PlanejamentoInsumos() {
 
       const menuIds = validMenus.map(m => m.id);
 
-      const [mdRes, riRes, unitRes] = await Promise.all([
+      const [mdRes, unitRes] = await Promise.all([
         supabase.from("menu_dishes").select("menu_id, dish_id").in("menu_id", menuIds),
-        supabase.from("recipe_ingredients").select("menu_id, product_id, peso_limpo_per_capita, fator_correcao").in("menu_id", menuIds),
         supabase.from("units").select("numero_colaboradores").eq("id", unitId).single(),
       ]);
 
       const menuDishes = mdRes.data || [];
-      const recipeIngredients = riRes.data || [];
       const numColab = unitRes.data?.numero_colaboradores || 0;
       setDishCount(menuDishes.length);
+
+      // Get unique dish_ids to query recipe_ingredients by dish
+      const dishIds = [...new Set(menuDishes.map(md => md.dish_id).filter(Boolean))];
+      if (dishIds.length === 0) {
+        setConsolidated([]); setLoading(false); return;
+      }
+
+      // Count how many times each dish appears (across menu days)
+      const dishAppearances = new Map<string, number>();
+      for (const md of menuDishes) {
+        dishAppearances.set(md.dish_id, (dishAppearances.get(md.dish_id) || 0) + 1);
+      }
+
+      const { data: riData } = await supabase
+        .from("recipe_ingredients")
+        .select("dish_id, product_id, peso_limpo_per_capita, fator_correcao")
+        .in("dish_id", dishIds);
+
+      const recipeIngredients = riData || [];
 
       if (recipeIngredients.length === 0) {
         setConsolidated([]); setLoading(false); return;
