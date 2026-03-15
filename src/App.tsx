@@ -38,6 +38,8 @@ const PainelNutri = lazy(() => import("./pages/PainelNutri"));
 const Pratos = lazy(() => import("./pages/Pratos"));
 const RelatorioExecutivo = lazy(() => import("./pages/RelatorioExecutivo"));
 const PlanejamentoInsumos = lazy(() => import("./pages/PlanejamentoInsumos"));
+const RadarOperacao = lazy(() => import("./pages/RadarOperacao"));
+const PainelCeo = lazy(() => import("./pages/PainelCeo"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -88,6 +90,8 @@ const App = () => (
                   <Route path="/pratos" element={<Pratos />} />
                   <Route path="/relatorio-executivo" element={<RelatorioExecutivo />} />
                   <Route path="/planejamento-insumos" element={<PlanejamentoInsumos />} />
+                  <Route path="/radar-operacao" element={<RadarOperacao />} />
+                  <Route path="/painel-ceo" element={<PainelCeo />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

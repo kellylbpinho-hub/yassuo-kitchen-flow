@@ -11,6 +11,7 @@ const FINANCEIRO_BLOCKED_ROUTES = [
   "/usuarios",
   "/unidades",
   "/configuracoes-acesso",
+  "/radar-operacao",
 ];
 
 const NUTRICIONISTA_BLOCKED_ROUTES = [
@@ -24,6 +25,7 @@ const NUTRICIONISTA_BLOCKED_ROUTES = [
   "/unidades",
   "/aprovacoes-cd",
   "/configuracoes-acesso",
+  "/radar-operacao",
 ];
 
 const ESTOQUISTA_BLOCKED_ROUTES = [
@@ -33,6 +35,7 @@ const ESTOQUISTA_BLOCKED_ROUTES = [
   "/unidades",
   "/aprovacoes-cd",
   "/configuracoes-acesso",
+  "/radar-operacao",
 ];
 
 const COMPRADOR_BLOCKED_ROUTES = [
@@ -44,6 +47,7 @@ const COMPRADOR_BLOCKED_ROUTES = [
   "/unidades",
   "/configuracoes-acesso",
   "/desperdicio",
+  "/radar-operacao",
 ];
 
 const FUNCIONARIO_BLOCKED_ROUTES = [
@@ -56,11 +60,12 @@ const FUNCIONARIO_BLOCKED_ROUTES = [
   "/unidades",
   "/configuracoes-acesso",
   "/painel-nutri",
+  "/radar-operacao",
 ];
 
 const NON_NUTRI_BLOCKED_ROUTES = ["/painel-nutri"];
 
-const CEO_ONLY_ROUTES = ["/configuracoes-acesso"];
+const CEO_ONLY_ROUTES = ["/configuracoes-acesso", "/painel-ceo"];
 
 const roleLabels: Record<string, string> = {
   ceo: "CEO",
