@@ -153,6 +153,34 @@ export default function CardapioSemanal() {
           >
             Hoje
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={() => {
+              const days = weekDates.map((date) => {
+                const menu = getMenuForDate(date);
+                const dishes = getDishesForMenu(menu?.id);
+                const status = getDayStatus(menu, dishes.length);
+                const cfg = STATUS_CONFIG[status];
+                const dishesWithNames = dishes.map((md) => {
+                  const dish = allDishes.find((d) => d.id === md.dish_id);
+                  const cat = dish?.category_id ? categories.find((c) => c.id === dish.category_id)?.nome || "Geral" : "Geral";
+                  return { nome: dish?.nome || "", category: cat };
+                });
+                return {
+                  dayLabel: format(date, "EEEE", { locale: ptBR }),
+                  dateLabel: format(date, "dd/MM"),
+                  status: cfg.label,
+                  dishes: dishesWithNames,
+                };
+              });
+              generateMenuWeekPDF({ weekLabel: weekLabel, days });
+            }}
+          >
+            <FileText className="h-4 w-4" />
+            PDF
+          </Button>
         </div>
       </div>
 
