@@ -13,6 +13,8 @@ import { ContextualLoader } from "@/components/ContextualLoader";
 import { EmptyState } from "@/components/EmptyState";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { generateInsumosPDF } from "@/lib/pdfExport";
+import { exportInsumosExcel } from "@/lib/excelExport";
 
 interface ConsolidatedIngredient {
   productId: string;
