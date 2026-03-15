@@ -28,3 +28,15 @@
 - Cores: `text-white` para "Yassuo", `text-destructive` (vermelho da marca) para "App"
 - O favicon permanece como está (ícone Y na aba do navegador)
 
+---
+
+## Regra do Projeto: Modo Guiado como Arquitetura
+
+O Modo Guiado é parte da arquitetura do Yassuo e deve acompanhar todas as mudanças de fluxo.
+
+Sempre que um módulo, fluxo operacional ou função do sistema for alterado, os passos correspondentes do Modo Guiado devem ser atualizados para refletir a nova lógica. Qualquer implementação nova deve incluir:
+
+1. Revisão do `guidedSteps` relacionado (`src/lib/guidedSteps.ts`)
+2. Atualização do `completionType` quando necessário
+3. Ajuste de `data-guide` highlights nos componentes
+4. Validação do fluxo guiado para consistência com o fluxo real

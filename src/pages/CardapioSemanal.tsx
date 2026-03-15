@@ -137,7 +137,7 @@ export default function CardapioSemanal() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-2xl font-display font-bold text-foreground">Cardápio Semanal</h1>
-        <div className="flex items-center gap-2">
+        <div data-guide="week-nav" className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => setWeekStart(subWeeks(weekStart, 1))}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -183,6 +183,7 @@ export default function CardapioSemanal() {
             PDF Simples
           </Button>
           <Button
+            data-guide="btn-pdf-tecnico"
             variant="outline"
             size="sm"
             className="gap-1"
@@ -225,7 +226,7 @@ export default function CardapioSemanal() {
       {loading ? (
         <ContextualLoader message="Carregando cardápio semanal..." />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div data-guide="week-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {weekDates.map((date) => {
             const menu = getMenuForDate(date);
             const dishes = getDishesForMenu(menu?.id);

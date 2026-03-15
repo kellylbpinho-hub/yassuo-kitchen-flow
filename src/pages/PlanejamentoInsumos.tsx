@@ -232,6 +232,7 @@ export default function PlanejamentoInsumos() {
       if (itemsErr) throw itemsErr;
 
       toast.success(`Pedido de compra criado com ${items.length} itens.`);
+      window.dispatchEvent(new CustomEvent("guided:purchase-from-forecast:success"));
       navigate(`/compras/${po.id}`);
     } catch (err: any) {
       toast.error("Erro ao gerar pedido: " + (err?.message || ""));
@@ -247,7 +248,7 @@ export default function PlanejamentoInsumos() {
           <p className="text-sm text-muted-foreground">Previsão de compra baseada no cardápio planejado</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Select value={unitId} onValueChange={setUnitId}>
+          <Select data-guide="select-unit-insumos" value={unitId} onValueChange={setUnitId}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Unidade" />
             </SelectTrigger>
@@ -257,7 +258,7 @@ export default function PlanejamentoInsumos() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={() => setWeekStart(subWeeks(weekStart, 1))}>
+          <Button data-guide="btn-prev-week" variant="outline" size="icon" onClick={() => setWeekStart(subWeeks(weekStart, 1))}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm font-medium text-foreground min-w-[160px] text-center">{weekLabel}</span>
@@ -285,7 +286,7 @@ export default function PlanejamentoInsumos() {
       ) : (
         <>
           {/* KPI Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <div data-guide="kpi-insumos" className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             <KpiCard icon={<Calculator className="h-5 w-5" />} label="Dias c/ cardápio" value={menuCount} sub={`${dishCount} preparações`} />
             <KpiCard icon={<Package className="h-5 w-5" />} label="Ingredientes" value={consolidated.length} sub={`${selectedUnit?.numero_colaboradores || 0} refeições/dia`} />
             <KpiCard icon={<CheckCircle2 className="h-5 w-5" />} label="Estoque OK" value={consolidated.length - itemsWithDeficit.length - itemsAtencao.length} accent="ok" />
@@ -308,7 +309,7 @@ export default function PlanejamentoInsumos() {
                     </p>
                   </div>
                 </div>
-                <Button size="sm" className="gap-1" onClick={handleGeneratePurchaseOrder}>
+                <Button data-guide="btn-gerar-compra" size="sm" className="gap-1" onClick={handleGeneratePurchaseOrder}>
                   <ShoppingCart className="h-4 w-4" />
                   Gerar Pedido de Compra
                 </Button>

@@ -223,7 +223,7 @@ export default function CardapioDiaSheet({
           <div className="space-y-3">
             <div className="space-y-1">
               <label className="text-sm font-medium text-foreground">Status do dia</label>
-              <Select value={status} onValueChange={(v) => setStatus(v as DayStatus)} disabled={readOnly}>
+              <Select data-guide="select-status-dia" value={status} onValueChange={(v) => setStatus(v as DayStatus)} disabled={readOnly}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -261,7 +261,7 @@ export default function CardapioDiaSheet({
                 <TabsTrigger value="pratos" className="flex-1 gap-1">
                   <UtensilsCrossed className="h-3.5 w-3.5" /> Pratos
                 </TabsTrigger>
-                <TabsTrigger value="ficha" className="flex-1 gap-1">
+                <TabsTrigger data-guide="tab-ficha-tecnica" value="ficha" className="flex-1 gap-1">
                   <ClipboardList className="h-3.5 w-3.5" /> Ficha Técnica
                 </TabsTrigger>
               </TabsList>
@@ -317,7 +317,7 @@ export default function CardapioDiaSheet({
                   <>
                     <Separator className="my-2" />
                     <div className="space-y-2">
-                      <h3 className="text-sm font-medium text-foreground">Adicionar prato</h3>
+                      <h3 data-guide="add-dish-section" className="text-sm font-medium text-foreground">Adicionar prato</h3>
                       <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
