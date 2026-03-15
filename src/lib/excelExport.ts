@@ -64,6 +64,7 @@ interface InsumosExportData {
   items: {
     ingrediente: string;
     unidade: string;
+    categoria: string;
     necessario: number;
     estoque: number;
     falta: number;
@@ -75,16 +76,34 @@ interface InsumosExportData {
 export function exportInsumosExcel(data: InsumosExportData) {
   const wb = XLSX.utils.book_new();
 
-  const info = [
+  const totalItems = data.items.length;
+  const itemsFalta = data.items.filter(i => i.falta > 0).length;
+  const totalCost = data.items.reduce((s, i) => s + i.custoTotal, 0);
+  const deficitCost = data.items.filter(i => i.falta > 0).reduce((s, i) => s + i.falta * i.custoUnit, 0);
+
+  const info: (string | number)[][] = [
     ["Planejamento de Insumos"],
     [`Período: ${data.weekLabel}`],
     [`Unidade: ${data.unitName}`],
     [`Refeições/dia: ${data.numColaboradores}`],
     [],
+    ["Resumo Executivo"],
+    ["Ingredientes planejados", totalItems],
+    ["Itens em falta", itemsFalta],
+    ["Custo total previsto (R$)", totalCost],
+    ["Custo em déficit (R$)", deficitCost],
+    [],
   ];
 
-  const headers = ["Ingrediente", "Unidade", "Necessário", "Estoque Atual", "Falta", "Custo Unit. (R$)", "Custo Total (R$)"];
-  const rows = data.items.map(i => [i.ingrediente, i.unidade, i.necessario, i.estoque, i.falta, i.custoUnit, i.custoTotal]);
+  const headers = ["Categoria", "Ingrediente", "Unidade", "Necessário", "Estoque Atual", "Falta", "Status", "Custo Unit. (R$)", "Custo Total (R$)"];
+  const rows = data.items.map(i => {
+    const balance = i.estoque - i.necessario;
+    const status = i.falta > 0 ? "FALTA" : (balance / Math.max(i.necessario, 0.01) <= 0.2 ? "ATENÇÃO" : "OK");
+    return [i.categoria, i.ingrediente, i.unidade, i.necessario, i.estoque, i.falta, status, i.custoUnit, i.custoTotal];
+  });
+
+  // Sort by category then name
+  rows.sort((a, b) => String(a[0]).localeCompare(String(b[0])) || String(a[1]).localeCompare(String(b[1])));
 
   const ws = XLSX.utils.aoa_to_sheet([...info, headers, ...rows]);
   ws["!cols"] = headers.map(() => ({ wch: 16 }));

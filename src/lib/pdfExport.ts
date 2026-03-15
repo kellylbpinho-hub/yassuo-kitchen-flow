@@ -546,6 +546,7 @@ interface InsumosPDFData {
   items: {
     ingrediente: string;
     unidade: string;
+    categoria: string;
     necessario: number;
     estoque: number;
     falta: number;
@@ -558,28 +559,69 @@ export function generateInsumosPDF(data: InsumosPDFData) {
   const doc = new jsPDF();
   addHeader(doc, "Planejamento de Insumos");
 
+  const totalItems = data.items.length;
+  const itemsFalta = data.items.filter(i => i.falta > 0).length;
+
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text(`Período: ${data.weekLabel}`, 14, 48);
   doc.text(`Unidade: ${data.unitName}`, 14, 54);
   doc.text(`Refeições previstas/dia: ${data.numColaboradores}`, 14, 60);
-  doc.text(`Custo total previsto: R$ ${data.totalCost.toFixed(2)}`, 120, 48);
-  doc.text(`Custo de compra: R$ ${data.purchaseCost.toFixed(2)}`, 120, 54);
 
-  autoTable(doc, {
-    startY: 68,
-    head: [["Ingrediente", "Unid.", "Necessário", "Estoque", "Falta", "Custo Unit.", "Custo Total"]],
-    body: data.items.map(i => [
-      i.ingrediente,
-      i.unidade,
-      i.necessario.toFixed(2),
-      i.estoque.toFixed(2),
-      i.falta > 0 ? i.falta.toFixed(2) : "—",
-      `R$ ${i.custoUnit.toFixed(2)}`,
-      `R$ ${i.custoTotal.toFixed(2)}`,
-    ]),
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [30, 30, 30] },
+  // Resumo executivo
+  doc.setFont("helvetica", "bold");
+  doc.text("Resumo Executivo", 120, 48);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Ingredientes planejados: ${totalItems}`, 120, 54);
+  doc.text(`Itens em falta: ${itemsFalta}`, 120, 60);
+  doc.text(`Custo total previsto: R$ ${data.totalCost.toFixed(2)}`, 120, 66);
+  doc.text(`Custo em déficit: R$ ${data.purchaseCost.toFixed(2)}`, 120, 72);
+
+  // Group by category
+  const groups = new Map<string, typeof data.items>();
+  for (const item of data.items) {
+    const cat = item.categoria || "Outros";
+    if (!groups.has(cat)) groups.set(cat, []);
+    groups.get(cat)!.push(item);
+  }
+
+  let startY = 80;
+
+  groups.forEach((items, category) => {
+    // Category header row
+    const body = items.map(i => {
+      const balance = i.estoque - i.necessario;
+      const status = i.falta > 0 ? "FALTA" : (balance / Math.max(i.necessario, 0.01) <= 0.2 ? "ATENÇÃO" : "OK");
+      return [
+        i.ingrediente,
+        i.unidade,
+        i.necessario.toFixed(2),
+        i.estoque.toFixed(2),
+        i.falta > 0 ? i.falta.toFixed(2) : "—",
+        `R$ ${i.custoUnit.toFixed(2)}`,
+        `R$ ${i.custoTotal.toFixed(2)}`,
+        status,
+      ];
+    });
+
+    autoTable(doc, {
+      startY,
+      head: [[{ content: `${category} (${items.length})`, colSpan: 8, styles: { fillColor: [60, 60, 60], fontSize: 9 } }],
+             ["Ingrediente", "Unid.", "Necessário", "Estoque", "Falta", "Custo Unit.", "Custo Total", "Status"]],
+      body,
+      styles: { fontSize: 7.5 },
+      headStyles: { fillColor: [30, 30, 30] },
+      didParseCell: (hookData: any) => {
+        if (hookData.section === "body" && hookData.column.index === 7) {
+          const val = hookData.cell.raw;
+          if (val === "FALTA") hookData.cell.styles.textColor = [220, 50, 50];
+          else if (val === "ATENÇÃO") hookData.cell.styles.textColor = [200, 150, 0];
+          else hookData.cell.styles.textColor = [40, 160, 80];
+        }
+      },
+    });
+
+    startY = (doc as any).lastAutoTable.finalY + 4;
   });
 
   addFooter(doc);
