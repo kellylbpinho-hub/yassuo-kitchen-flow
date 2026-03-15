@@ -20,6 +20,7 @@ interface Unit {
   name: string;
   type: string;
   numero_colaboradores: number;
+  contract_value: number | null;
 }
 
 interface Product {
