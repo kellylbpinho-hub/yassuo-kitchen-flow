@@ -786,6 +786,21 @@ export default function DashboardFinanceiro() {
         <h2 className="text-lg font-display font-bold text-foreground mb-3">Custo Real da Refeição</h2>
         <RealMealCostSection period={period} filterUnit={filterUnit} onDataReady={handleMealCostData} />
       </div>
+
+      {/* Índice de Eficiência */}
+      {mealCostData && (
+        <EfficiencyTable
+          data={mealCostData.unitTable.map(u => {
+            const unit = units.find(un => un.name === u.name);
+            return {
+              unitId: unit?.id || u.name,
+              unitName: u.name,
+              target: u.target,
+              realCost: u.realCost,
+            };
+          })}
+        />
+      )}
     </div>
   );
 }
