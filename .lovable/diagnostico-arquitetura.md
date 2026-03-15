@@ -31,7 +31,7 @@
 | `dish_categories` | Categorias de prato | id, nome, ordem |
 | `menus` | Cardápios (por dia/unidade) | id, data, nome, unidade_id, created_by |
 | `menu_dishes` | Vínculo cardápio↔prato | menu_id, dish_id, ordem |
-| `recipe_ingredients` | Ficha técnica (ingredientes) | id, menu_id, product_id, peso_limpo_per_capita, fator_correcao |
+| `recipe_ingredients` | Ficha técnica (ingredientes) | id, menu_id, dish_id, product_id, peso_limpo_per_capita, fator_correcao |
 | `waste_logs` | Registros de desperdício | id, product_id, dish_id, menu_id, quantidade, sobra_prato, sobra_limpa_rampa, desperdicio_total_organico, unidade_id |
 | `unit_product_rules` | Contrato/bloqueio produto↔unidade | unit_id, product_id, status(bloqueado) |
 | `audit_log` | Log de auditoria | user_id, tabela, acao, registro_id, dados(jsonb) |
