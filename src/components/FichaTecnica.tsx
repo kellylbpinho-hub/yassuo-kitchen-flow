@@ -10,7 +10,7 @@ import { Plus, Trash2, Calculator, Users, Loader2, ShoppingCart, Printer } from 
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { fuzzyMatch } from "@/lib/fuzzySearch";
-import { generateRequisicaoInternaPDF } from "@/lib/pdfExport";
+import { generateRequisicaoInternaPDF, generateFichaTecnicaPDF } from "@/lib/pdfExport";
 
 interface RecipeIngredient {
   id: string;
