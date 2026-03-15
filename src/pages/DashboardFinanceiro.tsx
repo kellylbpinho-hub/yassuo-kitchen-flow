@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Loader2, DollarSign, TrendingUp, Percent, UtensilsCrossed, Building2, Download, FileText, FileSpreadsheet } from "lucide-react";
+import { LastUpdated } from "@/components/LastUpdated";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -68,6 +69,7 @@ export default function DashboardFinanceiro() {
   const [wasteLogs, setWasteLogs] = useState<WasteLogRow[]>([]);
   const [movements, setMovements] = useState<MovementRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [period, setPeriod] = useState<PeriodMonths>(6);
   const [filterUnit, setFilterUnit] = useState("all");
   const [mealCostData, setMealCostData] = useState<MealCostSectionData | null>(null);
@@ -125,6 +127,7 @@ export default function DashboardFinanceiro() {
     }
 
     setLoading(false);
+    setLastUpdated(new Date());
   };
 
   // Build product cost map: purchase cost when available, fallback to product.custo_unitario
@@ -362,6 +365,7 @@ export default function DashboardFinanceiro() {
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Dashboard Financeiro</h1>
           <p className="text-sm text-muted-foreground mt-1">Análise de custos e eficiência operacional</p>
+          <LastUpdated timestamp={lastUpdated} />
         </div>
         <div className="flex gap-2 flex-wrap">
           <Select value={String(period)} onValueChange={(v) => setPeriod(Number(v) as PeriodMonths)}>

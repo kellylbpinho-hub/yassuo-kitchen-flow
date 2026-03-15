@@ -129,9 +129,13 @@ export type Database = {
           created_at: string
           created_by: string
           descricao: string | null
+          equipamento: string | null
           id: string
           is_padrao: boolean
+          modo_preparo: string | null
           nome: string
+          peso_porcao: number | null
+          tempo_preparo: string | null
         }
         Insert: {
           ativo?: boolean
@@ -140,9 +144,13 @@ export type Database = {
           created_at?: string
           created_by: string
           descricao?: string | null
+          equipamento?: string | null
           id?: string
           is_padrao?: boolean
+          modo_preparo?: string | null
           nome: string
+          peso_porcao?: number | null
+          tempo_preparo?: string | null
         }
         Update: {
           ativo?: boolean
@@ -151,9 +159,13 @@ export type Database = {
           created_at?: string
           created_by?: string
           descricao?: string | null
+          equipamento?: string | null
           id?: string
           is_padrao?: boolean
+          modo_preparo?: string | null
           nome?: string
+          peso_porcao?: number | null
+          tempo_preparo?: string | null
         }
         Relationships: [
           {

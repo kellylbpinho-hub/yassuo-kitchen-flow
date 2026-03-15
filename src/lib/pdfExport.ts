@@ -404,6 +404,9 @@ interface FichaTecnicaPDFData {
   numPorcoes: number;
   modoPreparo?: string;
   observacoes?: string;
+  tempoPreparo?: string;
+  equipamento?: string;
+  pesoPorcao?: number;
   ingredients: {
     produto: string;
     quantidade: number;
@@ -421,18 +424,34 @@ export function generateFichaTecnicaPDF(data: FichaTecnicaPDFData) {
   doc.setFont("helvetica", "normal");
   doc.text(`Preparação: ${data.dishName}`, 14, 48);
   doc.text(`Categoria: ${data.category}`, 14, 54);
-  doc.text(`Rendimento: ${data.rendimentoKg.toFixed(3)} kg`, 14, 60);
-  doc.text(`Nº de Porções: ${data.numPorcoes}`, 14, 66);
-  if (data.numPorcoes > 0) {
-    doc.text(`Porção: ${(data.rendimentoKg / data.numPorcoes * 1000).toFixed(0)}g`, 110, 66);
+
+  let yInfo = 60;
+  doc.text(`Rendimento: ${data.rendimentoKg.toFixed(3)} kg`, 14, yInfo);
+  doc.text(`Nº de Porções: ${data.numPorcoes}`, 110, yInfo);
+  yInfo += 6;
+
+  if (data.pesoPorcao) {
+    doc.text(`Peso por Porção: ${(data.pesoPorcao * 1000).toFixed(0)}g`, 14, yInfo);
+  } else if (data.numPorcoes > 0) {
+    doc.text(`Peso por Porção: ${(data.rendimentoKg / data.numPorcoes * 1000).toFixed(0)}g`, 14, yInfo);
+  }
+  if (data.tempoPreparo) {
+    doc.text(`Tempo de Preparo: ${data.tempoPreparo}`, 110, yInfo);
+  }
+  yInfo += 6;
+
+  if (data.equipamento) {
+    doc.text(`Equipamento: ${data.equipamento}`, 14, yInfo);
+    yInfo += 6;
   }
 
   const custoTotal = data.ingredients.reduce((s, i) => s + (i.custoTotal || 0), 0);
   const custoPorcao = data.numPorcoes > 0 ? custoTotal / data.numPorcoes : 0;
 
   doc.setFont("helvetica", "bold");
-  doc.text(`Custo Total: R$ ${custoTotal.toFixed(2)}`, 14, 74);
-  doc.text(`Custo por Porção: R$ ${custoPorcao.toFixed(2)}`, 110, 74);
+  doc.text(`Custo Total: R$ ${custoTotal.toFixed(2)}`, 14, yInfo);
+  doc.text(`Custo por Porção: R$ ${custoPorcao.toFixed(2)}`, 110, yInfo);
+  yInfo += 8;
 
   // Ingredients table
   const tableBody = data.ingredients.map((i) => [
@@ -444,7 +463,7 @@ export function generateFichaTecnicaPDF(data: FichaTecnicaPDFData) {
   ]);
 
   autoTable(doc, {
-    startY: 82,
+    startY: yInfo,
     head: [["Ingrediente", "Quantidade", "Unidade", "Custo Unit.", "Custo Total"]],
     body: tableBody,
     foot: [["", "", "", "Total:", `R$ ${custoTotal.toFixed(2)}`]],

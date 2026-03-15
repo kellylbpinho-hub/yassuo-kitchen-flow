@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Package, AlertTriangle, TrendingDown, DollarSign, Clock, CheckCircle2, ShieldAlert, FileDown, ShoppingCart, ClipboardCheck, RotateCcw } from "lucide-react";
+import { LastUpdated } from "@/components/LastUpdated";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -54,6 +55,7 @@ export default function Dashboard() {
     totalPedidos: 0, pedidosPendentes: 0, slowTurnoverItems: [],
   });
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => { loadDashboard(); }, []);
 
@@ -168,7 +170,7 @@ export default function Dashboard() {
         wasteData: { sobraLimpa, restoIngesta }, custoMedioRefeicao, pedidosStatus,
         totalPedidos, pedidosPendentes, slowTurnoverItems,
       });
-    } catch (err) { console.error("Dashboard error:", err); } finally { setLoading(false); }
+    } catch (err) { console.error("Dashboard error:", err); } finally { setLoading(false); setLastUpdated(new Date()); }
   };
 
   if (loading) {
@@ -189,6 +191,7 @@ export default function Dashboard() {
           <h1 className="text-xl font-display font-bold text-foreground">Painel de Controle</h1>
           <p className="text-xs text-muted-foreground mt-0.5">Yassuo Alimentação — Visão consolidada</p>
         </div>
+        <LastUpdated timestamp={lastUpdated} />
       </div>
 
       {/* KPI Cards Row */}
