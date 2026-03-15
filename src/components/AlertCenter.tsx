@@ -198,6 +198,29 @@ async function fetchAlerts(companyId: string): Promise<AlertItem[]> {
     }
   }
 
+  // 6. Divergências de peso (últimas 48h) — visível apenas para CEO/admin
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+  const { data: weightLogs } = await supabase
+    .from("weight_divergence_logs")
+    .select("id, product_name, peso_informado, media_historica, percentual_desvio, user_name, created_at")
+    .gte("created_at", twoDaysAgo.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (weightLogs) {
+    for (const log of weightLogs) {
+      items.push({
+        id: `peso-${log.id}`,
+        type: "peso",
+        title: "Divergência de peso no recebimento",
+        description: `O produto ${log.product_name} foi recebido com peso fora do padrão em relação à média histórica. Conferir no próximo dia útil.`,
+        route: "/recebimento-digital",
+      });
+    }
+  }
+
   return items;
 }
 
