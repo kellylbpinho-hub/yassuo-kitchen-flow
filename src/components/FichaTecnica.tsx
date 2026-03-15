@@ -49,7 +49,7 @@ export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCateg
     setLoading(true);
     const [{ data: ri }, { data: prods }, { data: unit }] = await Promise.all([
       supabase.from("recipe_ingredients").select("*").eq("menu_id", menuId),
-      supabase.from("products").select("id, nome, unidade_medida").eq("ativo", true),
+      supabase.from("products").select("id, nome, unidade_medida, custo_unitario").eq("ativo", true),
       supabase.from("units").select("numero_colaboradores").eq("id", unidadeId).single(),
     ]);
     setIngredients((ri || []) as RecipeIngredient[]);
