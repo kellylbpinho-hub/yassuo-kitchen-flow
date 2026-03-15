@@ -9,12 +9,15 @@ export function GuidedModeOverlay() {
   const { activeTask, currentStep, currentStepIndex, totalSteps, nextStep, prevStep, exitTask, skipTutorial, enabled } =
     useGuidedMode();
 
+  const isMobile = useIsMobile();
+
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const [arrowStyle, setArrowStyle] = useState<React.CSSProperties>({});
   const [stepCompleted, setStepCompleted] = useState(false);
   const [waitingSubmitSuccess, setWaitingSubmitSuccess] = useState(false);
   const [elementMissing, setElementMissing] = useState(false);
+  const [compactMode, setCompactMode] = useState(false);
 
   const retryRef = useRef<number>(0);
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -22,6 +25,7 @@ export function GuidedModeOverlay() {
   const baselineValueRef = useRef<string>("");
   const selectArmedRef = useRef<boolean>(false);
   const submitClickedRef = useRef<boolean>(false);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
 
   const clearTimers = () => {
     if (advanceTimerRef.current) {
