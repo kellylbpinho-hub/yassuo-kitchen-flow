@@ -58,6 +58,7 @@ export function AppLayout() {
         { to: "/cardapio-semanal", icon: CalendarDays, label: "Cardápio Semanal" },
         { to: "/painel-nutri", icon: LayoutDashboard, label: "Painel da Nutri" },
         { to: "/pratos", icon: UtensilsCrossed, label: "Pratos" },
+        { to: "/planejamento-insumos", icon: Calculator, label: "Previsão Insumos" },
         { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
       ],
     });
