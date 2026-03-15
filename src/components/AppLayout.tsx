@@ -257,14 +257,18 @@ export function AppLayout() {
           <div className="flex-1 flex justify-center lg:hidden">
             <span className="text-lg font-sans font-bold tracking-tight"><span className="text-white">Yassuo</span> <span className="text-destructive">App</span></span>
           </div>
-          <button
-            onClick={handleSignOut}
-            className="lg:hidden text-muted-foreground hover:text-foreground"
-            title="Sair"
-          >
-            <LogOut className="h-5 w-5" />
-          </button>
-          <div className="hidden lg:flex lg:flex-1 lg:justify-end">
+          <div className="flex items-center gap-1 lg:hidden">
+            <AlertCenter />
+            <button
+              onClick={handleSignOut}
+              className="text-muted-foreground hover:text-foreground"
+              title="Sair"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:gap-2">
+            <AlertCenter />
             <GuidedModeToggle />
           </div>
         </header>
