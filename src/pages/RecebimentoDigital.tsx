@@ -72,9 +72,6 @@ export default function RecebimentoDigital() {
   const [newUnit, setNewUnit] = useState("");
   const [newCategoria, setNewCategoria] = useState("");
 
-  // Weight deviation alert
-  const [weightAlert, setWeightAlert] = useState<{ avg: number; current: number } | null>(null);
-  const [showWeightAlert, setShowWeightAlert] = useState(false);
 
   const CATEGORIAS_FIXAS = ["Grãos", "Proteínas", "Laticínios", "Hortifruti", "Bebidas", "Descartáveis", "Limpeza", "Temperos", "Outros"];
 
