@@ -53,6 +53,7 @@ export default function Dashboard() {
     wasteData: { sobraLimpa: 0, restoIngesta: 0 }, custoMedioRefeicao: 0, pedidosStatus: [],
     totalPedidos: 0, pedidosPendentes: 0, slowTurnoverItems: [],
   });
+  const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => { loadDashboard(); }, []);
