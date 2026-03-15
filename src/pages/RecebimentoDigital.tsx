@@ -317,7 +317,6 @@ export default function RecebimentoDigital() {
     setNewMarca("");
     setNewUnidadeMedida("kg");
     setNewCategoria("");
-    setWeightAlert(null);
   };
 
   const getProductPurchaseUnit = (): PurchaseUnit | null => {
