@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Loader2, DollarSign, TrendingUp, Percent, UtensilsCrossed, Building2, Download, FileText, FileSpreadsheet, TrendingDown } from "lucide-react";
+import { Loader2, DollarSign, TrendingUp, Percent, UtensilsCrossed, Building2, Download, FileText, FileSpreadsheet, TrendingDown, AlertTriangle } from "lucide-react";
 import { LastUpdated } from "@/components/LastUpdated";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
@@ -600,7 +600,6 @@ export default function DashboardFinanceiro() {
           .map(u => {
             const unit = units.find(un => un.id === u.id);
             const contractValue = unit?.contract_value || 0;
-            // Use mealCostData real cost if available, else fallback to costPerMeal from purchases
             const mcUnit = mealCostData?.unitTable.find(ut => ut.name === u.name);
             const realCostPerMeal = mcUnit?.realCost || u.costPerMeal;
             const custoTotal = realCostPerMeal * u.meals;
@@ -622,68 +621,133 @@ export default function DashboardFinanceiro() {
         if (profitData.length === 0) return null;
 
         return (
-          <Card>
-            <CardHeader className="pb-2 p-4">
-              <CardTitle className="text-sm font-display flex items-center gap-2">
-                <TrendingDown className="h-4 w-4 text-primary" />
-                Performance por Unidade (Lucro)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border hover:bg-transparent">
-                      <TableHead>Unidade</TableHead>
-                      <TableHead className="text-right">Receita (Contrato)</TableHead>
-                      <TableHead className="text-right">Custo Total</TableHead>
-                      <TableHead className="text-right">Lucro</TableHead>
-                      <TableHead className="text-right">Margem %</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {profitData.map(u => {
-                      const marginColor = !u.hasContract
-                        ? "text-muted-foreground"
-                        : u.margem > 15
-                        ? "text-success"
-                        : u.margem >= 5
-                        ? "text-warning"
-                        : "text-destructive";
-                      const marginBg = !u.hasContract
-                        ? ""
-                        : u.margem > 15
-                        ? "bg-success/10"
-                        : u.margem >= 5
-                        ? "bg-warning/10"
-                        : "bg-destructive/10";
-                      return (
-                        <TableRow key={u.id} className="border-border">
-                          <TableCell className="font-medium">{u.name}</TableCell>
-                          <TableCell className="text-right">
-                            {u.hasContract ? formatCurrency(u.contractValue) : <span className="text-muted-foreground text-xs">Sem contrato</span>}
-                          </TableCell>
-                          <TableCell className="text-right">{formatCurrency(u.custoTotal)}</TableCell>
-                          <TableCell className={`text-right font-semibold ${u.hasContract ? (u.lucro >= 0 ? "text-success" : "text-destructive") : "text-muted-foreground"}`}>
-                            {u.hasContract ? formatCurrency(u.lucro) : "—"}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {u.hasContract ? (
-                              <Badge variant="outline" className={`${marginColor} ${marginBg} font-semibold`}>
-                                {u.margem.toFixed(1)}%
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">—</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            {/* Radar Financeiro da Operação */}
+            <Card className="border-2 border-warning/30">
+              <CardHeader className="pb-2 p-4">
+                <CardTitle className="text-sm font-display flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-warning" />
+                  Radar Financeiro da Operação
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">Monitoramento de prejuízos e margens críticas</p>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border hover:bg-transparent">
+                        <TableHead>Unidade</TableHead>
+                        <TableHead className="text-right">Receita</TableHead>
+                        <TableHead className="text-right">Custo Total</TableHead>
+                        <TableHead className="text-right">Lucro</TableHead>
+                        <TableHead className="text-center">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {profitData.map(u => {
+                        const status = !u.hasContract
+                          ? { label: "Sem contrato", color: "text-muted-foreground", bg: "" }
+                          : u.lucro < 0
+                          ? { label: "Prejuízo", color: "text-destructive", bg: "bg-destructive/10 border-destructive/30" }
+                          : u.margem < 5
+                          ? { label: "Margem crítica", color: "text-warning", bg: "bg-warning/10 border-warning/30" }
+                          : u.margem <= 15
+                          ? { label: "Atenção", color: "text-warning", bg: "bg-warning/5 border-warning/20" }
+                          : { label: "Saudável", color: "text-success", bg: "bg-success/10 border-success/30" };
+
+                        return (
+                          <TableRow key={u.id} className={`border-border ${u.lucro < 0 ? "bg-destructive/5" : ""}`}>
+                            <TableCell className="font-medium">{u.name}</TableCell>
+                            <TableCell className="text-right">
+                              {u.hasContract ? formatCurrency(u.contractValue) : <span className="text-muted-foreground text-xs">—</span>}
+                            </TableCell>
+                            <TableCell className="text-right">{formatCurrency(u.custoTotal)}</TableCell>
+                            <TableCell className={`text-right font-semibold ${u.hasContract ? (u.lucro >= 0 ? "text-success" : "text-destructive") : "text-muted-foreground"}`}>
+                              {u.hasContract ? formatCurrency(u.lucro) : "—"}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {u.hasContract ? (
+                                <Badge variant="outline" className={`${status.color} ${status.bg} font-semibold`}>
+                                  {status.label}
+                                  {u.hasContract && u.lucro < 0 ? "" : ` (${u.margem.toFixed(1)}%)`}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Performance por Unidade (Lucro) - tabela detalhada */}
+            <Card>
+              <CardHeader className="pb-2 p-4">
+                <CardTitle className="text-sm font-display flex items-center gap-2">
+                  <TrendingDown className="h-4 w-4 text-primary" />
+                  Performance por Unidade (Lucro)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border hover:bg-transparent">
+                        <TableHead>Unidade</TableHead>
+                        <TableHead className="text-right">Receita (Contrato)</TableHead>
+                        <TableHead className="text-right">Custo Total</TableHead>
+                        <TableHead className="text-right">Lucro</TableHead>
+                        <TableHead className="text-right">Margem %</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {profitData.map(u => {
+                        const marginColor = !u.hasContract
+                          ? "text-muted-foreground"
+                          : u.margem > 15
+                          ? "text-success"
+                          : u.margem >= 5
+                          ? "text-warning"
+                          : "text-destructive";
+                        const marginBg = !u.hasContract
+                          ? ""
+                          : u.margem > 15
+                          ? "bg-success/10"
+                          : u.margem >= 5
+                          ? "bg-warning/10"
+                          : "bg-destructive/10";
+                        return (
+                          <TableRow key={u.id} className="border-border">
+                            <TableCell className="font-medium">{u.name}</TableCell>
+                            <TableCell className="text-right">
+                              {u.hasContract ? formatCurrency(u.contractValue) : <span className="text-muted-foreground text-xs">Sem contrato</span>}
+                            </TableCell>
+                            <TableCell className="text-right">{formatCurrency(u.custoTotal)}</TableCell>
+                            <TableCell className={`text-right font-semibold ${u.hasContract ? (u.lucro >= 0 ? "text-success" : "text-destructive") : "text-muted-foreground"}`}>
+                              {u.hasContract ? formatCurrency(u.lucro) : "—"}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {u.hasContract ? (
+                                <Badge variant="outline" className={`${marginColor} ${marginBg} font-semibold`}>
+                                  {u.margem.toFixed(1)}%
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </>
         );
       })()}
 

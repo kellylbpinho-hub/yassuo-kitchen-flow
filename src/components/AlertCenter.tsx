@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Package, Clock, ClipboardList, ChevronRight } from "lucide-react";
+import { Bell, Package, Clock, ClipboardList, ChevronRight, AlertTriangle } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -14,7 +14,7 @@ import { useState } from "react";
 
 interface AlertItem {
   id: string;
-  type: "estoque" | "validade" | "pedido";
+  type: "estoque" | "validade" | "pedido" | "financeiro";
   title: string;
   description: string;
   route: string;
@@ -101,6 +101,62 @@ async function fetchAlerts(companyId: string): Promise<AlertItem[]> {
     }
   }
 
+  // 4. Radar financeiro — prejuízo ou margem crítica
+  const { data: kitchenUnits } = await supabase
+    .from("units")
+    .select("id, name, contract_value, numero_colaboradores, type")
+    .eq("type", "kitchen");
+
+  if (kitchenUnits) {
+    const unitsWithContract = kitchenUnits.filter(u => u.contract_value && Number(u.contract_value) > 0);
+    if (unitsWithContract.length > 0) {
+      // Get meal cost data for each unit
+      const { data: mealCostRows } = await supabase
+        .from("meal_cost_daily")
+        .select("unit_id, real_meal_cost, meals_served");
+
+      if (mealCostRows) {
+        // Aggregate per unit
+        const unitAgg: Record<string, { totalCost: number; totalMeals: number }> = {};
+        for (const row of mealCostRows) {
+          if (!row.unit_id) continue;
+          if (!unitAgg[row.unit_id]) unitAgg[row.unit_id] = { totalCost: 0, totalMeals: 0 };
+          const meals = Number(row.meals_served) || 0;
+          const realCost = Number(row.real_meal_cost) || 0;
+          unitAgg[row.unit_id].totalCost += realCost * meals;
+          unitAgg[row.unit_id].totalMeals += meals;
+        }
+
+        for (const u of unitsWithContract) {
+          const agg = unitAgg[u.id];
+          if (!agg || agg.totalMeals === 0) continue;
+          const contractValue = Number(u.contract_value);
+          const custoTotal = agg.totalCost;
+          const lucro = contractValue - custoTotal;
+          const margem = (lucro / contractValue) * 100;
+
+          if (lucro < 0) {
+            items.push({
+              id: `fin-prejuizo-${u.id}`,
+              type: "financeiro",
+              title: u.name,
+              description: `Prejuízo de R$ ${Math.abs(lucro).toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+              route: "/dashboard-financeiro",
+            });
+          } else if (margem < 5) {
+            items.push({
+              id: `fin-margem-${u.id}`,
+              type: "financeiro",
+              title: u.name,
+              description: `Margem crítica: ${margem.toFixed(1)}%`,
+              route: "/dashboard-financeiro",
+            });
+          }
+        }
+      }
+    }
+  }
+
   return items;
 }
 
@@ -123,6 +179,7 @@ export function AlertCenter() {
     estoque: { icon: Package, color: "text-warning" },
     validade: { icon: Clock, color: "text-destructive" },
     pedido: { icon: ClipboardList, color: "text-primary" },
+    financeiro: { icon: AlertTriangle, color: "text-destructive" },
   };
 
   const handleClick = (route: string) => {
