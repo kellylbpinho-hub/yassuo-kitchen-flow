@@ -232,6 +232,7 @@ export default function PlanejamentoInsumos() {
       if (itemsErr) throw itemsErr;
 
       toast.success(`Pedido de compra criado com ${items.length} itens.`);
+      window.dispatchEvent(new CustomEvent("guided:purchase-from-forecast:success"));
       navigate(`/compras/${po.id}`);
     } catch (err: any) {
       toast.error("Erro ao gerar pedido: " + (err?.message || ""));
