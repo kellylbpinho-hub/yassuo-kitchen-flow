@@ -226,6 +226,13 @@ export default function Unidades() {
                           <span className="text-muted-foreground text-xs">Sem meta</span>
                         )}
                       </TableCell>
+                      <TableCell className="text-right">
+                        {u.contract_value != null && u.contract_value > 0 ? (
+                          <span className="font-medium">R$ {Number(u.contract_value).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </TableCell>
                       {canManage && (
                         <TableCell>
                           <Button variant="ghost" size="sm" onClick={() => openEdit(u)}>
