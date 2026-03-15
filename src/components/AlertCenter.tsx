@@ -157,6 +157,47 @@ async function fetchAlerts(companyId: string): Promise<AlertItem[]> {
     }
   }
 
+  // 5. Previsão de ruptura — consumo médio 30d vs estoque atual
+  const { data: activeProducts } = await supabase
+    .from("products")
+    .select("id, nome, estoque_atual")
+    .eq("ativo", true)
+    .gt("estoque_atual", 0);
+
+  if (activeProducts && activeProducts.length > 0) {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const { data: consumptionMvs } = await supabase
+      .from("movements")
+      .select("product_id, quantidade")
+      .in("tipo", ["consumo", "saida", "perda"])
+      .gte("created_at", thirtyDaysAgo.toISOString());
+
+    if (consumptionMvs) {
+      const consumoMap: Record<string, number> = {};
+      consumptionMvs.forEach((m) => {
+        consumoMap[m.product_id] = (consumoMap[m.product_id] || 0) + Number(m.quantidade);
+      });
+
+      for (const p of activeProducts) {
+        const consumoTotal = consumoMap[p.id];
+        if (!consumoTotal || consumoTotal <= 0) continue;
+        const mediaDiaria = consumoTotal / 30;
+        const diasRestantes = Number(p.estoque_atual) / mediaDiaria;
+        if (diasRestantes <= 3) {
+          items.push({
+            id: `prev-${p.id}`,
+            type: "previsao",
+            title: "Risco de ruptura de estoque",
+            description: `O produto ${p.nome} está com estoque previsto para até ${Math.max(0, Math.round(diasRestantes))} dias.`,
+            route: "/estoque",
+          });
+        }
+      }
+    }
+  }
+
   return items;
 }
 
