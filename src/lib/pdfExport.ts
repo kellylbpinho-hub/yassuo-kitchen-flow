@@ -535,6 +535,57 @@ function addHeader(doc: jsPDF, subtitle: string) {
   doc.text(subtitle, 14, 40);
 }
 
+// ──────────────────── Insumos Forecast PDF ────────────────────
+
+interface InsumosPDFData {
+  weekLabel: string;
+  unitName: string;
+  numColaboradores: number;
+  totalCost: number;
+  purchaseCost: number;
+  items: {
+    ingrediente: string;
+    unidade: string;
+    necessario: number;
+    estoque: number;
+    falta: number;
+    custoUnit: number;
+    custoTotal: number;
+  }[];
+}
+
+export function generateInsumosPDF(data: InsumosPDFData) {
+  const doc = new jsPDF();
+  addHeader(doc, "Planejamento de Insumos");
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Período: ${data.weekLabel}`, 14, 48);
+  doc.text(`Unidade: ${data.unitName}`, 14, 54);
+  doc.text(`Refeições previstas/dia: ${data.numColaboradores}`, 14, 60);
+  doc.text(`Custo total previsto: R$ ${data.totalCost.toFixed(2)}`, 120, 48);
+  doc.text(`Custo de compra: R$ ${data.purchaseCost.toFixed(2)}`, 120, 54);
+
+  autoTable(doc, {
+    startY: 68,
+    head: [["Ingrediente", "Unid.", "Necessário", "Estoque", "Falta", "Custo Unit.", "Custo Total"]],
+    body: data.items.map(i => [
+      i.ingrediente,
+      i.unidade,
+      i.necessario.toFixed(2),
+      i.estoque.toFixed(2),
+      i.falta > 0 ? i.falta.toFixed(2) : "—",
+      `R$ ${i.custoUnit.toFixed(2)}`,
+      `R$ ${i.custoTotal.toFixed(2)}`,
+    ]),
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [30, 30, 30] },
+  });
+
+  addFooter(doc);
+  doc.save(`planejamento-insumos-${data.weekLabel.replace(/\s/g, "")}.pdf`);
+}
+
 function addFooter(doc: jsPDF) {
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
