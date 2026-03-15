@@ -52,6 +52,13 @@ interface StockByUnit {
   saldo: number;
 }
 
+interface MovementRow {
+  product_id: string;
+  quantidade: number;
+  created_at: string;
+  tipo: string;
+}
+
 export default function Estoque() {
   const { user, canSeeCosts, profile, canManage, isFinanceiro, isNutricionista } = useAuth();
   const navigate = useNavigate();
