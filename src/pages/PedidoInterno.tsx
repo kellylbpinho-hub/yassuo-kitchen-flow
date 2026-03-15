@@ -454,7 +454,7 @@ export default function PedidoInterno() {
 
         {/* Items table */}
         {items.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-2" data-guide="items-list">
             <h3 className="text-sm font-semibold text-foreground">
               Itens do pedido ({items.length})
             </h3>
