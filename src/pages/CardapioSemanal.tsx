@@ -223,8 +223,7 @@ export default function CardapioSemanal() {
 
       {/* Week grid */}
       {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <ContextualLoader message="Carregando cardápio semanal..." />
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
