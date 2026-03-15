@@ -969,6 +969,7 @@ export type Database = {
         Row: {
           company_id: string
           created_at: string
+          dish_id: string | null
           fator_correcao: number
           id: string
           menu_id: string
@@ -978,6 +979,7 @@ export type Database = {
         Insert: {
           company_id: string
           created_at?: string
+          dish_id?: string | null
           fator_correcao?: number
           id?: string
           menu_id: string
@@ -987,6 +989,7 @@ export type Database = {
         Update: {
           company_id?: string
           created_at?: string
+          dish_id?: string | null
           fator_correcao?: number
           id?: string
           menu_id?: string
@@ -999,6 +1002,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_dish_id_fkey"
+            columns: ["dish_id"]
+            isOneToOne: false
+            referencedRelation: "dishes"
             referencedColumns: ["id"]
           },
           {

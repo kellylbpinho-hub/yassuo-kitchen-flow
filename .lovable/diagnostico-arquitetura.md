@@ -31,7 +31,7 @@
 | `dish_categories` | Categorias de prato | id, nome, ordem |
 | `menus` | Cardápios (por dia/unidade) | id, data, nome, unidade_id, created_by |
 | `menu_dishes` | Vínculo cardápio↔prato | menu_id, dish_id, ordem |
-| `recipe_ingredients` | Ficha técnica (ingredientes) | id, menu_id, product_id, peso_limpo_per_capita, fator_correcao |
+| `recipe_ingredients` | Ficha técnica (ingredientes) | id, menu_id, dish_id, product_id, peso_limpo_per_capita, fator_correcao |
 | `waste_logs` | Registros de desperdício | id, product_id, dish_id, menu_id, quantidade, sobra_prato, sobra_limpa_rampa, desperdicio_total_organico, unidade_id |
 | `unit_product_rules` | Contrato/bloqueio produto↔unidade | unit_id, product_id, status(bloqueado) |
 | `audit_log` | Log de auditoria | user_id, tabela, acao, registro_id, dados(jsonb) |
@@ -325,13 +325,21 @@ Planejamento → Compra → Recebimento → Estoque → Consumo/Desperdício →
 
 ## 7. Recomendações para Próximas Evoluções
 
-1. **Remover rota duplicada** `/pratos` no App.tsx (linha 73)
-2. **Considerar migrar `recipe_ingredients`** de `menu_id` para `dish_id` para permitir reuso de fichas técnicas entre cardápios
-3. **Depreciar `products.categoria`** (texto) em favor de `category_id` (FK)
-4. **Expor campo `marca`** na UI de cadastro/edição de produtos
-5. **Monitorar drift** entre `products.estoque_atual` e soma real de lotes
+1. ~~**Remover rota duplicada** `/pratos` no App.tsx~~ ✅ Resolvido
+2. ~~**Migrar `recipe_ingredients`** de `menu_id` para `dish_id`~~ ✅ Resolvido — coluna `dish_id` adicionada, dados migrados, FichaTecnica e PlanejamentoInsumos atualizados para queries por dish_id
+3. **Depreciar `products.categoria`** (texto) em favor de `category_id` (FK) — mantido como texto para estabilidade do MVP, migração futura planejada
+4. ~~**Expor campo `marca`** na UI de cadastro/edição de produtos~~ ✅ Resolvido — marca disponível em Estoque (criação + edição), Compras (seleção + PDF) e Recebimento Digital
+5. **Monitorar drift** entre `products.estoque_atual` e soma real de lotes — mitigado: UI usa `v_estoque_por_unidade` para exibição, RPCs atualizam atomicamente
 6. **Manter regra**: toda alteração de módulo deve atualizar guidedSteps correspondente
+
+### Ajustes Estruturais v1.1 (2026-03-15)
+- `recipe_ingredients.dish_id` adicionado (FK → dishes), permitindo reuso de fichas técnicas entre cardápios diferentes
+- CardapioDiaSheet agora exibe ficha técnica **por prato** (não por menu inteiro)
+- PlanejamentoInsumos usa dish_id para calcular necessidades, contabilizando corretamente pratos repetidos em múltiplos dias
+- Campo `marca` exposto no formulário de criação de produtos em Estoque
+- Nenhuma rota duplicada ou tela antiga ativa no sistema
+- Todos os perfis utilizam o mesmo fluxo multi-item para Pedido Interno e Compras
 
 ---
 
-*Este documento serve como snapshot da arquitetura v1.0 do Yassuo Control. Qualquer evolução deve ser verificada contra este diagnóstico para garantir que nenhuma funcionalidade seja perdida.*
+*Este documento serve como snapshot da arquitetura v1.1 do Yassuo Control. Qualquer evolução deve ser verificada contra este diagnóstico para garantir que nenhuma funcionalidade seja perdida.*
