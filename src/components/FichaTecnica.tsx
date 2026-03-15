@@ -26,6 +26,9 @@ interface Props {
   menuId: string;
   unidadeId: string;
   companyId: string;
+  dishName?: string;
+  dishCategory?: string;
+  dishDescricao?: string;
 }
 
 export function FichaTecnica({ menuId, unidadeId, companyId }: Props) {
