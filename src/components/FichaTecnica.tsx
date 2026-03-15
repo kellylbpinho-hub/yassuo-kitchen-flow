@@ -197,13 +197,44 @@ export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCateg
             <span className="text-sm font-semibold text-foreground">Necessidade Total para esta Unidade</span>
           </div>
           {!isFinanceiro && ingredients.length > 0 && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const custoProducts = products.filter(p => ingredients.some(i => i.product_id === p.id));
+                  generateFichaTecnicaPDF({
+                    dishName: dishName || "Ficha Técnica",
+                    category: dishCategory || "Geral",
+                    rendimentoKg: totalDemanda,
+                    numPorcoes: numColaboradores,
+                    observacoes: dishDescricao || undefined,
+                    ingredients: ingredients.map((i) => {
+                      const prod = products.find(p => p.id === i.product_id);
+                      const demand = calcDemanda(i.peso_limpo_per_capita, i.fator_correcao);
+                      const custo = (prod as any)?.custo_unitario || null;
+                      return {
+                        produto: prod?.nome || "—",
+                        quantidade: demand,
+                        unidade: prod?.unidade_medida || "kg",
+                        custoUnitario: custo,
+                        custoTotal: custo != null ? custo * demand : null,
+                      };
+                    }),
+                  });
+                  toast.success("Ficha técnica PDF gerada!");
+                }}
+                className="gap-1.5"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Ficha Técnica PDF
+              </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => {
                   generateRequisicaoInternaPDF({
-                    menuName: "Ficha Técnica",
+                    menuName: dishName || "Ficha Técnica",
                     unitName: `Unidade`,
                     numColaboradores: numColaboradores,
                     date: new Date().toLocaleDateString("pt-BR"),
