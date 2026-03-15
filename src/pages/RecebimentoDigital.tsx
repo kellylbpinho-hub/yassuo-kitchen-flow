@@ -9,8 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ScanBarcode, Keyboard, Package, Loader2, CheckCircle2, Search, Info, AlertTriangle } from "lucide-react";
+import { ScanBarcode, Keyboard, Package, Loader2, CheckCircle2, Search, Info } from "lucide-react";
 import { toast } from "sonner";
 import { fuzzyMatchProduct, formatProductLabel } from "@/lib/fuzzySearch";
 import { parseGS1Barcode, getSuggestedValidityDays, type GS1Data } from "@/lib/gs1Parser";
@@ -73,9 +72,6 @@ export default function RecebimentoDigital() {
   const [newUnit, setNewUnit] = useState("");
   const [newCategoria, setNewCategoria] = useState("");
 
-  // Weight deviation alert
-  const [weightAlert, setWeightAlert] = useState<{ avg: number; current: number } | null>(null);
-  const [showWeightAlert, setShowWeightAlert] = useState(false);
 
   const CATEGORIAS_FIXAS = ["Grãos", "Proteínas", "Laticínios", "Hortifruti", "Bebidas", "Descartáveis", "Limpeza", "Temperos", "Outros"];
 
@@ -185,8 +181,8 @@ export default function RecebimentoDigital() {
     ? allProducts.filter((p) => fuzzyMatchProduct(p, searchQuery) || (p.codigo_barras && p.codigo_barras.includes(searchQuery)))
     : [];
 
-  // Check weight deviation against last 5 entries
-  const checkWeightDeviation = async (productId: string, currentQty: number): Promise<boolean> => {
+  // Check weight deviation against last 5 entries — silent logging
+  const checkAndLogWeightDeviation = async (productId: string, currentQty: number) => {
     const { data: lastEntries } = await supabase
       .from("movements")
       .select("quantidade")
@@ -195,17 +191,25 @@ export default function RecebimentoDigital() {
       .order("created_at", { ascending: false })
       .limit(5);
 
-    if (!lastEntries || lastEntries.length < 2) return false; // Not enough history
+    if (!lastEntries || lastEntries.length < 2) return; // Not enough history
 
     const avg = lastEntries.reduce((s, e) => s + Number(e.quantidade), 0) / lastEntries.length;
     const deviation = Math.abs(currentQty - avg) / avg;
 
-    if (deviation > 0.3) {
-      setWeightAlert({ avg: Math.round(avg * 1000) / 1000, current: currentQty });
-      setShowWeightAlert(true);
-      return true; // Has deviation
+    if (deviation > 0.3 && profile?.company_id) {
+      // Silent log — no blocking dialog
+      await supabase.from("weight_divergence_logs").insert({
+        company_id: profile.company_id,
+        product_id: productId,
+        product_name: product?.nome || "Produto",
+        peso_informado: currentQty,
+        media_historica: Math.round(avg * 1000) / 1000,
+        percentual_desvio: Math.round(deviation * 10000) / 100,
+        user_id: user!.id,
+        user_name: profile.full_name,
+        unidade_id: selectedUnit,
+      });
     }
-    return false;
   };
 
   const handleRegisterProduct = async () => {
@@ -295,12 +299,9 @@ export default function RecebimentoDigital() {
       return;
     }
 
-    // Check weight deviation before confirming
-    const hasDeviation = await checkWeightDeviation(product!.id, qty);
-    if (!hasDeviation) {
-      await executeReceipt();
-    }
-    // If has deviation, the alert dialog will handle confirmation
+    // Log weight deviation silently (non-blocking)
+    await checkAndLogWeightDeviation(product!.id, qty);
+    await executeReceipt();
   };
 
   const reset = () => {
@@ -316,7 +317,6 @@ export default function RecebimentoDigital() {
     setNewMarca("");
     setNewUnidadeMedida("kg");
     setNewCategoria("");
-    setWeightAlert(null);
   };
 
   const getProductPurchaseUnit = (): PurchaseUnit | null => {
@@ -345,30 +345,6 @@ export default function RecebimentoDigital() {
       <h1 className="text-2xl font-display font-bold text-foreground">
         Recebimento Digital
       </h1>
-
-      {/* Weight deviation alert */}
-      <AlertDialog open={showWeightAlert} onOpenChange={setShowWeightAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-warning" />
-              Peso fora do padrão
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              O peso inserido ({weightAlert?.current} kg) diverge mais de 30% da média das últimas entregas ({weightAlert?.avg} kg). Deseja confirmar o recebimento mesmo assim?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowWeightAlert(false)}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              setShowWeightAlert(false);
-              executeReceipt();
-            }}>
-              Confirmar mesmo assim
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Idle */}
       {step === "idle" && (

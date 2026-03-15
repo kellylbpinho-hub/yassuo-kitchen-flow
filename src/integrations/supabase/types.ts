@@ -1356,6 +1356,70 @@ export type Database = {
           },
         ]
       }
+      weight_divergence_logs: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          media_historica: number
+          percentual_desvio: number
+          peso_informado: number
+          product_id: string
+          product_name: string
+          unidade_id: string
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          media_historica: number
+          percentual_desvio: number
+          peso_informado: number
+          product_id: string
+          product_name: string
+          unidade_id: string
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          media_historica?: number
+          percentual_desvio?: number
+          peso_informado?: number
+          product_id?: string
+          product_name?: string
+          unidade_id?: string
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weight_divergence_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weight_divergence_logs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weight_divergence_logs_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       meal_cost_daily: {

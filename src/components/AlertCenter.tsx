@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Package, Clock, ClipboardList, ChevronRight, AlertTriangle, ShoppingCart } from "lucide-react";
+import { Bell, Package, Clock, ClipboardList, ChevronRight, AlertTriangle, ShoppingCart, Scale } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -14,7 +14,7 @@ import { useState } from "react";
 
 interface AlertItem {
   id: string;
-  type: "estoque" | "validade" | "pedido" | "financeiro" | "previsao";
+  type: "estoque" | "validade" | "pedido" | "financeiro" | "previsao" | "peso";
   title: string;
   description: string;
   route: string;
@@ -198,6 +198,29 @@ async function fetchAlerts(companyId: string): Promise<AlertItem[]> {
     }
   }
 
+  // 6. Divergências de peso (últimas 48h) — visível apenas para CEO/admin
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+  const { data: weightLogs } = await supabase
+    .from("weight_divergence_logs")
+    .select("id, product_name, peso_informado, media_historica, percentual_desvio, user_name, created_at")
+    .gte("created_at", twoDaysAgo.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (weightLogs) {
+    for (const log of weightLogs) {
+      items.push({
+        id: `peso-${log.id}`,
+        type: "peso",
+        title: "Divergência de peso no recebimento",
+        description: `O produto ${log.product_name} foi recebido com peso fora do padrão em relação à média histórica. Conferir no próximo dia útil.`,
+        route: "/recebimento-digital",
+      });
+    }
+  }
+
   return items;
 }
 
@@ -222,6 +245,7 @@ export function AlertCenter() {
     pedido: { icon: ClipboardList, color: "text-primary" },
     financeiro: { icon: AlertTriangle, color: "text-destructive" },
     previsao: { icon: ShoppingCart, color: "text-destructive" },
+    peso: { icon: Scale, color: "text-warning" },
   };
 
   const handleClick = (route: string) => {
