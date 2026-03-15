@@ -261,7 +261,7 @@ export default function CardapioDiaSheet({
                 <TabsTrigger value="pratos" className="flex-1 gap-1">
                   <UtensilsCrossed className="h-3.5 w-3.5" /> Pratos
                 </TabsTrigger>
-                <TabsTrigger value="ficha" className="flex-1 gap-1">
+                <TabsTrigger data-guide="tab-ficha-tecnica" value="ficha" className="flex-1 gap-1">
                   <ClipboardList className="h-3.5 w-3.5" /> Ficha Técnica
                 </TabsTrigger>
               </TabsList>

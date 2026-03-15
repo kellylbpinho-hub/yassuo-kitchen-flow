@@ -183,6 +183,7 @@ export default function CardapioSemanal() {
             PDF Simples
           </Button>
           <Button
+            data-guide="btn-pdf-tecnico"
             variant="outline"
             size="sm"
             className="gap-1"

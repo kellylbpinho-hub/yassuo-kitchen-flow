@@ -257,7 +257,7 @@ export default function PlanejamentoInsumos() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={() => setWeekStart(subWeeks(weekStart, 1))}>
+          <Button data-guide="btn-prev-week" variant="outline" size="icon" onClick={() => setWeekStart(subWeeks(weekStart, 1))}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm font-medium text-foreground min-w-[160px] text-center">{weekLabel}</span>
