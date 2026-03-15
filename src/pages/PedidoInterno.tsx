@@ -327,7 +327,7 @@ export default function PedidoInterno() {
         <h2 className="font-display font-bold text-foreground">Novo Pedido ao CD</h2>
 
         {/* Header fields */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" data-guide="order-header">
           {cdUnits.length > 1 && (
             <div className="space-y-2" data-guide="select-cd">
               <Label>CD de origem *</Label>
