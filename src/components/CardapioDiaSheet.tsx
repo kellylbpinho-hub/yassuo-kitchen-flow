@@ -317,7 +317,7 @@ export default function CardapioDiaSheet({
                   <>
                     <Separator className="my-2" />
                     <div className="space-y-2">
-                      <h3 className="text-sm font-medium text-foreground">Adicionar prato</h3>
+                      <h3 data-guide="add-dish-section" className="text-sm font-medium text-foreground">Adicionar prato</h3>
                       <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
