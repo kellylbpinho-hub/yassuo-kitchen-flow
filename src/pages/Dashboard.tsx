@@ -169,7 +169,7 @@ export default function Dashboard() {
         wasteData: { sobraLimpa, restoIngesta }, custoMedioRefeicao, pedidosStatus,
         totalPedidos, pedidosPendentes, slowTurnoverItems,
       });
-    } catch (err) { console.error("Dashboard error:", err); } finally { setLoading(false); }
+    } catch (err) { console.error("Dashboard error:", err); } finally { setLoading(false); setLastUpdated(new Date()); }
   };
 
   if (loading) {
