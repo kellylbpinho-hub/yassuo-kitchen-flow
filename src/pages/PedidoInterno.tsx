@@ -447,7 +447,7 @@ export default function PedidoInterno() {
             />
           </div>
 
-          <Button variant="outline" size="sm" onClick={handleAddItem} className="gap-1">
+          <Button variant="outline" size="sm" onClick={handleAddItem} className="gap-1" data-guide="btn-add-item">
             <Plus className="h-4 w-4" /> Adicionar item
           </Button>
         </div>
