@@ -40,6 +40,14 @@ export function EditProductDialog({ product, open, onClose, onSaved }: EditProdu
       toast.error("Nome do produto é obrigatório.");
       return;
     }
+    if (!marca.trim()) {
+      toast.error("Marca é obrigatória.");
+      return;
+    }
+    if (!categoria) {
+      toast.error("Categoria é obrigatória.");
+      return;
+    }
     setSaving(true);
     const { error } = await supabase
       .from("products")
