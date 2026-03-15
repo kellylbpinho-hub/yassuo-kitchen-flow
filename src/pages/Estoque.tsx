@@ -107,6 +107,10 @@ export default function Estoque() {
       toast.error("Preencha nome e unidade.");
       return;
     }
+    if (!form.marca.trim()) {
+      toast.error("Marca é obrigatória.");
+      return;
+    }
     if (!form.categoria) {
       toast.error("Selecione uma categoria.");
       return;
