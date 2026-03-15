@@ -308,7 +308,7 @@ export default function PlanejamentoInsumos() {
                     </p>
                   </div>
                 </div>
-                <Button size="sm" className="gap-1" onClick={handleGeneratePurchaseOrder}>
+                <Button data-guide="btn-gerar-compra" size="sm" className="gap-1" onClick={handleGeneratePurchaseOrder}>
                   <ShoppingCart className="h-4 w-4" />
                   Gerar Pedido de Compra
                 </Button>
