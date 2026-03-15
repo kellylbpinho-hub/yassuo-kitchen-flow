@@ -2,12 +2,13 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ChevronLeft, ChevronRight, CalendarDays, UtensilsCrossed, Coffee, Palmtree } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, CalendarDays, UtensilsCrossed, Coffee, Palmtree, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CardapioDiaSheet from "@/components/CardapioDiaSheet";
+import { generateMenuWeekPDF } from "@/lib/pdfExport";
 
 interface MenuData {
   id: string;
