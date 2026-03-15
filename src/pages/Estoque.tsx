@@ -122,11 +122,13 @@ export default function Estoque() {
       const result = data as any;
       const productId = result?.id;
       if (productId && !result?.already_existed) {
-        await supabase.from("products").update({ categoria: form.categoria }).eq("id", productId);
+        const updateData: any = { categoria: form.categoria };
+        if (form.marca.trim()) updateData.marca = form.marca.trim();
+        await supabase.from("products").update(updateData).eq("id", productId);
       }
       toast.success("Produto adicionado!");
       setAddOpen(false);
-      setForm({ nome: "", categoria: "", unidade_medida: "kg", estoque_minimo: "0", unidade_id: form.unidade_id });
+      setForm({ nome: "", marca: "", categoria: "", unidade_medida: "kg", estoque_minimo: "0", unidade_id: form.unidade_id });
       loadData();
     }
   };
