@@ -374,6 +374,7 @@ export default function CardapioDiaSheet({
                     dishName={menu.nome}
                     dishCategory="Cardápio do Dia"
                     dishDescricao={menu.descricao || undefined}
+                    dishId={menuDishes.length === 1 ? menuDishes[0].dish_id : undefined}
                   />
                 ) : (
                   <div className="text-sm text-muted-foreground text-center py-8">
