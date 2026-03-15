@@ -59,6 +59,7 @@ const FUNCIONARIO_BLOCKED_ROUTES = [
   "/unidades",
   "/configuracoes-acesso",
   "/painel-nutri",
+  "/radar-operacao",
 ];
 
 const NON_NUTRI_BLOCKED_ROUTES = ["/painel-nutri"];
