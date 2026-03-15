@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CardapioDiaSheet from "@/components/CardapioDiaSheet";
-import { generateMenuWeekPDF } from "@/lib/pdfExport";
+import { generateMenuWeekPDF, generateMenuTecnicoPDF } from "@/lib/pdfExport";
 
 interface MenuData {
   id: string;
