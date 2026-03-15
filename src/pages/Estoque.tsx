@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, RefreshCw, Search, Loader2, AlertTriangle, Eye, Pencil, MoreVertical, FileSpreadsheet, Upload } from "lucide-react";
+import { Plus, RefreshCw, Search, Loader2, AlertTriangle, Eye, Pencil, MoreVertical, FileSpreadsheet, Upload, ShoppingCart } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -51,6 +52,13 @@ interface StockByUnit {
   saldo: number;
 }
 
+interface MovementRow {
+  product_id: string;
+  quantidade: number;
+  created_at: string;
+  tipo: string;
+}
+
 export default function Estoque() {
   const { user, canSeeCosts, profile, canManage, isFinanceiro, isNutricionista } = useAuth();
   const navigate = useNavigate();
@@ -58,6 +66,7 @@ export default function Estoque() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [stockByUnit, setStockByUnit] = useState<StockByUnit[]>([]);
+  const [consumptionMovements, setConsumptionMovements] = useState<MovementRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterUnit, setFilterUnit] = useState("all");
@@ -79,16 +88,24 @@ export default function Estoque() {
 
   const loadData = async () => {
     setLoading(true);
-    const [{ data: prods }, { data: u }, { data: cats }, { data: sbu }] = await Promise.all([
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
+
+    const [{ data: prods }, { data: u }, { data: cats }, { data: sbu }, { data: mvs }] = await Promise.all([
       supabase.from("products").select("*, product_categories(name)").eq("ativo", true).order("nome"),
       supabase.from("units").select("id, name, type"),
       supabase.from("product_categories").select("id, name").order("name"),
       supabase.from("v_estoque_por_unidade").select("product_id, unidade_id, saldo"),
+      supabase.from("movements").select("product_id, quantidade, created_at, tipo")
+        .in("tipo", ["consumo", "saida", "perda"])
+        .gte("created_at", thirtyDaysAgoISO),
     ]);
     setProducts((prods || []) as Product[]);
     setUnits((u || []) as Unit[]);
     setCategories((cats || []) as Category[]);
     setStockByUnit((sbu || []) as StockByUnit[]);
+    setConsumptionMovements((mvs || []) as MovementRow[]);
     if (u && u.length > 0 && !form.unidade_id) {
       setForm((f) => ({ ...f, unidade_id: profile?.unidade_id || u[0].id }));
     }
@@ -176,6 +193,41 @@ export default function Estoque() {
 
   const getUnitName = (id: string) => units.find((u) => u.id === id)?.name || "—";
   const getCategoryName = (p: Product) => p.product_categories?.name || p.categoria || "—";
+
+  // Previsão de Pedido — consumption forecast
+  const forecastData = useMemo(() => {
+    // Aggregate consumption per product over last 30 days
+    const consumoMap: Record<string, number> = {};
+    consumptionMovements.forEach((m) => {
+      consumoMap[m.product_id] = (consumoMap[m.product_id] || 0) + Number(m.quantidade);
+    });
+
+    return products
+      .filter((p) => {
+        const consumoTotal = consumoMap[p.id] || 0;
+        return consumoTotal > 0; // Only show products with consumption
+      })
+      .map((p) => {
+        const consumoTotal = consumoMap[p.id] || 0;
+        const consumoMedioDiario = consumoTotal / 30;
+        const estoqueAtual = Number(p.estoque_atual);
+        const diasRestantes = consumoMedioDiario > 0 ? estoqueAtual / consumoMedioDiario : Infinity;
+        const sugestaoCompra = consumoMedioDiario * 7;
+
+        return {
+          id: p.id,
+          nome: p.nome,
+          marca: p.marca,
+          unidade_medida: p.unidade_medida,
+          estoqueAtual,
+          consumoMedioDiario,
+          diasRestantes: diasRestantes === Infinity ? null : Math.round(diasRestantes * 10) / 10,
+          sugestaoCompra: Math.ceil(sugestaoCompra * 10) / 10,
+        };
+      })
+      .filter((p) => p.diasRestantes !== null)
+      .sort((a, b) => (a.diasRestantes ?? 999) - (b.diasRestantes ?? 999));
+  }, [products, consumptionMovements]);
 
   if (loading) {
     return (
@@ -392,6 +444,76 @@ export default function Estoque() {
           </div>
         );
       })()}
+
+      {/* Previsão de Pedido */}
+      {forecastData.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2 p-4">
+            <CardTitle className="text-sm font-display flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4 text-primary" />
+              Previsão de Pedido
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">Baseado no consumo médio dos últimos 30 dias</p>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead>Produto</TableHead>
+                    <TableHead className="text-right">Estoque Atual</TableHead>
+                    <TableHead className="text-right">Consumo Médio/Dia</TableHead>
+                    <TableHead className="text-right">Dias Restantes</TableHead>
+                    <TableHead className="text-right">Sugestão de Compra</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {forecastData.slice(0, 20).map((p) => {
+                    const dias = p.diasRestantes ?? 999;
+                    const statusColor = dias <= 3
+                      ? "text-destructive"
+                      : dias <= 7
+                      ? "text-warning"
+                      : "text-success";
+                    const statusBg = dias <= 3
+                      ? "bg-destructive/10"
+                      : dias <= 7
+                      ? "bg-warning/10"
+                      : "bg-success/10";
+                    const statusLabel = dias <= 3 ? "Crítico" : dias <= 7 ? "Atenção" : "OK";
+
+                    return (
+                      <TableRow key={p.id} className={`border-border ${dias <= 3 ? "bg-destructive/5" : ""}`}>
+                        <TableCell>
+                          <div>
+                            <span className="font-medium">{p.nome}</span>
+                            {p.marca && <span className="block text-xs text-muted-foreground">{p.marca}</span>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {p.estoqueAtual.toFixed(1)} {p.unidade_medida}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {p.consumoMedioDiario.toFixed(1)} {p.unidade_medida}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="outline" className={`${statusColor} ${statusBg} font-semibold`}>
+                            {p.diasRestantes?.toFixed(1)}d — {statusLabel}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {p.sugestaoCompra} {p.unidade_medida}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
 
       {/* Table */}
       <div className="glass-card overflow-hidden">
