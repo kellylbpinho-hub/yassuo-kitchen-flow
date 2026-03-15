@@ -96,7 +96,7 @@ export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCateg
       tempo_preparo: dishExtra.tempo_preparo || null,
       equipamento: dishExtra.equipamento || null,
       peso_porcao: dishExtra.peso_porcao,
-    }).eq("id", dishId);
+    } as any).eq("id", dishId);
     if (error) toast.error(error.message);
     else toast.success("Informações da preparação salvas!");
     setSavingExtra(false);
