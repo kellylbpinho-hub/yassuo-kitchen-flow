@@ -95,7 +95,7 @@ export default function DashboardFinanceiro() {
       { data: w },
       { data: mv },
     ] = await Promise.all([
-      supabase.from("units").select("id, name, type, numero_colaboradores"),
+      supabase.from("units").select("id, name, type, numero_colaboradores, contract_value"),
       supabase.from("products").select("id, nome, custo_unitario"),
       supabase.from("purchase_orders").select("id, unidade_id, status, created_at").gte("created_at", startISO),
       supabase.from("waste_logs").select("quantidade, unidade_id, created_at, product_id").gte("created_at", startISO),
