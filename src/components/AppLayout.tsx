@@ -104,6 +104,9 @@ export function AppLayout() {
       nutricaoItems.push({ to: "/desperdicio-contrato", icon: BarChart3, label: "Desp. Contrato" });
     }
     nutricaoItems.push({ to: "/alertas", icon: Bell, label: "Alertas" });
+    if (isCeo || isGerenteOperacional) {
+      nutricaoItems.push({ to: "/planejamento-insumos", icon: Calculator, label: "Previsão Insumos" });
+    }
     groups.push({
       label: "🍎 Nutrição",
       icon: UtensilsCrossed,
