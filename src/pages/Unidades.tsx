@@ -18,6 +18,7 @@ interface Unit {
   company_id: string;
   numero_colaboradores: number;
   target_meal_cost: number | null;
+  contract_value: number | null;
 }
 
 const typeLabels: Record<string, string> = {
