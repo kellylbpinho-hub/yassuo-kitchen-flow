@@ -14,7 +14,7 @@ import { useState } from "react";
 
 interface AlertItem {
   id: string;
-  type: "estoque" | "validade" | "pedido" | "financeiro" | "previsao";
+  type: "estoque" | "validade" | "pedido" | "financeiro" | "previsao" | "peso";
   title: string;
   description: string;
   route: string;
