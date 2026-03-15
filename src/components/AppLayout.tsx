@@ -119,8 +119,14 @@ export function AppLayout() {
     // Administração
     const showDashFinanceiro = isCeo || isFinanceiroRole || isGerenteOperacional;
     const adminItems: NavGroup["items"] = [];
+    if (isCeo) {
+      adminItems.push({ to: "/painel-ceo", icon: Crown, label: "Painel do CEO" });
+    }
     if (showDashFinanceiro) {
       adminItems.push({ to: "/dashboard-financeiro", icon: DollarSign, label: "Dash Financeiro" });
+    }
+    if (isCeo || isGerenteOperacional) {
+      adminItems.push({ to: "/radar-operacao", icon: Radar, label: "Radar Operação" });
     }
     const isEstoquistaRole = role === "estoquista";
     const isFuncionarioRole = role === "funcionario";

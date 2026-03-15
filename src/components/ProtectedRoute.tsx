@@ -60,7 +60,7 @@ const FUNCIONARIO_BLOCKED_ROUTES = [
 
 const NON_NUTRI_BLOCKED_ROUTES = ["/painel-nutri"];
 
-const CEO_ONLY_ROUTES = ["/configuracoes-acesso"];
+const CEO_ONLY_ROUTES = ["/configuracoes-acesso", "/painel-ceo"];
 
 const roleLabels: Record<string, string> = {
   ceo: "CEO",
