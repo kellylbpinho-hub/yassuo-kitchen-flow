@@ -69,6 +69,7 @@ export default function DashboardFinanceiro() {
   const [wasteLogs, setWasteLogs] = useState<WasteLogRow[]>([]);
   const [movements, setMovements] = useState<MovementRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [period, setPeriod] = useState<PeriodMonths>(6);
   const [filterUnit, setFilterUnit] = useState("all");
   const [mealCostData, setMealCostData] = useState<MealCostSectionData | null>(null);
