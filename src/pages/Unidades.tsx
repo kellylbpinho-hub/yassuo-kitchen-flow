@@ -37,7 +37,7 @@ export default function Unidades() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [editUnit, setEditUnit] = useState<Unit | null>(null);
-  const [form, setForm] = useState({ name: "", type: "kitchen", numero_colaboradores: "0", target_meal_cost: "" });
+  const [form, setForm] = useState({ name: "", type: "kitchen", numero_colaboradores: "0", target_meal_cost: "", contract_value: "" });
 
   useEffect(() => { loadData(); }, []);
 
