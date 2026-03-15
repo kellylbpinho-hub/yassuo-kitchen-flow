@@ -117,6 +117,7 @@ export function GuidedModeOverlay() {
     setStepCompleted(false);
     setWaitingSubmitSuccess(false);
     setElementMissing(false);
+    setCompactMode(false);
     selectArmedRef.current = false;
     submitClickedRef.current = false;
 
