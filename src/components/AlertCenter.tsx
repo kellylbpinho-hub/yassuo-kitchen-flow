@@ -221,6 +221,7 @@ export function AlertCenter() {
     validade: { icon: Clock, color: "text-destructive" },
     pedido: { icon: ClipboardList, color: "text-primary" },
     financeiro: { icon: AlertTriangle, color: "text-destructive" },
+    previsao: { icon: ShoppingCart, color: "text-destructive" },
   };
 
   const handleClick = (route: string) => {
