@@ -173,7 +173,7 @@ export default function PainelCeo() {
           <h1 className="text-2xl font-bold text-foreground">Painel do CEO</h1>
           <p className="text-sm text-muted-foreground">Visão executiva consolidada da operação</p>
         </div>
-        <LastUpdated date={lastUpdated} />
+        <LastUpdated timestamp={lastUpdated} />
       </div>
 
       {/* KPI Cards */}

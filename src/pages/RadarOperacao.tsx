@@ -216,7 +216,7 @@ export default function RadarOperacao() {
           </h1>
           <p className="text-sm text-muted-foreground">Consolidação de riscos operacionais e financeiros por unidade</p>
         </div>
-        <LastUpdated date={lastUpdated} />
+        <LastUpdated timestamp={lastUpdated} />
       </div>
 
       {/* Summary cards */}
