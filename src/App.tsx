@@ -32,6 +32,7 @@ import CardapioSemanal from "./pages/CardapioSemanal";
 import PainelNutri from "./pages/PainelNutri";
 import Pratos from "./pages/Pratos";
 import RelatorioExecutivo from "./pages/RelatorioExecutivo";
+import PlanejamentoInsumos from "./pages/PlanejamentoInsumos";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
