@@ -273,63 +273,193 @@ export function GuidedModeOverlay() {
     };
   }, [currentStep, enabled, stepCompleted, rect, completeStep]);
 
-  // Position tooltip
-  useEffect(() => {
+  const overlapArea = (
+    a: { left: number; right: number; top: number; bottom: number },
+    b: { left: number; right: number; top: number; bottom: number }
+  ) => {
+    const x = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+    const y = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+    return x * y;
+  };
+
+  const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(value, max));
+
+  const collectInteractiveRects = useCallback(() => {
+    const selectors = [
+      "[role='listbox']",
+      "[role='menu']",
+      "[role='dialog'][data-state='open']",
+      "[data-radix-popper-content-wrapper]",
+      "[data-state='open'][role='dialog']",
+    ];
+
+    const nodes = selectors.flatMap((selector) => Array.from(document.querySelectorAll(selector)));
+
+    return nodes
+      .filter((node) => {
+        if (!(node instanceof HTMLElement)) return false;
+        if (tooltipRef.current && (node === tooltipRef.current || tooltipRef.current.contains(node))) return false;
+        if (node.closest("[data-guided-overlay='true']")) return false;
+
+        const style = window.getComputedStyle(node);
+        if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) return false;
+
+        const r = node.getBoundingClientRect();
+        return r.width > 24 && r.height > 24;
+      })
+      .map((node) => node.getBoundingClientRect());
+  }, []);
+
+  const positionTooltip = useCallback(() => {
     if (!rect || !currentStep) return;
 
-    const pos = currentStep.position || "bottom";
-    const pad = 16;
-    const tooltipW = 340;
-    const tooltipH = 128;
+    const margin = 8;
+    const gap = 14;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
 
-    let top = 0;
-    let left = 0;
+    const interactiveRects = collectInteractiveRects();
+    const shouldCompact = interactiveRects.length > 0;
+    setCompactMode((prev) => (prev === shouldCompact ? prev : shouldCompact));
 
-    switch (pos) {
-      case "bottom":
-        top = rect.bottom + pad;
-        left = rect.left + rect.width / 2 - tooltipW / 2;
-        break;
-      case "top":
-        top = rect.top - tooltipH - pad;
-        left = rect.left + rect.width / 2 - tooltipW / 2;
-        break;
-      case "left":
-        top = rect.top + rect.height / 2 - tooltipH / 2;
-        left = rect.left - tooltipW - pad;
-        break;
-      case "right":
-        top = rect.top + rect.height / 2 - tooltipH / 2;
-        left = rect.right + pad;
-        break;
+    const tooltipWidth = tooltipRef.current?.offsetWidth ?? (shouldCompact ? 280 : 340);
+    const tooltipHeight = tooltipRef.current?.offsetHeight ?? (shouldCompact ? 92 : 188);
+
+    const targetRect = {
+      left: rect.left - 10,
+      right: rect.right + 10,
+      top: rect.top - 10,
+      bottom: rect.bottom + 10,
+    };
+
+    if (isMobile) {
+      const dockTop = rect.top > viewportHeight * 0.55;
+      const width = Math.min(viewportWidth - margin * 2, shouldCompact ? 300 : 360);
+      const left = clamp((viewportWidth - width) / 2, margin, viewportWidth - width - margin);
+      const baseTop = dockTop ? margin : viewportHeight - tooltipHeight - margin;
+      const top = clamp(baseTop, margin, viewportHeight - tooltipHeight - margin);
+      const pointerLeft = clamp(rect.left + rect.width / 2 - left, 24, width - 24);
+
+      setTooltipStyle({ top, left, width });
+      setArrowStyle({
+        position: "absolute",
+        left: pointerLeft,
+        ...(dockTop
+          ? {
+              bottom: -8,
+              transform: "translateX(-50%) rotate(180deg)",
+            }
+          : {
+              top: -8,
+              transform: "translateX(-50%)",
+            }),
+      });
+      return;
     }
 
-    left = Math.max(8, Math.min(left, window.innerWidth - tooltipW - 8));
-    top = Math.max(8, Math.min(top, window.innerHeight - tooltipH - 8));
+    const preferred = currentStep.position || "bottom";
+    const fallbackOrder: Array<"top" | "bottom" | "left" | "right"> = ["right", "bottom", "top", "left"];
+    const order = [preferred, ...fallbackOrder.filter((side) => side !== preferred)] as Array<
+      "top" | "bottom" | "left" | "right"
+    >;
 
-    setTooltipStyle({ top, left, width: tooltipW });
+    const avoidRects = [targetRect, ...interactiveRects];
+
+    const candidates = order.map((side) => {
+      let top = 0;
+      let left = 0;
+
+      if (side === "bottom") {
+        top = rect.bottom + gap;
+        left = rect.left + rect.width / 2 - tooltipWidth / 2;
+      } else if (side === "top") {
+        top = rect.top - tooltipHeight - gap;
+        left = rect.left + rect.width / 2 - tooltipWidth / 2;
+      } else if (side === "left") {
+        top = rect.top + rect.height / 2 - tooltipHeight / 2;
+        left = rect.left - tooltipWidth - gap;
+      } else {
+        top = rect.top + rect.height / 2 - tooltipHeight / 2;
+        left = rect.right + gap;
+      }
+
+      const clampedLeft = clamp(left, margin, viewportWidth - tooltipWidth - margin);
+      const clampedTop = clamp(top, margin, viewportHeight - tooltipHeight - margin);
+
+      const candidateRect = {
+        left: clampedLeft,
+        right: clampedLeft + tooltipWidth,
+        top: clampedTop,
+        bottom: clampedTop + tooltipHeight,
+      };
+
+      const overlap = avoidRects.reduce((acc, item) => acc + overlapArea(candidateRect, item), 0);
+
+      return { side, top: clampedTop, left: clampedLeft, overlap };
+    });
+
+    const best = candidates.sort((a, b) => a.overlap - b.overlap)[0];
+
+    setTooltipStyle({
+      top: best.top,
+      left: best.left,
+      width: tooltipWidth,
+      maxWidth: viewportWidth - margin * 2,
+    });
 
     const arrowS: React.CSSProperties = { position: "absolute" };
-    if (pos === "bottom") {
+    if (best.side === "bottom") {
       arrowS.top = -8;
-      arrowS.left = "50%";
+      arrowS.left = clamp(rect.left + rect.width / 2 - best.left, 18, tooltipWidth - 18);
       arrowS.transform = "translateX(-50%)";
-    } else if (pos === "top") {
+    } else if (best.side === "top") {
       arrowS.bottom = -8;
-      arrowS.left = "50%";
+      arrowS.left = clamp(rect.left + rect.width / 2 - best.left, 18, tooltipWidth - 18);
       arrowS.transform = "translateX(-50%) rotate(180deg)";
-    } else if (pos === "left") {
+    } else if (best.side === "left") {
       arrowS.right = -8;
-      arrowS.top = "50%";
+      arrowS.top = clamp(rect.top + rect.height / 2 - best.top, 18, tooltipHeight - 18);
       arrowS.transform = "translateY(-50%) rotate(90deg)";
     } else {
       arrowS.left = -8;
-      arrowS.top = "50%";
+      arrowS.top = clamp(rect.top + rect.height / 2 - best.top, 18, tooltipHeight - 18);
       arrowS.transform = "translateY(-50%) rotate(-90deg)";
     }
 
     setArrowStyle(arrowS);
-  }, [rect, currentStep]);
+  }, [collectInteractiveRects, currentStep, isMobile, rect]);
+
+  // Position tooltip and keep it reactive when dropdowns/modals open
+  useEffect(() => {
+    if (!rect || !currentStep || !enabled) return;
+
+    let frame = 0;
+    const schedulePosition = () => {
+      if (frame) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(positionTooltip);
+    };
+
+    schedulePosition();
+
+    const onWindowChange = () => schedulePosition();
+    window.addEventListener("resize", onWindowChange);
+    window.addEventListener("scroll", onWindowChange, true);
+
+    const observer = new MutationObserver(() => schedulePosition());
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["data-state", "aria-expanded", "class", "style"],
+    });
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("resize", onWindowChange);
+      window.removeEventListener("scroll", onWindowChange, true);
+      observer.disconnect();
+    };
+  }, [rect, currentStep, enabled, positionTooltip, currentStepIndex, stepCompleted, waitingSubmitSuccess, compactMode]);
 
   if (!enabled || !activeTask || !currentStep) return null;
 
