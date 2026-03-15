@@ -14,6 +14,7 @@ import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import RealMealCostSection, { type MealCostSectionData } from "@/components/RealMealCostSection";
 import { generateDashboardPDF, generateDashboardExcel, type DashboardExportData } from "@/lib/dashboardFinanceiroExport";
+import EfficiencyTable from "@/components/EfficiencyTable";
 
 interface Unit {
   id: string;
