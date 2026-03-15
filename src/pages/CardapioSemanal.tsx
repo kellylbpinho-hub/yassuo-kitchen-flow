@@ -225,7 +225,7 @@ export default function CardapioSemanal() {
       {loading ? (
         <ContextualLoader message="Carregando cardápio semanal..." />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div data-guide="week-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {weekDates.map((date) => {
             const menu = getMenuForDate(date);
             const dishes = getDishesForMenu(menu?.id);
