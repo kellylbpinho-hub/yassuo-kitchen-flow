@@ -245,6 +245,7 @@ export function AlertCenter() {
     pedido: { icon: ClipboardList, color: "text-primary" },
     financeiro: { icon: AlertTriangle, color: "text-destructive" },
     previsao: { icon: ShoppingCart, color: "text-destructive" },
+    peso: { icon: Scale, color: "text-warning" },
   };
 
   const handleClick = (route: string) => {

@@ -346,30 +346,6 @@ export default function RecebimentoDigital() {
         Recebimento Digital
       </h1>
 
-      {/* Weight deviation alert */}
-      <AlertDialog open={showWeightAlert} onOpenChange={setShowWeightAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-warning" />
-              Peso fora do padrão
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              O peso inserido ({weightAlert?.current} kg) diverge mais de 30% da média das últimas entregas ({weightAlert?.avg} kg). Deseja confirmar o recebimento mesmo assim?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowWeightAlert(false)}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              setShowWeightAlert(false);
-              executeReceipt();
-            }}>
-              Confirmar mesmo assim
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       {/* Idle */}
       {step === "idle" && (
         <div className="grid gap-4 sm:grid-cols-2 max-w-lg" data-guide="btn-scan">
