@@ -137,7 +137,7 @@ export default function CardapioSemanal() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-2xl font-display font-bold text-foreground">Cardápio Semanal</h1>
-        <div className="flex items-center gap-2">
+        <div data-guide="week-nav" className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => setWeekStart(subWeeks(weekStart, 1))}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
