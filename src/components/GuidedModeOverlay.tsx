@@ -541,7 +541,7 @@ export function GuidedModeOverlay() {
           </button>
         </div>
 
-        <p className={`text-foreground leading-relaxed ${compactMode ? "text-xs mb-1 line-clamp-2" : "text-sm mb-1"}`}>
+<p className={`text-foreground leading-relaxed ${compactMode ? "text-xs mb-1 max-h-8 overflow-hidden" : "text-sm mb-1"}`}>
           {currentStep.instruction}
         </p>
 
