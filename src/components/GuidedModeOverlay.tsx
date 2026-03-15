@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useGuidedMode } from "@/contexts/GuidedModeContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X, Check } from "lucide-react";
 import type { GuidedStep } from "@/lib/guidedSteps";
