@@ -54,3 +54,41 @@ export function exportEstoqueExcel(data: EstoqueExportData) {
 
   XLSX.writeFile(wb, `estoque-${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
+
+// ──────────────────── Insumos Forecast Excel ────────────────────
+
+interface InsumosExportData {
+  weekLabel: string;
+  unitName: string;
+  numColaboradores: number;
+  items: {
+    ingrediente: string;
+    unidade: string;
+    necessario: number;
+    estoque: number;
+    falta: number;
+    custoUnit: number;
+    custoTotal: number;
+  }[];
+}
+
+export function exportInsumosExcel(data: InsumosExportData) {
+  const wb = XLSX.utils.book_new();
+
+  const info = [
+    ["Planejamento de Insumos"],
+    [`Período: ${data.weekLabel}`],
+    [`Unidade: ${data.unitName}`],
+    [`Refeições/dia: ${data.numColaboradores}`],
+    [],
+  ];
+
+  const headers = ["Ingrediente", "Unidade", "Necessário", "Estoque Atual", "Falta", "Custo Unit. (R$)", "Custo Total (R$)"];
+  const rows = data.items.map(i => [i.ingrediente, i.unidade, i.necessario, i.estoque, i.falta, i.custoUnit, i.custoTotal]);
+
+  const ws = XLSX.utils.aoa_to_sheet([...info, headers, ...rows]);
+  ws["!cols"] = headers.map(() => ({ wch: 16 }));
+  XLSX.utils.book_append_sheet(wb, ws, "Previsão de Insumos");
+
+  XLSX.writeFile(wb, `planejamento-insumos-${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
