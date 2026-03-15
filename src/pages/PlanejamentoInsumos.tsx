@@ -285,7 +285,7 @@ export default function PlanejamentoInsumos() {
       ) : (
         <>
           {/* KPI Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <div data-guide="kpi-insumos" className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             <KpiCard icon={<Calculator className="h-5 w-5" />} label="Dias c/ cardápio" value={menuCount} sub={`${dishCount} preparações`} />
             <KpiCard icon={<Package className="h-5 w-5" />} label="Ingredientes" value={consolidated.length} sub={`${selectedUnit?.numero_colaboradores || 0} refeições/dia`} />
             <KpiCard icon={<CheckCircle2 className="h-5 w-5" />} label="Estoque OK" value={consolidated.length - itemsWithDeficit.length - itemsAtencao.length} accent="ok" />
