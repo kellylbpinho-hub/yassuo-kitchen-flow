@@ -256,104 +256,132 @@ export default function CardapioDiaSheet({
               Dia marcado como <span className="font-medium ml-1">{STATUS_LABELS[status]}</span>
             </div>
           ) : (
-            <>
-              {/* Current dishes */}
-              <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-                <h3 className="text-sm font-medium text-foreground mb-2">
-                  Pratos do dia ({menuDishes.length})
-                </h3>
-                <ScrollArea className="flex-1">
-                  {dishesGrouped.length === 0 ? (
-                    <div className="text-sm text-muted-foreground text-center py-6">
-                      <UtensilsCrossed className="h-6 w-6 mx-auto mb-2 opacity-40" />
-                      Nenhum prato adicionado
-                    </div>
-                  ) : (
-                    <div className="space-y-3 pr-3">
-                      {dishesGrouped.map((group) => (
-                        <div key={group.category}>
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-                            {group.category}
-                          </p>
-                          {group.dishes.map((md) => (
-                            <div key={md.id} className="flex items-center justify-between py-1.5">
-                              <span className="text-sm text-foreground">{md.dishData.nome}</span>
-                              {!readOnly && (
+            <Tabs defaultValue="pratos" className="flex-1 flex flex-col min-h-0">
+              <TabsList className="w-full">
+                <TabsTrigger value="pratos" className="flex-1 gap-1">
+                  <UtensilsCrossed className="h-3.5 w-3.5" /> Pratos
+                </TabsTrigger>
+                <TabsTrigger value="ficha" className="flex-1 gap-1">
+                  <ClipboardList className="h-3.5 w-3.5" /> Ficha Técnica
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="pratos" className="flex-1 flex flex-col min-h-0 mt-2">
+                {/* Current dishes */}
+                <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+                  <h3 className="text-sm font-medium text-foreground mb-2">
+                    Pratos do dia ({menuDishes.length})
+                  </h3>
+                  <ScrollArea className="flex-1">
+                    {dishesGrouped.length === 0 ? (
+                      <div className="text-sm text-muted-foreground text-center py-6">
+                        <UtensilsCrossed className="h-6 w-6 mx-auto mb-2 opacity-40" />
+                        Nenhum prato adicionado
+                      </div>
+                    ) : (
+                      <div className="space-y-3 pr-3">
+                        {dishesGrouped.map((group) => (
+                          <div key={group.category}>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                              {group.category}
+                            </p>
+                            {group.dishes.map((md) => (
+                              <div key={md.id} className="flex items-center justify-between py-1.5">
+                                <span className="text-sm text-foreground">{md.dishData.nome}</span>
+                                {!readOnly && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-destructive hover:text-destructive"
+                                    onClick={() => handleRemoveDish(md.id)}
+                                    disabled={removingDishId === md.id}
+                                  >
+                                    {removingDishId === md.id ? (
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    )}
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </div>
+
+                {/* Add dishes */}
+                {!readOnly && (
+                  <>
+                    <Separator className="my-2" />
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium text-foreground">Adicionar prato</h3>
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Buscar prato..."
+                          value={search}
+                          onChange={(e) => setSearch(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+                      <ScrollArea className="max-h-48">
+                        <div className="space-y-0.5 pr-3">
+                          {filteredDishes.length === 0 ? (
+                            <p className="text-xs text-muted-foreground py-2 text-center">
+                              {search ? "Nenhum prato encontrado" : "Todos os pratos já foram adicionados"}
+                            </p>
+                          ) : (
+                            filteredDishes.slice(0, 20).map((dish) => (
+                              <div key={dish.id} className="flex items-center justify-between py-1.5">
+                                <div>
+                                  <span className="text-sm text-foreground">{dish.nome}</span>
+                                  <Badge variant="secondary" className="ml-2 text-[10px]">
+                                    {getCategoryName(dish.category_id)}
+                                  </Badge>
+                                </div>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-7 w-7 text-destructive hover:text-destructive"
-                                  onClick={() => handleRemoveDish(md.id)}
-                                  disabled={removingDishId === md.id}
+                                  className="h-7 w-7 text-primary"
+                                  onClick={() => handleAddDish(dish.id)}
+                                  disabled={addingDishId === dish.id}
                                 >
-                                  {removingDishId === md.id ? (
+                                  {addingDishId === dish.id ? (
                                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                   ) : (
-                                    <Trash2 className="h-3.5 w-3.5" />
+                                    <Plus className="h-3.5 w-3.5" />
                                   )}
                                 </Button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </div>
-
-              {/* Add dishes */}
-              {!readOnly && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-foreground">Adicionar prato</h3>
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Buscar prato..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-9"
-                      />
-                    </div>
-                    <ScrollArea className="max-h-48">
-                      <div className="space-y-0.5 pr-3">
-                        {filteredDishes.length === 0 ? (
-                          <p className="text-xs text-muted-foreground py-2 text-center">
-                            {search ? "Nenhum prato encontrado" : "Todos os pratos já foram adicionados"}
-                          </p>
-                        ) : (
-                          filteredDishes.slice(0, 20).map((dish) => (
-                            <div key={dish.id} className="flex items-center justify-between py-1.5">
-                              <div>
-                                <span className="text-sm text-foreground">{dish.nome}</span>
-                                <Badge variant="secondary" className="ml-2 text-[10px]">
-                                  {getCategoryName(dish.category_id)}
-                                </Badge>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-primary"
-                                onClick={() => handleAddDish(dish.id)}
-                                disabled={addingDishId === dish.id}
-                              >
-                                {addingDishId === dish.id ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                ) : (
-                                  <Plus className="h-3.5 w-3.5" />
-                                )}
-                              </Button>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </ScrollArea>
+                            ))
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  </>
+                )}
+              </TabsContent>
+
+              <TabsContent value="ficha" className="flex-1 overflow-auto mt-2">
+                {menu ? (
+                  <FichaTecnica
+                    menuId={menu.id}
+                    unidadeId={menu.unidade_id}
+                    companyId={menu.company_id}
+                    dishName={menu.nome}
+                    dishCategory="Cardápio do Dia"
+                    dishDescricao={menu.descricao || undefined}
+                  />
+                ) : (
+                  <div className="text-sm text-muted-foreground text-center py-8">
+                    Salve o cardápio primeiro para acessar a ficha técnica.
                   </div>
-                </>
-              )}
-            </>
+                )}
+              </TabsContent>
+            </Tabs>
           )}
         </div>
       </SheetContent>
