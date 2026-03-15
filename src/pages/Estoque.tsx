@@ -194,6 +194,41 @@ export default function Estoque() {
   const getUnitName = (id: string) => units.find((u) => u.id === id)?.name || "—";
   const getCategoryName = (p: Product) => p.product_categories?.name || p.categoria || "—";
 
+  // Previsão de Pedido — consumption forecast
+  const forecastData = useMemo(() => {
+    // Aggregate consumption per product over last 30 days
+    const consumoMap: Record<string, number> = {};
+    consumptionMovements.forEach((m) => {
+      consumoMap[m.product_id] = (consumoMap[m.product_id] || 0) + Number(m.quantidade);
+    });
+
+    return products
+      .filter((p) => {
+        const consumoTotal = consumoMap[p.id] || 0;
+        return consumoTotal > 0; // Only show products with consumption
+      })
+      .map((p) => {
+        const consumoTotal = consumoMap[p.id] || 0;
+        const consumoMedioDiario = consumoTotal / 30;
+        const estoqueAtual = Number(p.estoque_atual);
+        const diasRestantes = consumoMedioDiario > 0 ? estoqueAtual / consumoMedioDiario : Infinity;
+        const sugestaoCompra = consumoMedioDiario * 7;
+
+        return {
+          id: p.id,
+          nome: p.nome,
+          marca: p.marca,
+          unidade_medida: p.unidade_medida,
+          estoqueAtual,
+          consumoMedioDiario,
+          diasRestantes: diasRestantes === Infinity ? null : Math.round(diasRestantes * 10) / 10,
+          sugestaoCompra: Math.ceil(sugestaoCompra * 10) / 10,
+        };
+      })
+      .filter((p) => p.diasRestantes !== null)
+      .sort((a, b) => (a.diasRestantes ?? 999) - (b.diasRestantes ?? 999));
+  }, [products, consumptionMovements]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
