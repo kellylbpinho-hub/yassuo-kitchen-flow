@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Calculator, Users, Loader2, ShoppingCart, Printer } from "lucide-react";
+import { Plus, Trash2, Calculator, Users, Loader2, ShoppingCart, Printer, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { fuzzyMatch } from "@/lib/fuzzySearch";
