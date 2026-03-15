@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Search, Send, Plus, Trash2, Clock, ShieldX, FileText } from "lucide-react";
+import { ContextualLoader } from "@/components/ContextualLoader";
+import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fuzzyMatchProduct } from "@/lib/fuzzySearch";
