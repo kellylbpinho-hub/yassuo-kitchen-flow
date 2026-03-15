@@ -23,6 +23,7 @@ import {
   DollarSign,
   Shield,
   CalendarDays,
+  Calculator,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -58,6 +59,7 @@ export function AppLayout() {
         { to: "/cardapio-semanal", icon: CalendarDays, label: "Cardápio Semanal" },
         { to: "/painel-nutri", icon: LayoutDashboard, label: "Painel da Nutri" },
         { to: "/pratos", icon: UtensilsCrossed, label: "Pratos" },
+        { to: "/planejamento-insumos", icon: Calculator, label: "Previsão Insumos" },
         { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
       ],
     });
@@ -102,6 +104,9 @@ export function AppLayout() {
       nutricaoItems.push({ to: "/desperdicio-contrato", icon: BarChart3, label: "Desp. Contrato" });
     }
     nutricaoItems.push({ to: "/alertas", icon: Bell, label: "Alertas" });
+    if (isCeo || isGerenteOperacional) {
+      nutricaoItems.push({ to: "/planejamento-insumos", icon: Calculator, label: "Previsão Insumos" });
+    }
     groups.push({
       label: "🍎 Nutrição",
       icon: UtensilsCrossed,

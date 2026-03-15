@@ -32,6 +32,7 @@ import CardapioSemanal from "./pages/CardapioSemanal";
 import PainelNutri from "./pages/PainelNutri";
 import Pratos from "./pages/Pratos";
 import RelatorioExecutivo from "./pages/RelatorioExecutivo";
+import PlanejamentoInsumos from "./pages/PlanejamentoInsumos";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="/pratos" element={<Pratos />} />
               <Route path="/pratos" element={<Pratos />} />
               <Route path="/relatorio-executivo" element={<RelatorioExecutivo />} />
+              <Route path="/planejamento-insumos" element={<PlanejamentoInsumos />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
