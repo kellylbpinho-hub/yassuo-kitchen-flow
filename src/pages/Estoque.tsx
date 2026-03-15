@@ -445,6 +445,76 @@ export default function Estoque() {
         );
       })()}
 
+      {/* Previsão de Pedido */}
+      {forecastData.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2 p-4">
+            <CardTitle className="text-sm font-display flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4 text-primary" />
+              Previsão de Pedido
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">Baseado no consumo médio dos últimos 30 dias</p>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead>Produto</TableHead>
+                    <TableHead className="text-right">Estoque Atual</TableHead>
+                    <TableHead className="text-right">Consumo Médio/Dia</TableHead>
+                    <TableHead className="text-right">Dias Restantes</TableHead>
+                    <TableHead className="text-right">Sugestão de Compra</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {forecastData.slice(0, 20).map((p) => {
+                    const dias = p.diasRestantes ?? 999;
+                    const statusColor = dias <= 3
+                      ? "text-destructive"
+                      : dias <= 7
+                      ? "text-warning"
+                      : "text-success";
+                    const statusBg = dias <= 3
+                      ? "bg-destructive/10"
+                      : dias <= 7
+                      ? "bg-warning/10"
+                      : "bg-success/10";
+                    const statusLabel = dias <= 3 ? "Crítico" : dias <= 7 ? "Atenção" : "OK";
+
+                    return (
+                      <TableRow key={p.id} className={`border-border ${dias <= 3 ? "bg-destructive/5" : ""}`}>
+                        <TableCell>
+                          <div>
+                            <span className="font-medium">{p.nome}</span>
+                            {p.marca && <span className="block text-xs text-muted-foreground">{p.marca}</span>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {p.estoqueAtual.toFixed(1)} {p.unidade_medida}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {p.consumoMedioDiario.toFixed(1)} {p.unidade_medida}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="outline" className={`${statusColor} ${statusBg} font-semibold`}>
+                            {p.diasRestantes?.toFixed(1)}d — {statusLabel}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {p.sugestaoCompra} {p.unidade_medida}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
       {/* Table */}
       <div className="glass-card overflow-hidden">
         <div className="overflow-x-auto">
