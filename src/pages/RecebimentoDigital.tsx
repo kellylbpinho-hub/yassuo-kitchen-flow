@@ -181,8 +181,8 @@ export default function RecebimentoDigital() {
     ? allProducts.filter((p) => fuzzyMatchProduct(p, searchQuery) || (p.codigo_barras && p.codigo_barras.includes(searchQuery)))
     : [];
 
-  // Check weight deviation against last 5 entries
-  const checkWeightDeviation = async (productId: string, currentQty: number): Promise<boolean> => {
+  // Check weight deviation against last 5 entries — silent logging
+  const checkAndLogWeightDeviation = async (productId: string, currentQty: number) => {
     const { data: lastEntries } = await supabase
       .from("movements")
       .select("quantidade")
@@ -191,17 +191,25 @@ export default function RecebimentoDigital() {
       .order("created_at", { ascending: false })
       .limit(5);
 
-    if (!lastEntries || lastEntries.length < 2) return false; // Not enough history
+    if (!lastEntries || lastEntries.length < 2) return; // Not enough history
 
     const avg = lastEntries.reduce((s, e) => s + Number(e.quantidade), 0) / lastEntries.length;
     const deviation = Math.abs(currentQty - avg) / avg;
 
-    if (deviation > 0.3) {
-      setWeightAlert({ avg: Math.round(avg * 1000) / 1000, current: currentQty });
-      setShowWeightAlert(true);
-      return true; // Has deviation
+    if (deviation > 0.3 && profile?.company_id) {
+      // Silent log — no blocking dialog
+      await supabase.from("weight_divergence_logs").insert({
+        company_id: profile.company_id,
+        product_id: productId,
+        product_name: product?.nome || "Produto",
+        peso_informado: currentQty,
+        media_historica: Math.round(avg * 1000) / 1000,
+        percentual_desvio: Math.round(deviation * 10000) / 100,
+        user_id: user!.id,
+        user_name: profile.full_name,
+        unidade_id: selectedUnit,
+      });
     }
-    return false;
   };
 
   const handleRegisterProduct = async () => {
