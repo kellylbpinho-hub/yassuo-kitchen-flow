@@ -365,6 +365,7 @@ export default function DashboardFinanceiro() {
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Dashboard Financeiro</h1>
           <p className="text-sm text-muted-foreground mt-1">Análise de custos e eficiência operacional</p>
+          <LastUpdated timestamp={lastUpdated} />
         </div>
         <div className="flex gap-2 flex-wrap">
           <Select value={String(period)} onValueChange={(v) => setPeriod(Number(v) as PeriodMonths)}>
