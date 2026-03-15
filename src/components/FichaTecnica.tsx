@@ -63,25 +63,27 @@ export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCateg
 
   const loadData = async () => {
     setLoading(true);
-    const queries: Promise<any>[] = [
+    const [riRes, prodsRes, unitRes] = await Promise.all([
       supabase.from("recipe_ingredients").select("*").eq("menu_id", menuId),
       supabase.from("products").select("id, nome, unidade_medida, custo_unitario").eq("ativo", true),
       supabase.from("units").select("numero_colaboradores").eq("id", unidadeId).single(),
-    ];
-
-    if (dishId) {
-      queries.push(supabase.from("dishes").select("modo_preparo, tempo_preparo, equipamento, peso_porcao").eq("id", dishId).single());
-    }
-
-    const results = await Promise.all(queries);
-    const [riRes, prodsRes, unitRes] = results;
+    ]);
 
     setIngredients((riRes.data || []) as RecipeIngredient[]);
     setProducts((prodsRes.data || []) as Product[]);
     setNumColaboradores(unitRes.data?.numero_colaboradores || 0);
 
-    if (dishId && results[3]?.data) {
-      setDishExtra(results[3].data as DishExtra);
+    if (dishId) {
+      const { data: dishData } = await supabase.from("dishes").select("*").eq("id", dishId).single();
+      if (dishData) {
+        const d = dishData as any;
+        setDishExtra({
+          modo_preparo: d.modo_preparo || null,
+          tempo_preparo: d.tempo_preparo || null,
+          equipamento: d.equipamento || null,
+          peso_porcao: d.peso_porcao || null,
+        });
+      }
     }
     setLoading(false);
   };
