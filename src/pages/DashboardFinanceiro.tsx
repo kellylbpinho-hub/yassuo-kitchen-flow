@@ -127,6 +127,7 @@ export default function DashboardFinanceiro() {
     }
 
     setLoading(false);
+    setLastUpdated(new Date());
   };
 
   // Build product cost map: purchase cost when available, fallback to product.custo_unitario
