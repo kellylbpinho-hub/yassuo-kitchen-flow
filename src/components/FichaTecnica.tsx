@@ -31,7 +31,7 @@ interface Props {
   dishDescricao?: string;
 }
 
-export function FichaTecnica({ menuId, unidadeId, companyId }: Props) {
+export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCategory, dishDescricao }: Props) {
   const { isFinanceiro, user, profile } = useAuth();
   const navigate = useNavigate();
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>([]);
