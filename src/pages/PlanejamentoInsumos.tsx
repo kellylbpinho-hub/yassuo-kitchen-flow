@@ -247,7 +247,7 @@ export default function PlanejamentoInsumos() {
           <p className="text-sm text-muted-foreground">Previsão de compra baseada no cardápio planejado</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Select value={unitId} onValueChange={setUnitId}>
+          <Select data-guide="select-unit-insumos" value={unitId} onValueChange={setUnitId}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Unidade" />
             </SelectTrigger>
