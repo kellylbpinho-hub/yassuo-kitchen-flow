@@ -223,8 +223,8 @@ export default function CardapioDiaSheet({
           <div className="space-y-3">
             <div className="space-y-1">
               <label className="text-sm font-medium text-foreground">Status do dia</label>
-              <Select data-guide="select-status-dia" value={status} onValueChange={(v) => setStatus(v as DayStatus)} disabled={readOnly}>
-                <SelectTrigger>
+              <Select value={status} onValueChange={(v) => setStatus(v as DayStatus)} disabled={readOnly}>
+                <SelectTrigger data-guide="select-status-dia">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
