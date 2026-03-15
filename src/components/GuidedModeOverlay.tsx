@@ -427,7 +427,7 @@ export function GuidedModeOverlay() {
     }
 
     setArrowStyle(arrowS);
-  }, [collectInteractiveRects, currentStep, isMobile, rect]);
+  }, [collectInteractiveRects, currentStep, isMobile, rect, clamp, overlapArea]);
 
   // Position tooltip and keep it reactive when dropdowns/modals open
   useEffect(() => {
