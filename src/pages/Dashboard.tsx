@@ -191,6 +191,7 @@ export default function Dashboard() {
           <h1 className="text-xl font-display font-bold text-foreground">Painel de Controle</h1>
           <p className="text-xs text-muted-foreground mt-0.5">Yassuo Alimentação — Visão consolidada</p>
         </div>
+        <LastUpdated timestamp={lastUpdated} />
       </div>
 
       {/* KPI Cards Row */}
