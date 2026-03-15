@@ -367,15 +367,34 @@ export default function CardapioDiaSheet({
 
               <TabsContent value="ficha" className="flex-1 overflow-auto mt-2">
                 {menu ? (
-                  <FichaTecnica
-                    menuId={menu.id}
-                    unidadeId={menu.unidade_id}
-                    companyId={menu.company_id}
-                    dishName={menu.nome}
-                    dishCategory="Cardápio do Dia"
-                    dishDescricao={menu.descricao || undefined}
-                    dishId={menuDishes.length === 1 ? menuDishes[0].dish_id : undefined}
-                  />
+                  menuDishes.length === 0 ? (
+                    <div className="text-sm text-muted-foreground text-center py-8">
+                      Adicione pratos ao cardápio para criar fichas técnicas.
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {menuDishes.map((md) => {
+                        const dish = allDishes.find(d => d.id === md.dish_id);
+                        if (!dish) return null;
+                        return (
+                          <div key={md.id} className="space-y-2">
+                            <h3 className="text-sm font-semibold text-foreground border-b border-border pb-1">
+                              🍽️ {dish.nome}
+                            </h3>
+                            <FichaTecnica
+                              menuId={menu.id}
+                              unidadeId={menu.unidade_id}
+                              companyId={menu.company_id}
+                              dishName={dish.nome}
+                              dishCategory={getCategoryName(dish.category_id)}
+                              dishDescricao={menu.descricao || undefined}
+                              dishId={dish.id}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )
                 ) : (
                   <div className="text-sm text-muted-foreground text-center py-8">
                     Salve o cardápio primeiro para acessar a ficha técnica.

@@ -18,6 +18,7 @@ import { ContextualLoader } from "@/components/ContextualLoader";
 interface RecipeIngredient {
   id: string;
   menu_id: string;
+  dish_id: string | null;
   product_id: string;
   peso_limpo_per_capita: number;
   fator_correcao: number;
@@ -59,12 +60,18 @@ export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCateg
   const [dishExtra, setDishExtra] = useState<DishExtra>({ modo_preparo: null, tempo_preparo: null, equipamento: null, peso_porcao: null });
   const [savingExtra, setSavingExtra] = useState(false);
 
-  useEffect(() => { loadData(); }, [menuId]);
+  useEffect(() => { loadData(); }, [menuId, dishId]);
 
   const loadData = async () => {
     setLoading(true);
+
+    // Query by dish_id if available, otherwise fall back to menu_id
+    const riQuery = dishId
+      ? supabase.from("recipe_ingredients").select("*").eq("dish_id", dishId)
+      : supabase.from("recipe_ingredients").select("*").eq("menu_id", menuId);
+
     const [riRes, prodsRes, unitRes] = await Promise.all([
-      supabase.from("recipe_ingredients").select("*").eq("menu_id", menuId),
+      riQuery,
       supabase.from("products").select("id, nome, unidade_medida, custo_unitario").eq("ativo", true),
       supabase.from("units").select("numero_colaboradores").eq("id", unidadeId).single(),
     ]);
@@ -117,6 +124,7 @@ export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCateg
 
     const { error } = await supabase.from("recipe_ingredients").insert({
       menu_id: menuId,
+      dish_id: dishId || null,
       product_id: newForm.product_id,
       peso_limpo_per_capita: peso,
       fator_correcao: fator,

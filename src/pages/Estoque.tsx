@@ -70,7 +70,7 @@ export default function Estoque() {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
 
   const [form, setForm] = useState({
-    nome: "", categoria: "", unidade_medida: "kg", estoque_minimo: "0", unidade_id: "",
+    nome: "", marca: "", categoria: "", unidade_medida: "kg", estoque_minimo: "0", unidade_id: "",
   });
 
   const [movForm, setMovForm] = useState({ tipo: "saida", quantidade: "", motivo: "" });

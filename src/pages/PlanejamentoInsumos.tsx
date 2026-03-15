@@ -139,26 +139,29 @@ export default function PlanejamentoInsumos() {
 
       const map = new Map<string, ConsolidatedIngredient>();
       for (const ri of recipeIngredients) {
-        const need = (Number(ri.peso_limpo_per_capita) || 0) * (Number(ri.fator_correcao) || 1) * numColab;
+        const dishId = (ri as any).dish_id as string;
+        const daysUsed = dishAppearances.get(dishId) || 1;
+        const needPerDay = (Number(ri.peso_limpo_per_capita) || 0) * (Number(ri.fator_correcao) || 1) * numColab;
+        const totalNeed = needPerDay * daysUsed;
         const product = productMap.get(ri.product_id);
         if (!product) continue;
 
         const existing = map.get(ri.product_id);
         if (existing) {
-          existing.totalNeeded += need;
-          existing.appearsInDays += 1;
+          existing.totalNeeded += totalNeed;
+          existing.appearsInDays = Math.max(existing.appearsInDays, daysUsed);
         } else {
           map.set(ri.product_id, {
             productId: ri.product_id,
             productName: product.nome,
             unidadeMedida: product.unidade_medida,
             categoria: product.categoria || "Outros",
-            totalNeeded: need,
+            totalNeeded: totalNeed,
             stockAvailable: stockMap.get(ri.product_id) || 0,
             deficit: 0,
             custoUnitario: Number(product.custo_unitario) || 0,
             custoTotal: 0,
-            appearsInDays: 1,
+            appearsInDays: daysUsed,
           });
         }
       }
