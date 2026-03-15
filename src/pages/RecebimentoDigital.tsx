@@ -299,12 +299,9 @@ export default function RecebimentoDigital() {
       return;
     }
 
-    // Check weight deviation before confirming
-    const hasDeviation = await checkWeightDeviation(product!.id, qty);
-    if (!hasDeviation) {
-      await executeReceipt();
-    }
-    // If has deviation, the alert dialog will handle confirmation
+    // Log weight deviation silently (non-blocking)
+    await checkAndLogWeightDeviation(product!.id, qty);
+    await executeReceipt();
   };
 
   const reset = () => {
