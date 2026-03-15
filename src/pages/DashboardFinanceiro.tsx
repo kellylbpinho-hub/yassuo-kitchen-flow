@@ -620,9 +620,38 @@ export default function DashboardFinanceiro() {
 
         if (profitData.length === 0) return null;
 
+        const prejuizoCount = profitData.filter(u => u.hasContract && u.lucro < 0).length;
+        const margemCriticaCount = profitData.filter(u => u.hasContract && u.lucro >= 0 && u.margem < 5).length;
+        const saudavelCount = profitData.filter(u => u.hasContract && u.lucro >= 0 && u.margem >= 5).length;
+
         return (
           <>
-            {/* Radar Financeiro da Operação */}
+            {/* Radar Financeiro — card resumo */}
+            <div className="grid grid-cols-3 gap-3">
+              <Card className="relative overflow-hidden">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-destructive rounded-l-xl" />
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                  <span className="text-3xl font-bold font-display text-destructive">{prejuizoCount}</span>
+                  <span className="text-xs text-muted-foreground mt-1">Com prejuízo</span>
+                </CardContent>
+              </Card>
+              <Card className="relative overflow-hidden">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-warning rounded-l-xl" />
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                  <span className="text-3xl font-bold font-display text-warning">{margemCriticaCount}</span>
+                  <span className="text-xs text-muted-foreground mt-1">Margem crítica</span>
+                </CardContent>
+              </Card>
+              <Card className="relative overflow-hidden">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-success rounded-l-xl" />
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                  <span className="text-3xl font-bold font-display text-success">{saudavelCount}</span>
+                  <span className="text-xs text-muted-foreground mt-1">Saudáveis</span>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Radar Financeiro da Operação — tabela */}
             <Card className="border-2 border-warning/30">
               <CardHeader className="pb-2 p-4">
                 <CardTitle className="text-sm font-display flex items-center gap-2">

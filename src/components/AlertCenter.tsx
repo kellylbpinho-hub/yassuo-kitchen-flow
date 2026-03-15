@@ -139,16 +139,16 @@ async function fetchAlerts(companyId: string): Promise<AlertItem[]> {
             items.push({
               id: `fin-prejuizo-${u.id}`,
               type: "financeiro",
-              title: u.name,
-              description: `Prejuízo de R$ ${Math.abs(lucro).toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+              title: "Prejuízo na operação",
+              description: `A unidade ${u.name} está operando com prejuízo no período atual.`,
               route: "/dashboard-financeiro",
             });
           } else if (margem < 5) {
             items.push({
               id: `fin-margem-${u.id}`,
               type: "financeiro",
-              title: u.name,
-              description: `Margem crítica: ${margem.toFixed(1)}%`,
+              title: "Margem crítica",
+              description: `A unidade ${u.name} está com margem abaixo de 5% no período atual.`,
               route: "/dashboard-financeiro",
             });
           }
