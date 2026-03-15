@@ -212,7 +212,7 @@ export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCateg
                     ingredients: ingredients.map((i) => {
                       const prod = products.find(p => p.id === i.product_id);
                       const demand = calcDemanda(i.peso_limpo_per_capita, i.fator_correcao);
-                      const custo = (prod as any)?.custo_unitario || null;
+                      const custo = prod?.custo_unitario ?? null;
                       return {
                         produto: prod?.nome || "—",
                         quantidade: demand,
