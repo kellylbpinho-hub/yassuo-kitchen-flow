@@ -267,6 +267,7 @@ export function AppLayout() {
           </div>
           <div className="flex items-center gap-1 lg:hidden">
             <AlertCenter />
+            <GuidedModeToggleMobile />
             <button
               onClick={handleSignOut}
               className="text-muted-foreground hover:text-foreground"
