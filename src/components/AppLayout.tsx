@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/collapsible";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { GuidedModeToggle } from "@/components/GuidedModeToggle";
+import { GuidedModeToggleMobile } from "@/components/GuidedModeToggleMobile";
 import { AlertCenter } from "@/components/AlertCenter";
 import { GuidedModePanel } from "@/components/GuidedModePanel";
 import { GuidedModeOverlay } from "@/components/GuidedModeOverlay";
@@ -267,6 +268,7 @@ export function AppLayout() {
           </div>
           <div className="flex items-center gap-1 lg:hidden">
             <AlertCenter />
+            <GuidedModeToggleMobile />
             <button
               onClick={handleSignOut}
               className="text-muted-foreground hover:text-foreground"
