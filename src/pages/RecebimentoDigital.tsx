@@ -135,14 +135,18 @@ export default function RecebimentoDigital() {
       {/* Idle */}
       {step === "idle" && (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 max-w-lg" data-guide="btn-scan">
+          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 max-w-xl" data-guide="btn-scan">
             <Button className="h-24 text-lg gap-3" onClick={() => setStep("scanning")}>
               <ScanBarcode className="h-7 w-7" />
-              Escanear código de barras
+              Escanear código
             </Button>
             <Button variant="outline" className="h-24 text-lg gap-3" onClick={() => setStep("manual")}>
               <Keyboard className="h-7 w-7" />
               Buscar produto
+            </Button>
+            <Button variant="outline" className="h-24 text-lg gap-3 col-span-2 sm:col-span-1" onClick={() => setStep("nfe")}>
+              <FileText className="h-7 w-7" />
+              Importar NF-e
             </Button>
           </div>
           <RecentReceipts />
@@ -220,6 +224,16 @@ export default function RecebimentoDigital() {
           novoSaldo={lastSaldo}
           onNewReceipt={reset}
           onSameProduct={handleSameProduct}
+        />
+      )}
+
+      {/* NF-e Import */}
+      {step === "nfe" && (
+        <NFeImport
+          allProducts={allProducts}
+          defaultUnitId={defaultCdId}
+          onComplete={reset}
+          onCancel={reset}
         />
       )}
     </div>
