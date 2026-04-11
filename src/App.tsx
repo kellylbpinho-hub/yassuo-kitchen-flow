@@ -40,6 +40,8 @@ const RelatorioExecutivo = lazy(() => import("./pages/RelatorioExecutivo"));
 const PlanejamentoInsumos = lazy(() => import("./pages/PlanejamentoInsumos"));
 const RadarOperacao = lazy(() => import("./pages/RadarOperacao"));
 const PainelCeo = lazy(() => import("./pages/PainelCeo"));
+const Cotacoes = lazy(() => import("./pages/Cotacoes"));
+const CotacaoPublica = lazy(() => import("./pages/CotacaoPublica"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -65,6 +67,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/cotacao/:token" element={<CotacaoPublica />} />
                 <Route path="/esqueci-senha" element={<ForgotPassword />} />
                 <Route path="/redefinir-senha" element={<ResetPassword />} />
                 <Route element={<ProtectedRoute><GuidedModeProvider><AppLayout /></GuidedModeProvider></ProtectedRoute>}>
@@ -92,6 +95,7 @@ const App = () => (
                   <Route path="/planejamento-insumos" element={<PlanejamentoInsumos />} />
                   <Route path="/radar-operacao" element={<RadarOperacao />} />
                   <Route path="/painel-ceo" element={<PainelCeo />} />
+                  <Route path="/cotacoes" element={<Cotacoes />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

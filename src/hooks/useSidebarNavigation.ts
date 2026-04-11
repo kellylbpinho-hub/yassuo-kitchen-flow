@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, Trash2, BarChart3,
   Users, Building2, Shield, ScanBarcode, Bell, ClipboardList,
   ClipboardCheck, FileText, UtensilsCrossed, DollarSign,
-  CalendarDays, Calculator, Radar, Crown,
+  CalendarDays, Calculator, Radar, Crown, FileSearch,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -95,6 +95,7 @@ export function useSidebarNavigation(): NavGroup[] {
   }
   if (!isEstoquistaRole && !isFuncionarioRole) {
     adminItems.push({ to: "/compras", icon: ShoppingCart, label: "Compras" });
+    adminItems.push({ to: "/cotacoes", icon: FileSearch, label: "Cotações" });
   }
   adminItems.push({ to: "/categorias", icon: Shield, label: "Contratos" });
   if (canManageUsers) {

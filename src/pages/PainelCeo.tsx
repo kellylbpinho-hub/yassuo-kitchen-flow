@@ -11,7 +11,7 @@ import {
 import {
   Loader2, UtensilsCrossed, Package, AlertTriangle, DollarSign,
   Scale, ArrowRight, Radar, ScanBarcode, TrendingDown,
-  Download, FileText, FileSpreadsheet,
+  Download, FileText, FileSpreadsheet, ShoppingCart,
 } from "lucide-react";
 import { LastUpdated } from "@/components/LastUpdated";
 import { generateCeoPDF, generateCeoExcel, type CeoExportData } from "@/lib/ceoExport";
@@ -67,6 +67,9 @@ export default function PainelCeo() {
   const [recentDivergences, setRecentDivergences] = useState<{ product_name: string; percentual_desvio: number; created_at: string }[]>([]);
   const [unitFinRows, setUnitFinRows] = useState<UnitFinRow[]>([]);
   const [radarRows, setRadarRows] = useState<RadarRow[]>([]);
+  const [purchaseSummary, setPurchaseSummary] = useState<{ total_orders: number; total_value: number; pending_quotations: number; recent_orders: { numero: number; status: string; fornecedor: string; total: number; created_at: string }[] }>({
+    total_orders: 0, total_value: 0, pending_quotations: 0, recent_orders: [],
+  });
 
   useEffect(() => {
     if (profile?.company_id) loadData();
@@ -75,9 +78,40 @@ export default function PainelCeo() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const { data: rawData, error } = await supabase.rpc("rpc_dashboard_executive");
+      const [{ data: rawData, error }, { data: ordersData }, { data: itemsAgg }, { data: quotData }, { data: fornData }] = await Promise.all([
+        supabase.rpc("rpc_dashboard_executive"),
+        supabase.from("purchase_orders").select("id, numero, status, fornecedor_id, created_at").order("created_at", { ascending: false }).limit(5),
+        supabase.from("purchase_items").select("purchase_order_id, quantidade, custo_unitario"),
+        supabase.from("quotation_requests").select("id, status"),
+        supabase.from("fornecedores").select("id, nome"),
+      ]);
       if (error) throw error;
       const data = rawData as any;
+
+      // Purchase summary
+      const fornMap: Record<string, string> = {};
+      (fornData || []).forEach((f: any) => { fornMap[f.id] = f.nome; });
+      const orderTotals: Record<string, number> = {};
+      (itemsAgg || []).forEach((it: any) => {
+        if (it.custo_unitario) {
+          orderTotals[it.purchase_order_id] = (orderTotals[it.purchase_order_id] || 0) + it.quantidade * Number(it.custo_unitario);
+        }
+      });
+      const allOrderIds = (ordersData || []).map((o: any) => o.id);
+      const totalValue = Object.entries(orderTotals).reduce((s, [_, v]) => s + v, 0);
+      const pendingQ = (quotData || []).filter((q: any) => q.status === "pendente").length;
+      setPurchaseSummary({
+        total_orders: (ordersData || []).length,
+        total_value: totalValue,
+        pending_quotations: pendingQ,
+        recent_orders: (ordersData || []).map((o: any) => ({
+          numero: o.numero,
+          status: o.status,
+          fornecedor: o.fornecedor_id ? (fornMap[o.fornecedor_id] || "—") : "—",
+          total: orderTotals[o.id] || 0,
+          created_at: o.created_at,
+        })),
+      });
       const units = data.units || [];
       const mealCosts: Record<string, { total_cost: number; total_meals: number; avg_cost: number }> = {};
       (data.meal_costs || []).forEach((mc: any) => {
@@ -293,6 +327,46 @@ export default function PainelCeo() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Purchase Summary */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <ShoppingCart className="h-4 w-4 text-primary" /> Resumo de Compras
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center">
+              <p className="text-lg font-bold text-foreground">{purchaseSummary.total_orders}</p>
+              <p className="text-xs text-muted-foreground">Últimos pedidos</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold text-foreground">{formatCurrency(purchaseSummary.total_value)}</p>
+              <p className="text-xs text-muted-foreground">Total em itens</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold text-foreground">{purchaseSummary.pending_quotations}</p>
+              <p className="text-xs text-muted-foreground">Cotações pendentes</p>
+            </div>
+          </div>
+          {purchaseSummary.recent_orders.length > 0 && (
+            <div className="space-y-1.5 pt-1 border-t border-border">
+              {purchaseSummary.recent_orders.slice(0, 3).map((o, i) => (
+                <div key={i} className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">OC-{String(o.numero).padStart(4, "0")}</span>
+                  <span className="text-muted-foreground truncate max-w-[100px]">{o.fornecedor}</span>
+                  <Badge variant="outline" className="text-[10px]">{o.status}</Badge>
+                  <span className="font-medium text-foreground">{o.total > 0 ? formatCurrency(o.total) : "—"}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={() => navigate("/cotacoes")}>
+            Ver Cotações <ArrowRight className="h-3 w-3" />
+          </Button>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="pb-2">
