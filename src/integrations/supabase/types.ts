@@ -917,6 +917,7 @@ export type Database = {
           company_id: string
           created_at: string
           created_by: string
+          fornecedor_id: string | null
           id: string
           numero: number
           observacao: string | null
@@ -929,6 +930,7 @@ export type Database = {
           company_id: string
           created_at?: string
           created_by: string
+          fornecedor_id?: string | null
           id?: string
           numero?: number
           observacao?: string | null
@@ -941,6 +943,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           created_by?: string
+          fornecedor_id?: string | null
           id?: string
           numero?: number
           observacao?: string | null
@@ -954,6 +957,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
             referencedColumns: ["id"]
           },
           {
