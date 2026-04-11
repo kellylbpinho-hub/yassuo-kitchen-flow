@@ -3,104 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, ShieldAlert, ShieldX } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-
-const FINANCEIRO_BLOCKED_ROUTES = [
-  "/recebimento-digital",
-  "/pedido-interno",
-  "/aprovacoes-cd",
-  "/usuarios",
-  "/unidades",
-  "/configuracoes-acesso",
-  "/radar-operacao",
-];
-
-const NUTRICIONISTA_BLOCKED_ROUTES = [
-  "/dashboard",
-  "/dashboard-financeiro",
-  "/compras",
-  "/recebimento-digital",
-  "/estoque",
-  "/alertas",
-  "/usuarios",
-  "/unidades",
-  "/aprovacoes-cd",
-  "/configuracoes-acesso",
-  "/radar-operacao",
-];
-
-const ESTOQUISTA_BLOCKED_ROUTES = [
-  "/compras",
-  "/dashboard-financeiro",
-  "/usuarios",
-  "/unidades",
-  "/aprovacoes-cd",
-  "/configuracoes-acesso",
-  "/radar-operacao",
-];
-
-const COMPRADOR_BLOCKED_ROUTES = [
-  "/recebimento-digital",
-  "/dashboard-financeiro",
-  "/pedido-interno",
-  "/aprovacoes-cd",
-  "/usuarios",
-  "/unidades",
-  "/configuracoes-acesso",
-  "/desperdicio",
-  "/radar-operacao",
-];
-
-const FUNCIONARIO_BLOCKED_ROUTES = [
-  "/compras",
-  "/dashboard-financeiro",
-  "/recebimento-digital",
-  "/pedido-interno",
-  "/aprovacoes-cd",
-  "/usuarios",
-  "/unidades",
-  "/configuracoes-acesso",
-  "/painel-nutri",
-  "/radar-operacao",
-];
-
-const NON_NUTRI_BLOCKED_ROUTES = ["/painel-nutri"];
-
-const CEO_ONLY_ROUTES = ["/configuracoes-acesso", "/painel-ceo"];
-
-const roleLabels: Record<string, string> = {
-  ceo: "CEO",
-  gerente_financeiro: "Gerente Financeiro",
-  gerente_operacional: "Gerente Operacional",
-  nutricionista: "Nutricionista",
-  estoquista: "Estoquista",
-  comprador: "Comprador",
-  funcionario: "Funcionário",
-};
-
-function isBlocked(role: string | null, pathname: string): boolean {
-  if (!role) return false;
-  const matchRoute = (routes: string[]) =>
-    routes.some((r) => pathname === r || pathname.startsWith(r + "/"));
-
-  switch (role) {
-    case "gerente_financeiro":
-      return matchRoute(FINANCEIRO_BLOCKED_ROUTES) || matchRoute(NON_NUTRI_BLOCKED_ROUTES);
-    case "nutricionista":
-      return matchRoute(NUTRICIONISTA_BLOCKED_ROUTES);
-    case "estoquista":
-      return matchRoute(ESTOQUISTA_BLOCKED_ROUTES) || matchRoute(NON_NUTRI_BLOCKED_ROUTES);
-    case "comprador":
-      return matchRoute(COMPRADOR_BLOCKED_ROUTES) || matchRoute(NON_NUTRI_BLOCKED_ROUTES);
-    case "funcionario":
-      return matchRoute(FUNCIONARIO_BLOCKED_ROUTES);
-    case "gerente_operacional":
-      return matchRoute(NON_NUTRI_BLOCKED_ROUTES);
-    case "ceo":
-      return matchRoute(NON_NUTRI_BLOCKED_ROUTES);
-    default:
-      return matchRoute(NON_NUTRI_BLOCKED_ROUTES);
-  }
-}
+import { ROLE_LABELS, isRouteBlocked } from "@/lib/constants";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, role, profile, loading } = useAuth();
@@ -151,7 +54,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (isBlocked(role, location.pathname)) {
+  if (isRouteBlocked(role, location.pathname)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background p-4">
         <div className="glass-card p-8 max-w-md text-center space-y-4 animate-fade-in">
@@ -162,7 +65,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
             Acesso restrito
           </h2>
           <p className="text-sm text-muted-foreground">
-            Seu cargo de <span className="font-semibold text-foreground">{roleLabels[role] || role}</span> não tem permissão para acessar esta área.
+            Seu cargo de <span className="font-semibold text-foreground">{ROLE_LABELS[role] || role}</span> não tem permissão para acessar esta área.
           </p>
           <p className="text-xs text-muted-foreground">
             Se você acredita que deveria ter acesso, entre em contato com o administrador (CEO).
