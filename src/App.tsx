@@ -67,6 +67,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/cotacao/:token" element={<CotacaoPublica />} />
                 <Route path="/esqueci-senha" element={<ForgotPassword />} />
                 <Route path="/redefinir-senha" element={<ResetPassword />} />
                 <Route element={<ProtectedRoute><GuidedModeProvider><AppLayout /></GuidedModeProvider></ProtectedRoute>}>
