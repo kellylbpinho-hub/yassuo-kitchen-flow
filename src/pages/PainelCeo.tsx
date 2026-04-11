@@ -75,10 +75,9 @@ export default function PainelCeo() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc("rpc_dashboard_executive");
+      const { data: rawData, error } = await supabase.rpc("rpc_dashboard_executive");
       if (error) throw error;
-
-      const units = data.units || [];
+      const data = rawData as any;
       const mealCosts: Record<string, { total_cost: number; total_meals: number; avg_cost: number }> = {};
       (data.meal_costs || []).forEach((mc: any) => {
         mealCosts[mc.unit_id] = { total_cost: Number(mc.total_cost), total_meals: Number(mc.total_meals), avg_cost: Number(mc.avg_cost) };
