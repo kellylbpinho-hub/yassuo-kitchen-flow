@@ -975,6 +975,127 @@ export type Database = {
           },
         ]
       }
+      quotation_items: {
+        Row: {
+          adicionado_pelo_fornecedor: boolean
+          company_id: string
+          created_at: string
+          id: string
+          nome_produto: string
+          observacao_fornecedor: string | null
+          preco_unitario: number | null
+          product_id: string | null
+          quantidade: number
+          quotation_id: string
+          unidade_medida: string
+        }
+        Insert: {
+          adicionado_pelo_fornecedor?: boolean
+          company_id: string
+          created_at?: string
+          id?: string
+          nome_produto: string
+          observacao_fornecedor?: string | null
+          preco_unitario?: number | null
+          product_id?: string | null
+          quantidade?: number
+          quotation_id: string
+          unidade_medida?: string
+        }
+        Update: {
+          adicionado_pelo_fornecedor?: boolean
+          company_id?: string
+          created_at?: string
+          id?: string
+          nome_produto?: string
+          observacao_fornecedor?: string | null
+          preco_unitario?: number | null
+          product_id?: string | null
+          quantidade?: number
+          quotation_id?: string
+          unidade_medida?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotation_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotation_items_quotation_id_fkey"
+            columns: ["quotation_id"]
+            isOneToOne: false
+            referencedRelation: "quotation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotation_requests: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          fornecedor_id: string
+          id: string
+          observacao: string | null
+          respondido_em: string | null
+          status: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          fornecedor_id: string
+          id?: string
+          observacao?: string | null
+          respondido_em?: string | null
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          fornecedor_id?: string
+          id?: string
+          observacao?: string | null
+          respondido_em?: string | null
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotation_requests_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipe_ingredients: {
         Row: {
           company_id: string
