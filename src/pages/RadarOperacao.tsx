@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Radar, Building2 } from "lucide-react";
 import { LastUpdated } from "@/components/LastUpdated";
 import EfficiencyTable from "@/components/EfficiencyTable";
+import { toast } from "sonner";
 
 type StatusLevel = "verde" | "amarelo" | "vermelho";
 
@@ -54,135 +55,65 @@ export default function RadarOperacao() {
 
   const loadData = async () => {
     setLoading(true);
+    try {
+      const { data, error } = await supabase.rpc("rpc_dashboard_executive");
+      if (error) throw error;
 
-    const [
-      { data: units },
-      { data: products },
-      { data: mealCostRows },
-      { data: weightLogs },
-      { data: expiringLots },
-    ] = await Promise.all([
-      supabase.from("units").select("id, name, type, contract_value, target_meal_cost"),
-      supabase.from("products").select("id, nome, estoque_atual, estoque_minimo").eq("ativo", true),
-      supabase.from("meal_cost_daily").select("unit_id, real_meal_cost, meals_served, total_food_cost"),
-      supabase.from("weight_divergence_logs").select("id, unidade_id, created_at")
-        .gte("created_at", new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()),
-      supabase.from("lotes").select("id, unidade_id, validade, quantidade")
-        .eq("status", "ativo").gt("quantidade", 0)
-        .lte("validade", new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]),
-    ]);
-
-    const kitchenUnits = (units || []).filter(u => u.type === "kitchen");
-
-    // Previsão de ruptura — consumo médio 30d
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const { data: consumptionMvs } = await supabase
-      .from("movements")
-      .select("product_id, quantidade, unidade_id")
-      .in("tipo", ["consumo", "saida", "perda"])
-      .gte("created_at", thirtyDaysAgo.toISOString());
-
-    // Build per-unit consumption
-    const unitConsumption: Record<string, Record<string, number>> = {};
-    (consumptionMvs || []).forEach(m => {
-      if (!unitConsumption[m.unidade_id]) unitConsumption[m.unidade_id] = {};
-      unitConsumption[m.unidade_id][m.product_id] = (unitConsumption[m.unidade_id][m.product_id] || 0) + Number(m.quantidade);
-    });
-
-    // Financial aggregation per unit
-    const unitFinance: Record<string, { totalCost: number; totalMeals: number }> = {};
-    (mealCostRows || []).forEach(r => {
-      if (!r.unit_id) return;
-      if (!unitFinance[r.unit_id]) unitFinance[r.unit_id] = { totalCost: 0, totalMeals: 0 };
-      const meals = Number(r.meals_served) || 0;
-      const realCost = Number(r.real_meal_cost) || 0;
-      unitFinance[r.unit_id].totalCost += realCost * meals;
-      unitFinance[r.unit_id].totalMeals += meals;
-    });
-
-    // Weight divergences per unit (last 48h)
-    const unitWeightCount: Record<string, number> = {};
-    (weightLogs || []).forEach(l => {
-      unitWeightCount[l.unidade_id] = (unitWeightCount[l.unidade_id] || 0) + 1;
-    });
-
-    // Expiring lots per unit
-    const unitExpiringCount: Record<string, number> = {};
-    (expiringLots || []).forEach(l => {
-      unitExpiringCount[l.unidade_id] = (unitExpiringCount[l.unidade_id] || 0) + 1;
-    });
-
-    // Low stock products (global for now, mapped to unit)
-    const lowStockProducts = (products || []).filter(
-      p => Number(p.estoque_atual) <= Number(p.estoque_minimo) && Number(p.estoque_minimo) > 0
-    );
-
-    // Build efficiency data
-    const effData: typeof efficiencyData = [];
-
-    const radars: UnitRadar[] = kitchenUnits.map(u => {
-      // Financial status
-      let financeiro: StatusLevel = "verde";
-      const fin = unitFinance[u.id];
-      if (fin && fin.totalMeals > 0 && u.contract_value && Number(u.contract_value) > 0) {
-        const lucro = Number(u.contract_value) - fin.totalCost;
-        const margem = (lucro / Number(u.contract_value)) * 100;
-        if (lucro < 0) financeiro = "vermelho";
-        else if (margem < 5) financeiro = "amarelo";
-      }
-
-      // Efficiency data
-      const avgRealCost = fin && fin.totalMeals > 0 ? fin.totalCost / fin.totalMeals : 0;
-      effData.push({
-        unitId: u.id,
-        unitName: u.name,
-        target: u.target_meal_cost ? Number(u.target_meal_cost) : null,
-        realCost: avgRealCost,
+      const units = data.units || [];
+      const mealCosts: Record<string, { total_cost: number; total_meals: number }> = {};
+      (data.meal_costs || []).forEach((mc: any) => {
+        mealCosts[mc.unit_id] = { total_cost: Number(mc.total_cost), total_meals: Number(mc.total_meals) };
       });
 
-      // Stock status — check low stock + expiring + rupture risk
-      let estoque: StatusLevel = "verde";
-      const expiringCount = unitExpiringCount[u.id] || 0;
-      const hasLowStock = lowStockProducts.length > 0; // simplified: global check
+      const unitWeightCount: Record<string, number> = {};
+      (data.divergences || []).forEach((d: any) => {
+        unitWeightCount[d.unidade_id] = (unitWeightCount[d.unidade_id] || 0) + 1;
+      });
 
-      // Check rupture risk for this unit
-      const unitCons = unitConsumption[u.id] || {};
-      let ruptureCount = 0;
-      (products || []).forEach(p => {
-        const consumo = unitCons[p.id];
-        if (consumo && consumo > 0) {
-          const mediaDiaria = consumo / 30;
-          const diasRestantes = Number(p.estoque_atual) / mediaDiaria;
-          if (diasRestantes <= 3) ruptureCount++;
+      const effData: typeof efficiencyData = [];
+      const radars: UnitRadar[] = units.map((u: any) => {
+        const fin = mealCosts[u.id];
+        const hasFin = fin && fin.total_meals > 0;
+        const contractValue = u.contract_value ? Number(u.contract_value) : null;
+        const avgRealCost = hasFin ? fin.total_cost / fin.total_meals : 0;
+
+        effData.push({
+          unitId: u.id, unitName: u.name,
+          target: u.target_meal_cost ? Number(u.target_meal_cost) : null,
+          realCost: avgRealCost,
+        });
+
+        // Financial status
+        let financeiro: StatusLevel = "verde";
+        if (hasFin && contractValue && contractValue > 0) {
+          const lucro = contractValue - fin.total_cost;
+          const margem = (lucro / contractValue) * 100;
+          if (lucro < 0) financeiro = "vermelho";
+          else if (margem < 5) financeiro = "amarelo";
         }
+
+        // Stock status
+        let estoque: StatusLevel = "verde";
+        if (data.rupture_risk > 0) estoque = "vermelho";
+        else if (data.low_stock_count > 0 || data.expiring_count > 0) estoque = "amarelo";
+
+        // Receiving
+        let recebimento: StatusLevel = "verde";
+        const wCount = unitWeightCount[u.id] || 0;
+        if (wCount >= 3) recebimento = "vermelho";
+        else if (wCount >= 1) recebimento = "amarelo";
+
+        return { id: u.id, name: u.name, financeiro, estoque, recebimento, statusGeral: deriveGeral(financeiro, estoque, recebimento) };
       });
 
-      if (ruptureCount > 0 || expiringCount > 3) estoque = "vermelho";
-      else if (expiringCount > 0 || hasLowStock) estoque = "amarelo";
+      const geralOrder = { "Risco": 0, "Atenção": 1, "Monitorar": 2, "Saudável": 3 };
+      radars.sort((a, b) => geralOrder[a.statusGeral] - geralOrder[b.statusGeral]);
 
-      // Receiving status
-      let recebimento: StatusLevel = "verde";
-      const wCount = unitWeightCount[u.id] || 0;
-      if (wCount >= 3) recebimento = "vermelho";
-      else if (wCount >= 1) recebimento = "amarelo";
-
-      return {
-        id: u.id,
-        name: u.name,
-        financeiro,
-        estoque,
-        recebimento,
-        statusGeral: deriveGeral(financeiro, estoque, recebimento),
-      };
-    });
-
-    // Sort by risk (Risco first)
-    const geralOrder = { "Risco": 0, "Atenção": 1, "Monitorar": 2, "Saudável": 3 };
-    radars.sort((a, b) => geralOrder[a.statusGeral] - geralOrder[b.statusGeral]);
-
-    setUnitRadars(radars);
-    setEfficiencyData(effData);
+      setUnitRadars(radars);
+      setEfficiencyData(effData);
+    } catch (err: any) {
+      toast.error("Erro ao carregar radar", { description: err.message });
+    }
     setLoading(false);
     setLastUpdated(new Date());
   };
@@ -219,7 +150,6 @@ export default function RadarOperacao() {
         <LastUpdated timestamp={lastUpdated} />
       </div>
 
-      {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "Saudável", value: summary.saudavel, color: "text-success" },
@@ -236,65 +166,64 @@ export default function RadarOperacao() {
         ))}
       </div>
 
-      {/* Unit radar table */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            Status por Unidade
+            <Building2 className="h-4 w-4" /> Status por Unidade
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Unidade</TableHead>
-                <TableHead className="text-center">Financeiro</TableHead>
-                <TableHead className="text-center">Estoque</TableHead>
-                <TableHead className="text-center">Recebimento</TableHead>
-                <TableHead className="text-center">Status Geral</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {unitRadars.length === 0 ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    Nenhuma unidade encontrada
-                  </TableCell>
+                  <TableHead>Unidade</TableHead>
+                  <TableHead className="text-center">Financeiro</TableHead>
+                  <TableHead className="text-center">Estoque</TableHead>
+                  <TableHead className="text-center">Recebimento</TableHead>
+                  <TableHead className="text-center">Status Geral</TableHead>
                 </TableRow>
-              ) : (
-                unitRadars.map(r => (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-medium">{r.name}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline" className={statusColors[r.financeiro]}>
-                        {r.financeiro === "verde" ? "Saudável" : r.financeiro === "amarelo" ? "Margem Crítica" : "Prejuízo"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline" className={statusColors[r.estoque]}>
-                        {r.estoque === "verde" ? "OK" : r.estoque === "amarelo" ? "Atenção" : "Crítico"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline" className={statusColors[r.recebimento]}>
-                        {r.recebimento === "verde" ? "OK" : r.recebimento === "amarelo" ? "Divergência" : "Múltiplas"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline" className={geralColors[r.statusGeral]}>
-                        {r.statusGeral}
-                      </Badge>
+              </TableHeader>
+              <TableBody>
+                {unitRadars.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                      Nenhuma unidade encontrada
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  unitRadars.map(r => (
+                    <TableRow key={r.id}>
+                      <TableCell className="font-medium">{r.name}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className={statusColors[r.financeiro]}>
+                          {r.financeiro === "verde" ? "Saudável" : r.financeiro === "amarelo" ? "Margem Crítica" : "Prejuízo"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className={statusColors[r.estoque]}>
+                          {r.estoque === "verde" ? "OK" : r.estoque === "amarelo" ? "Atenção" : "Crítico"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className={statusColors[r.recebimento]}>
+                          {r.recebimento === "verde" ? "OK" : r.recebimento === "amarelo" ? "Divergência" : "Múltiplas"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className={geralColors[r.statusGeral]}>
+                          {r.statusGeral}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Efficiency Index */}
       <EfficiencyTable data={efficiencyData} />
     </div>
   );
