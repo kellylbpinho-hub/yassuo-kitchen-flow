@@ -59,6 +59,7 @@ export default function RadarOperacao() {
       const { data: rawData, error } = await supabase.rpc("rpc_dashboard_executive");
       if (error) throw error;
       const data = rawData as any;
+      const units = data.units || [];
       const mealCosts: Record<string, { total_cost: number; total_meals: number }> = {};
       (data.meal_costs || []).forEach((mc: any) => {
         mealCosts[mc.unit_id] = { total_cost: Number(mc.total_cost), total_meals: Number(mc.total_meals) };
