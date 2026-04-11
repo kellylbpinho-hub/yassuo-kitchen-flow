@@ -51,7 +51,6 @@ export const ROLE_BLOCKED_ROUTES: Record<string, string[]> = {
   comprador: [
     "/recebimento-digital",
     "/dashboard-financeiro",
-    "/pedido-interno",
     "/aprovacoes-cd",
     "/usuarios",
     "/unidades",
