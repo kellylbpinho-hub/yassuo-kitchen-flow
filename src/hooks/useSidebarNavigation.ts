@@ -49,9 +49,9 @@ export function useSidebarNavigation(): NavGroup[] {
   const isComprador = role === "comprador";
   const isEstoquistaRole = role === "estoquista";
   const isFuncionarioRole = role === "funcionario";
-  const showPedidoInterno = isGerenteOperacional || isCeo;
+  const showPedidoInterno = isGerenteOperacional || isCeo || isComprador;
   const showAprovacoes = isCeo || isGerenteOperacional;
-  const showMeusPedidos = isGerenteOperacional || isCeo;
+  const showMeusPedidos = isGerenteOperacional || isCeo || isComprador;
 
   // Suprimentos
   const suprimentosItems: NavItem[] = [
