@@ -11,7 +11,7 @@ import {
 import {
   Loader2, UtensilsCrossed, Package, AlertTriangle, DollarSign,
   Scale, ArrowRight, Radar, ScanBarcode, TrendingDown,
-  Download, FileText, FileSpreadsheet,
+  Download, FileText, FileSpreadsheet, ShoppingCart,
 } from "lucide-react";
 import { LastUpdated } from "@/components/LastUpdated";
 import { generateCeoPDF, generateCeoExcel, type CeoExportData } from "@/lib/ceoExport";
