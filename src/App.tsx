@@ -40,6 +40,8 @@ const RelatorioExecutivo = lazy(() => import("./pages/RelatorioExecutivo"));
 const PlanejamentoInsumos = lazy(() => import("./pages/PlanejamentoInsumos"));
 const RadarOperacao = lazy(() => import("./pages/RadarOperacao"));
 const PainelCeo = lazy(() => import("./pages/PainelCeo"));
+const Cotacoes = lazy(() => import("./pages/Cotacoes"));
+const CotacaoPublica = lazy(() => import("./pages/CotacaoPublica"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
