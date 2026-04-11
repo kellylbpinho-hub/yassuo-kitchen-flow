@@ -67,6 +67,9 @@ export default function PainelCeo() {
   const [recentDivergences, setRecentDivergences] = useState<{ product_name: string; percentual_desvio: number; created_at: string }[]>([]);
   const [unitFinRows, setUnitFinRows] = useState<UnitFinRow[]>([]);
   const [radarRows, setRadarRows] = useState<RadarRow[]>([]);
+  const [purchaseSummary, setPurchaseSummary] = useState<{ total_orders: number; total_value: number; pending_quotations: number; recent_orders: { numero: number; status: string; fornecedor: string; total: number; created_at: string }[] }>({
+    total_orders: 0, total_value: 0, pending_quotations: 0, recent_orders: [],
+  });
 
   useEffect(() => {
     if (profile?.company_id) loadData();
