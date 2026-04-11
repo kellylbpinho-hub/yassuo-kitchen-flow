@@ -78,9 +78,40 @@ export default function PainelCeo() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const { data: rawData, error } = await supabase.rpc("rpc_dashboard_executive");
+      const [{ data: rawData, error }, { data: ordersData }, { data: itemsAgg }, { data: quotData }, { data: fornData }] = await Promise.all([
+        supabase.rpc("rpc_dashboard_executive"),
+        supabase.from("purchase_orders").select("id, numero, status, fornecedor_id, created_at").order("created_at", { ascending: false }).limit(5),
+        supabase.from("purchase_items").select("purchase_order_id, quantidade, custo_unitario"),
+        supabase.from("quotation_requests").select("id, status"),
+        supabase.from("fornecedores").select("id, nome"),
+      ]);
       if (error) throw error;
       const data = rawData as any;
+
+      // Purchase summary
+      const fornMap: Record<string, string> = {};
+      (fornData || []).forEach((f: any) => { fornMap[f.id] = f.nome; });
+      const orderTotals: Record<string, number> = {};
+      (itemsAgg || []).forEach((it: any) => {
+        if (it.custo_unitario) {
+          orderTotals[it.purchase_order_id] = (orderTotals[it.purchase_order_id] || 0) + it.quantidade * Number(it.custo_unitario);
+        }
+      });
+      const allOrderIds = (ordersData || []).map((o: any) => o.id);
+      const totalValue = Object.entries(orderTotals).reduce((s, [_, v]) => s + v, 0);
+      const pendingQ = (quotData || []).filter((q: any) => q.status === "pendente").length;
+      setPurchaseSummary({
+        total_orders: (ordersData || []).length,
+        total_value: totalValue,
+        pending_quotations: pendingQ,
+        recent_orders: (ordersData || []).map((o: any) => ({
+          numero: o.numero,
+          status: o.status,
+          fornecedor: o.fornecedor_id ? (fornMap[o.fornecedor_id] || "—") : "—",
+          total: orderTotals[o.id] || 0,
+          created_at: o.created_at,
+        })),
+      });
       const units = data.units || [];
       const mealCosts: Record<string, { total_cost: number; total_meals: number; avg_cost: number }> = {};
       (data.meal_costs || []).forEach((mc: any) => {
