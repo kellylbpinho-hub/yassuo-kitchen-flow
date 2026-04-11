@@ -13,12 +13,13 @@ export function GuidedModeToggleMobile() {
           toggleEnabled();
         }
       }}
-      className="relative text-muted-foreground hover:text-foreground transition-colors p-1"
+      className="relative text-primary hover:text-primary/80 transition-colors p-1"
       title="Modo Guiado"
+      aria-label="Modo Guiado"
     >
       <HelpCircle className="h-5 w-5" />
       {enabled && (
-        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary" />
+        <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-primary animate-pulse ring-2 ring-card" />
       )}
     </button>
   );
