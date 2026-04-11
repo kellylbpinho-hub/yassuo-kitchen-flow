@@ -1519,6 +1519,7 @@ export type Database = {
         Args: { p_cd_unit_id: string; p_product_id: string }
         Returns: number
       }
+      rpc_painel_nutri: { Args: { p_unit_id: string }; Returns: Json }
       rpc_receive_digital: {
         Args: {
           p_lote_codigo: string
