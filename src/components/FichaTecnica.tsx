@@ -44,7 +44,7 @@ interface Props {
 }
 
 export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCategory, dishDescricao, dishId }: Props) {
-  const { isFinanceiro, user, profile } = useAuth();
+  const { isFinanceiro, canSeeCosts, user, profile } = useAuth();
   const navigate = useNavigate();
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
