@@ -148,7 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const canSeeCosts = role === "ceo" || role === "gerente_financeiro";
   const canManage = role === "ceo" || role === "gerente_financeiro" || role === "gerente_operacional";
   const canManageUsers = role === "ceo" || role === "gerente_operacional";
-  const canApprove = role === "ceo" || role === "gerente_financeiro";
+  const canApprove = role === "ceo" || role === "gerente_operacional";
   const canWrite = !!role && role !== "gerente_financeiro";
   const canAccessRecebimento = role === "ceo" || role === "gerente_operacional" || role === "estoquista";
 
