@@ -195,41 +195,42 @@ export default function CotacaoPublica() {
         {/* Items */}
         <div className="space-y-3">
           <h2 className="text-lg font-semibold text-foreground">Itens para Cotação</h2>
-          {items.map((item, idx) => (
-            <div key={item.id} className="bg-card border border-border rounded-lg p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">{item.nome_produto}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {item.quantidade} {item.unidade_medida}
-                  </p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs">Preço Unitário (R$) *</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0,00"
-                    value={item.preco_unitario ?? ""}
-                    onChange={(e) => updateItemPrice(idx, e.target.value)}
-                    className="bg-input border-border"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Observação</Label>
-                  <Input
-                    placeholder="Opcional"
-                    value={item.observacao_fornecedor}
-                    onChange={(e) => updateItemObs(idx, e.target.value)}
-                    className="bg-input border-border"
-                  />
-                </div>
-              </div>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 px-3 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-b border-border">
+              <span>Produto</span>
+              <span className="text-center w-16">Qtd</span>
+              <span className="text-center w-24">Preço (R$)*</span>
+              <span className="text-center w-24">Obs.</span>
             </div>
-          ))}
+            {items.map((item, idx) => (
+              <div
+                key={item.id}
+                className={`grid grid-cols-[1fr_auto_auto_auto] gap-x-2 items-center px-3 py-2 ${idx < items.length - 1 ? "border-b border-border/50" : ""}`}
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{item.nome_produto}</p>
+                </div>
+                <span className="text-xs text-muted-foreground text-center w-16 whitespace-nowrap">
+                  {item.quantidade} {item.unidade_medida}
+                </span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0,00"
+                  value={item.preco_unitario ?? ""}
+                  onChange={(e) => updateItemPrice(idx, e.target.value)}
+                  className="bg-input border-border h-8 text-sm w-24 text-center"
+                />
+                <Input
+                  placeholder="—"
+                  value={item.observacao_fornecedor}
+                  onChange={(e) => updateItemObs(idx, e.target.value)}
+                  className="bg-input border-border h-8 text-sm w-24"
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* New items from supplier */}
