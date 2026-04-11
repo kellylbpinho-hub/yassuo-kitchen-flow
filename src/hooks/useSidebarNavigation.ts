@@ -95,6 +95,7 @@ export function useSidebarNavigation(): NavGroup[] {
   }
   if (!isEstoquistaRole && !isFuncionarioRole) {
     adminItems.push({ to: "/compras", icon: ShoppingCart, label: "Compras" });
+    adminItems.push({ to: "/cotacoes", icon: FileSearch, label: "Cotações" });
   }
   adminItems.push({ to: "/categorias", icon: Shield, label: "Contratos" });
   if (canManageUsers) {
