@@ -1513,6 +1513,7 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_dashboard_executive: { Args: never; Returns: Json }
       rpc_ensure_profile: { Args: never; Returns: Json }
       rpc_get_cd_balance: {
         Args: { p_cd_unit_id: string; p_product_id: string }

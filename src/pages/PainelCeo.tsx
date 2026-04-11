@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { LastUpdated } from "@/components/LastUpdated";
 import { generateCeoPDF, generateCeoExcel, type CeoExportData } from "@/lib/ceoExport";
+import { toast } from "sonner";
 
 const formatCurrency = (v: number) =>
   `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -59,15 +60,9 @@ export default function PainelCeo() {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [kpis, setKpis] = useState({
-    mealsToday: 0,
-    criticalProducts: 0,
-    avgMealCost: 0,
-    marginCriticalUnits: 0,
-    lossUnits: 0,
-    weightDivergences: 0,
-    healthyUnits: 0,
-    ruptureRisk: 0,
-    expiringAlerts: 0,
+    mealsToday: 0, criticalProducts: 0, avgMealCost: 0,
+    marginCriticalUnits: 0, lossUnits: 0, weightDivergences: 0,
+    healthyUnits: 0, ruptureRisk: 0, expiringAlerts: 0,
   });
   const [recentDivergences, setRecentDivergences] = useState<{ product_name: string; percentual_desvio: number; created_at: string }[]>([]);
   const [unitFinRows, setUnitFinRows] = useState<UnitFinRow[]>([]);
@@ -79,189 +74,93 @@ export default function PainelCeo() {
 
   const loadData = async () => {
     setLoading(true);
-
-    const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-    const fiveDaysLater = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const [
-      { data: units },
-      { data: products },
-      { data: mealCostRows },
-      { data: weightLogs },
-      { data: expiringLots },
-      { data: consumptionMvs },
-    ] = await Promise.all([
-      supabase.from("units").select("id, name, type, contract_value, target_meal_cost, numero_colaboradores"),
-      supabase.from("products").select("id, nome, estoque_atual, estoque_minimo").eq("ativo", true),
-      supabase.from("meal_cost_daily").select("unit_id, real_meal_cost, meals_served"),
-      supabase.from("weight_divergence_logs")
-        .select("id, product_name, percentual_desvio, created_at, unidade_id")
-        .gte("created_at", twoDaysAgo)
-        .order("created_at", { ascending: false })
-        .limit(10),
-      supabase.from("lotes").select("id, unidade_id, validade, quantidade")
-        .eq("status", "ativo").gt("quantidade", 0)
-        .lte("validade", fiveDaysLater),
-      supabase.from("movements")
-        .select("product_id, quantidade, unidade_id")
-        .in("tipo", ["consumo", "saida", "perda"])
-        .gte("created_at", thirtyDaysAgo.toISOString()),
-    ]);
-
-    const kitchenUnits = (units || []).filter(u => u.type === "kitchen");
-    const mealsToday = kitchenUnits.reduce((sum, u) => sum + (u.numero_colaboradores || 0), 0);
-
-    const lowStockProducts = (products || []).filter(
-      p => Number(p.estoque_atual) <= Number(p.estoque_minimo) && Number(p.estoque_minimo) > 0
-    );
-    const criticalProducts = lowStockProducts.length;
-
-    // Consumption per unit
-    const unitConsumption: Record<string, Record<string, number>> = {};
-    (consumptionMvs || []).forEach(m => {
-      if (!unitConsumption[m.unidade_id]) unitConsumption[m.unidade_id] = {};
-      unitConsumption[m.unidade_id][m.product_id] = (unitConsumption[m.unidade_id][m.product_id] || 0) + Number(m.quantidade);
-    });
-
-    // Global rupture
-    const consumoMap: Record<string, number> = {};
-    (consumptionMvs || []).forEach(m => {
-      consumoMap[m.product_id] = (consumoMap[m.product_id] || 0) + Number(m.quantidade);
-    });
-    let ruptureRisk = 0;
-    (products || []).filter(p => Number(p.estoque_atual) > 0).forEach(p => {
-      const consumo = consumoMap[p.id];
-      if (consumo && consumo > 0) {
-        const dias = Number(p.estoque_atual) / (consumo / 30);
-        if (dias <= 3) ruptureRisk++;
-      }
-    });
-
-    // Financial aggregation
-    const unitFinance: Record<string, { totalCost: number; totalMeals: number }> = {};
-    (mealCostRows || []).forEach(r => {
-      if (!r.unit_id) return;
-      if (!unitFinance[r.unit_id]) unitFinance[r.unit_id] = { totalCost: 0, totalMeals: 0 };
-      const meals = Number(r.meals_served) || 0;
-      const realCost = Number(r.real_meal_cost) || 0;
-      unitFinance[r.unit_id].totalCost += realCost * meals;
-      unitFinance[r.unit_id].totalMeals += meals;
-    });
-
-    // Weight divergence per unit
-    const unitWeightCount: Record<string, number> = {};
-    (weightLogs || []).forEach(l => {
-      unitWeightCount[l.unidade_id] = (unitWeightCount[l.unidade_id] || 0) + 1;
-    });
-
-    // Expiring per unit
-    const unitExpiringCount: Record<string, number> = {};
-    (expiringLots || []).forEach(l => {
-      unitExpiringCount[l.unidade_id] = (unitExpiringCount[l.unidade_id] || 0) + 1;
-    });
-
-    let healthyUnits = 0, marginCriticalUnits = 0, lossUnits = 0;
-    let totalCostAll = 0, totalMealsAll = 0;
-    const finRows: UnitFinRow[] = [];
-    const radRows: RadarRow[] = [];
-
-    kitchenUnits.forEach(u => {
-      const fin = unitFinance[u.id];
-      const hasFin = fin && fin.totalMeals > 0;
-      const avgCost = hasFin ? fin.totalCost / fin.totalMeals : 0;
-      const target = u.target_meal_cost ? Number(u.target_meal_cost) : null;
-      const efficiency = target && target > 0 && avgCost > 0 ? (avgCost / target) * 100 : null;
-
-      let finStatus: StatusLevel = "verde";
-      let statusLabel = "Saudável";
-      if (hasFin && u.contract_value && Number(u.contract_value) > 0) {
-        totalCostAll += fin.totalCost;
-        totalMealsAll += fin.totalMeals;
-        const lucro = Number(u.contract_value) - fin.totalCost;
-        const margem = (lucro / Number(u.contract_value)) * 100;
-        if (lucro < 0) { lossUnits++; finStatus = "vermelho"; statusLabel = "Prejuízo"; }
-        else if (margem < 5) { marginCriticalUnits++; finStatus = "amarelo"; statusLabel = "Margem Crítica"; }
-        else { healthyUnits++; }
-      } else if (hasFin) {
-        totalCostAll += fin.totalCost;
-        totalMealsAll += fin.totalMeals;
-        healthyUnits++;
-      } else {
-        healthyUnits++;
-      }
-
-      finRows.push({
-        name: u.name,
-        contractValue: u.contract_value ? Number(u.contract_value) : null,
-        totalCost: hasFin ? fin.totalCost : 0,
-        totalMeals: hasFin ? fin.totalMeals : 0,
-        avgCost,
-        target,
-        efficiency,
-        status: statusLabel,
+    try {
+      const { data: rawData, error } = await supabase.rpc("rpc_dashboard_executive");
+      if (error) throw error;
+      const data = rawData as any;
+      const units = data.units || [];
+      const mealCosts: Record<string, { total_cost: number; total_meals: number; avg_cost: number }> = {};
+      (data.meal_costs || []).forEach((mc: any) => {
+        mealCosts[mc.unit_id] = { total_cost: Number(mc.total_cost), total_meals: Number(mc.total_meals), avg_cost: Number(mc.avg_cost) };
       });
 
-      // Stock status
-      let estoque: StatusLevel = "verde";
-      const expiringCount = unitExpiringCount[u.id] || 0;
-      const unitCons = unitConsumption[u.id] || {};
-      let unitRupture = 0;
-      (products || []).forEach(p => {
-        const consumo = unitCons[p.id];
-        if (consumo && consumo > 0) {
-          const dias = Number(p.estoque_atual) / (consumo / 30);
-          if (dias <= 3) unitRupture++;
+      const divergences = data.divergences || [];
+      const unitWeightCount: Record<string, number> = {};
+      divergences.forEach((d: any) => {
+        unitWeightCount[d.unidade_id] = (unitWeightCount[d.unidade_id] || 0) + 1;
+      });
+
+      const mealsToday = units.reduce((sum: number, u: any) => sum + (u.numero_colaboradores || 0), 0);
+      let healthyUnits = 0, marginCriticalUnits = 0, lossUnits = 0;
+      let totalCostAll = 0, totalMealsAll = 0;
+      const finRows: UnitFinRow[] = [];
+      const radRows: RadarRow[] = [];
+
+      units.forEach((u: any) => {
+        const fin = mealCosts[u.id];
+        const hasFin = fin && fin.total_meals > 0;
+        const avgCost = hasFin ? fin.avg_cost : 0;
+        const target = u.target_meal_cost ? Number(u.target_meal_cost) : null;
+        const efficiency = target && target > 0 && avgCost > 0 ? (avgCost / target) * 100 : null;
+        const contractValue = u.contract_value ? Number(u.contract_value) : null;
+
+        let finStatus: StatusLevel = "verde";
+        let statusLabel = "Saudável";
+        if (hasFin && contractValue && contractValue > 0) {
+          totalCostAll += fin.total_cost;
+          totalMealsAll += fin.total_meals;
+          const lucro = contractValue - fin.total_cost;
+          const margem = (lucro / contractValue) * 100;
+          if (lucro < 0) { lossUnits++; finStatus = "vermelho"; statusLabel = "Prejuízo"; }
+          else if (margem < 5) { marginCriticalUnits++; finStatus = "amarelo"; statusLabel = "Margem Crítica"; }
+          else { healthyUnits++; }
+        } else if (hasFin) {
+          totalCostAll += fin.total_cost;
+          totalMealsAll += fin.total_meals;
+          healthyUnits++;
+        } else {
+          healthyUnits++;
         }
+
+        finRows.push({ name: u.name, contractValue, totalCost: hasFin ? fin.total_cost : 0, totalMeals: hasFin ? fin.total_meals : 0, avgCost, target, efficiency, status: statusLabel });
+
+        // Stock status (simplified with RPC data)
+        let estoque: StatusLevel = "verde";
+        if (data.low_stock_count > 0 || data.expiring_count > 0) estoque = "amarelo";
+        if (data.rupture_risk > 0) estoque = "vermelho";
+
+        // Receiving
+        let recebimento: StatusLevel = "verde";
+        const wCount = unitWeightCount[u.id] || 0;
+        if (wCount >= 3) recebimento = "vermelho";
+        else if (wCount >= 1) recebimento = "amarelo";
+
+        radRows.push({ name: u.name, financeiro: finLabel(finStatus), estoque: estLabel(estoque), recebimento: recLabel(recebimento), geral: deriveGeral(finStatus, estoque, recebimento) });
       });
-      if (unitRupture > 0 || expiringCount > 3) estoque = "vermelho";
-      else if (expiringCount > 0 || criticalProducts > 0) estoque = "amarelo";
 
-      // Receiving
-      let recebimento: StatusLevel = "verde";
-      const wCount = unitWeightCount[u.id] || 0;
-      if (wCount >= 3) recebimento = "vermelho";
-      else if (wCount >= 1) recebimento = "amarelo";
-
-      radRows.push({
-        name: u.name,
-        financeiro: finLabel(finStatus),
-        estoque: estLabel(estoque),
-        recebimento: recLabel(recebimento),
-        geral: deriveGeral(finStatus, estoque, recebimento),
+      const avgMealCost = totalMealsAll > 0 ? totalCostAll / totalMealsAll : 0;
+      setKpis({
+        mealsToday, criticalProducts: data.low_stock_count, avgMealCost,
+        marginCriticalUnits, lossUnits, weightDivergences: divergences.length,
+        healthyUnits, ruptureRisk: data.rupture_risk, expiringAlerts: data.expiring_count,
       });
-    });
-
-    const avgMealCost = totalMealsAll > 0 ? totalCostAll / totalMealsAll : 0;
-
-    setKpis({
-      mealsToday, criticalProducts, avgMealCost,
-      marginCriticalUnits, lossUnits,
-      weightDivergences: (weightLogs || []).length,
-      healthyUnits, ruptureRisk,
-      expiringAlerts: (expiringLots || []).length,
-    });
-
-    setRecentDivergences((weightLogs || []).map(l => ({
-      product_name: l.product_name,
-      percentual_desvio: Number(l.percentual_desvio),
-      created_at: l.created_at,
-    })));
-
-    setUnitFinRows(finRows);
-    setRadarRows(radRows);
+      setRecentDivergences(divergences.map((l: any) => ({
+        product_name: l.product_name, percentual_desvio: Number(l.percentual_desvio), created_at: l.created_at,
+      })));
+      setUnitFinRows(finRows);
+      setRadarRows(radRows);
+    } catch (err: any) {
+      toast.error("Erro ao carregar dados executivos", { description: err.message });
+    }
     setLoading(false);
     setLastUpdated(new Date());
   };
 
   const handleExport = (type: "pdf" | "excel") => {
+    toast.success(type === "pdf" ? "Gerando PDF..." : "Gerando Excel...", { duration: 2000 });
     const exportData: CeoExportData = {
       generatedAt: new Date().toLocaleString("pt-BR"),
-      kpis,
-      unitFinance: unitFinRows,
-      radar: radarRows,
-      divergences: recentDivergences,
+      kpis, unitFinance: unitFinRows, radar: radarRows, divergences: recentDivergences,
     };
     if (type === "pdf") generateCeoPDF(exportData);
     else generateCeoExcel(exportData);
@@ -309,7 +208,6 @@ export default function PainelCeo() {
         </DropdownMenu>
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {kpiCards.map(k => (
           <Card key={k.label}>
@@ -322,13 +220,11 @@ export default function PainelCeo() {
         ))}
       </div>
 
-      {/* Summary blocks */}
       <div className="grid md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-primary" />
-              Resumo Financeiro
+              <DollarSign className="h-4 w-4 text-primary" /> Resumo Financeiro
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -350,8 +246,7 @@ export default function PainelCeo() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Package className="h-4 w-4 text-primary" />
-              Resumo de Estoque
+              <Package className="h-4 w-4 text-primary" /> Resumo de Estoque
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -373,8 +268,7 @@ export default function PainelCeo() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Scale className="h-4 w-4 text-primary" />
-              Resumo de Recebimento
+              <Scale className="h-4 w-4 text-primary" /> Resumo de Recebimento
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -400,7 +294,6 @@ export default function PainelCeo() {
         </Card>
       </div>
 
-      {/* Quick links */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Atalhos Rápidos</CardTitle>
@@ -413,13 +306,7 @@ export default function PainelCeo() {
               { label: "Recebimento Digital", route: "/recebimento-digital", icon: ScanBarcode },
               { label: "Radar da Operação", route: "/radar-operacao", icon: Radar },
             ].map(link => (
-              <Button
-                key={link.route}
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => navigate(link.route)}
-              >
+              <Button key={link.route} variant="outline" size="sm" className="gap-1.5" onClick={() => navigate(link.route)}>
                 <link.icon className="h-3.5 w-3.5" />
                 {link.label}
                 <ArrowRight className="h-3 w-3" />

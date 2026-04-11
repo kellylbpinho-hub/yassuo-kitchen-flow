@@ -1,34 +1,11 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  LayoutDashboard,
-  Package,
-  ShoppingCart,
-  Trash2,
-  BarChart3,
-  Users,
-  Building2,
-  Tag,
-  ScanBarcode,
-  LogOut,
-  Menu,
-  X,
-  ChevronDown,
-  Bell,
-  ClipboardList,
-  ClipboardCheck,
-  FileText,
-  UtensilsCrossed,
-  DollarSign,
-  Shield,
-  CalendarDays,
-  Calculator,
-  Radar,
-  Crown,
-} from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ROLE_LABELS } from "@/lib/constants";
+import { useSidebarNavigation, type NavGroup } from "@/hooks/useSidebarNavigation";
 import {
   Collapsible,
   CollapsibleContent,
@@ -41,122 +18,16 @@ import { AlertCenter } from "@/components/AlertCenter";
 import { GuidedModePanel } from "@/components/GuidedModePanel";
 import { GuidedModeOverlay } from "@/components/GuidedModeOverlay";
 
-interface NavGroup {
-  label: string;
-  icon: React.ElementType;
-  items: { to: string; icon: React.ElementType; label: string }[];
-}
-
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { profile, role, signOut, canManageUsers, isNutricionista, isGerenteOperacional, isCeo, isComprador: isCompradorAuth } = useAuth();
+  const { profile, role, signOut, isNutricionista } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const groups: NavGroup[] = [];
-
-  if (isNutricionista) {
-    groups.push({
-      label: "🍎 Nutrição",
-      icon: UtensilsCrossed,
-      items: [
-        { to: "/cardapio-semanal", icon: CalendarDays, label: "Cardápio Semanal" },
-        { to: "/painel-nutri", icon: LayoutDashboard, label: "Painel da Nutri" },
-        { to: "/pratos", icon: UtensilsCrossed, label: "Pratos" },
-        { to: "/planejamento-insumos", icon: Calculator, label: "Previsão Insumos" },
-        { to: "/desperdicio", icon: Trash2, label: "Desperdício" },
-      ],
-    });
-    groups.push({
-      label: "📦 Suprimentos",
-      icon: Package,
-      items: [
-        { to: "/pedido-interno", icon: ClipboardList, label: "Pedido Interno" },
-        { to: "/meus-pedidos", icon: FileText, label: "Meus Pedidos" },
-      ],
-    });
-  } else {
-    // Normal sidebar for other roles
-    const showPedidoInterno = isGerenteOperacional || isCeo;
-    const showAprovacoes = isCeo || isGerenteOperacional;
-    const showMeusPedidos = isGerenteOperacional || isCeo;
-
-    // Suprimentos
-    const isFinanceiroRole = role === "gerente_financeiro";
-    const suprimentosItems: NavGroup["items"] = [
-      { to: "/estoque", icon: Package, label: "Estoque" },
-    ];
-    if (!isFinanceiroRole) {
-      suprimentosItems.push({ to: "/recebimento-digital", icon: ScanBarcode, label: "Recebimento" });
-    }
-    if (showPedidoInterno) {
-      suprimentosItems.push({ to: "/pedido-interno", icon: ClipboardList, label: "Transferência" });
-    }
-    if (showAprovacoes) {
-      suprimentosItems.push({ to: "/aprovacoes-cd", icon: ClipboardCheck, label: "Aprovações CD" });
-    }
-    if (showMeusPedidos) {
-      suprimentosItems.push({ to: "/meus-pedidos", icon: FileText, label: "Meus Pedidos" });
-    }
-    groups.push({ label: "📦 Suprimentos", icon: Package, items: suprimentosItems });
-
-    // Nutrição (hide Desperdício from Comprador)
-    const isComprador = role === "comprador";
-    const nutricaoItems: NavGroup["items"] = [];
-    if (!isComprador) {
-      nutricaoItems.push({ to: "/desperdicio", icon: Trash2, label: "Desperdício" });
-      nutricaoItems.push({ to: "/desperdicio-contrato", icon: BarChart3, label: "Desp. Contrato" });
-    }
-    nutricaoItems.push({ to: "/alertas", icon: Bell, label: "Alertas" });
-    if (isCeo || isGerenteOperacional) {
-      nutricaoItems.push({ to: "/planejamento-insumos", icon: Calculator, label: "Previsão Insumos" });
-    }
-    groups.push({
-      label: "🍎 Nutrição",
-      icon: UtensilsCrossed,
-      items: nutricaoItems,
-    });
-
-    // Administração
-    const showDashFinanceiro = isCeo || isFinanceiroRole || isGerenteOperacional;
-    const adminItems: NavGroup["items"] = [];
-    if (isCeo) {
-      adminItems.push({ to: "/painel-ceo", icon: Crown, label: "Painel do CEO" });
-    }
-    if (showDashFinanceiro) {
-      adminItems.push({ to: "/dashboard-financeiro", icon: DollarSign, label: "Dash Financeiro" });
-    }
-    if (isCeo || isGerenteOperacional) {
-      adminItems.push({ to: "/radar-operacao", icon: Radar, label: "Radar Operação" });
-    }
-    const isEstoquistaRole = role === "estoquista";
-    const isFuncionarioRole = role === "funcionario";
-    if (!isEstoquistaRole && !isFuncionarioRole) {
-      adminItems.push({ to: "/compras", icon: ShoppingCart, label: "Compras" });
-    }
-    adminItems.push({ to: "/categorias", icon: Shield, label: "Contratos" });
-    if (canManageUsers) {
-      adminItems.push({ to: "/usuarios", icon: Users, label: "Usuários" });
-      adminItems.push({ to: "/unidades", icon: Building2, label: "Unidades" });
-    }
-    if (isCeo) {
-      adminItems.push({ to: "/configuracoes-acesso", icon: Shield, label: "Config. Acesso" });
-    }
-    groups.push({ label: "💰 Administração", icon: DollarSign, items: adminItems });
-  }
+  const groups = useSidebarNavigation();
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/login");
-  };
-
-  const roleLabels: Record<string, string> = {
-    ceo: "CEO",
-    gerente_financeiro: "Gerente Financeiro",
-    gerente_operacional: "Gerente Operacional",
-    nutricionista: "Nutricionista",
-    estoquista: "Estoquista",
-    comprador: "Comprador",
   };
 
   const isGroupActive = (group: NavGroup) =>
@@ -239,7 +110,7 @@ export function AppLayout() {
                 {profile?.full_name || "Usuário"}
               </p>
               <p className="text-[11px] text-muted-foreground truncate">
-                {role ? roleLabels[role] || role : ""}
+                {role ? ROLE_LABELS[role] || role : ""}
               </p>
             </div>
           </div>
