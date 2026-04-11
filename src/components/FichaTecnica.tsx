@@ -394,7 +394,7 @@ export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCateg
           <div className="text-lg font-bold text-primary">
             {totalDemanda.toFixed(2)} kg
           </div>
-          {custoTotal > 0 && (
+          {canSeeCosts && custoTotal > 0 && (
             <>
               <div className="h-4 w-px bg-border" />
               <div className="text-sm font-semibold text-foreground">
@@ -428,8 +428,8 @@ export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCateg
               <TableHead className="text-right">Per Capita (g)</TableHead>
               <TableHead className="text-right">Fator Correção</TableHead>
               <TableHead className="text-right">Demanda Total</TableHead>
-              <TableHead className="text-right">Custo Unit.</TableHead>
-              <TableHead className="text-right">Custo Total</TableHead>
+              {canSeeCosts && <TableHead className="text-right">Custo Unit.</TableHead>}
+              {canSeeCosts && <TableHead className="text-right">Custo Total</TableHead>}
               {!isFinanceiro && <TableHead className="w-12" />}
             </TableRow>
           </TableHeader>
@@ -445,12 +445,16 @@ export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCateg
                   <TableCell className="text-right font-semibold">
                     {demand.toFixed(2)} {getProductUnit(i.product_id)}
                   </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {cost != null ? `R$ ${cost.toFixed(2)}` : "—"}
-                  </TableCell>
-                  <TableCell className="text-right font-semibold">
-                    {cost != null ? `R$ ${(cost * demand).toFixed(2)}` : "—"}
-                  </TableCell>
+                  {canSeeCosts && (
+                    <TableCell className="text-right text-muted-foreground">
+                      {cost != null ? `R$ ${cost.toFixed(2)}` : "—"}
+                    </TableCell>
+                  )}
+                  {canSeeCosts && (
+                    <TableCell className="text-right font-semibold">
+                      {cost != null ? `R$ ${(cost * demand).toFixed(2)}` : "—"}
+                    </TableCell>
+                  )}
                   {!isFinanceiro && (
                     <TableCell>
                       <Button variant="ghost" size="sm" onClick={() => removeIngredient(i.id)}>
