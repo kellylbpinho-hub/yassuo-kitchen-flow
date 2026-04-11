@@ -33,4 +33,4 @@ export interface RecentReceipt {
   created_at: string;
 }
 
-export type Step = "idle" | "scanning" | "manual" | "found" | "not_found" | "register" | "receipt" | "success";
+export type Step = "idle" | "scanning" | "manual" | "found" | "not_found" | "register" | "receipt" | "success" | "nfe";
