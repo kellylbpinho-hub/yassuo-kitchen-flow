@@ -4,13 +4,14 @@ import { supabase } from "@/lib/supabase";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScanBarcode, Keyboard, Package } from "lucide-react";
+import { ScanBarcode, Keyboard, Package, FileText } from "lucide-react";
 import { parseGS1Barcode, type GS1Data } from "@/lib/gs1Parser";
 import { ProductSearch } from "@/components/recebimento/ProductSearch";
 import { RegisterProductForm } from "@/components/recebimento/RegisterProductForm";
 import { ReceiptForm } from "@/components/recebimento/ReceiptForm";
 import { ReceiptSuccess } from "@/components/recebimento/ReceiptSuccess";
 import { RecentReceipts } from "@/components/recebimento/RecentReceipts";
+import { NFeImport } from "@/components/recebimento/NFeImport";
 import type { Product, Unit, PurchaseUnit, Step } from "@/components/recebimento/types";
 
 export default function RecebimentoDigital() {
@@ -134,14 +135,18 @@ export default function RecebimentoDigital() {
       {/* Idle */}
       {step === "idle" && (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 max-w-lg" data-guide="btn-scan">
+          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 max-w-xl" data-guide="btn-scan">
             <Button className="h-24 text-lg gap-3" onClick={() => setStep("scanning")}>
               <ScanBarcode className="h-7 w-7" />
-              Escanear código de barras
+              Escanear código
             </Button>
             <Button variant="outline" className="h-24 text-lg gap-3" onClick={() => setStep("manual")}>
               <Keyboard className="h-7 w-7" />
               Buscar produto
+            </Button>
+            <Button variant="outline" className="h-24 text-lg gap-3 col-span-2 sm:col-span-1" onClick={() => setStep("nfe")}>
+              <FileText className="h-7 w-7" />
+              Importar NF-e
             </Button>
           </div>
           <RecentReceipts />
@@ -219,6 +224,16 @@ export default function RecebimentoDigital() {
           novoSaldo={lastSaldo}
           onNewReceipt={reset}
           onSameProduct={handleSameProduct}
+        />
+      )}
+
+      {/* NF-e Import */}
+      {step === "nfe" && (
+        <NFeImport
+          allProducts={allProducts}
+          defaultUnitId={defaultCdId}
+          onComplete={reset}
+          onCancel={reset}
         />
       )}
     </div>
