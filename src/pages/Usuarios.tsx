@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UserPlus, Loader2, AlertCircle, Briefcase, Settings, DollarSign, Leaf, Archive, ShoppingCart, type LucideIcon } from "lucide-react";
+import { UserPlus, Loader2, AlertCircle, Briefcase, Settings, DollarSign, Leaf, Archive, ShoppingCart, Link2, Copy, Check, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import avatarCeoCaio from "@/assets/avatar-ceo-caio.png";
 import avatarGfKaren from "@/assets/avatar-gf-karen.png";
