@@ -42,6 +42,7 @@ const RadarOperacao = lazy(() => import("./pages/RadarOperacao"));
 const PainelCeo = lazy(() => import("./pages/PainelCeo"));
 const Cotacoes = lazy(() => import("./pages/Cotacoes"));
 const CotacaoPublica = lazy(() => import("./pages/CotacaoPublica"));
+const Convite = lazy(() => import("./pages/Convite"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -68,6 +69,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/cotacao/:token" element={<CotacaoPublica />} />
+                <Route path="/convite/:token" element={<Convite />} />
                 <Route path="/esqueci-senha" element={<ForgotPassword />} />
                 <Route path="/redefinir-senha" element={<ResetPassword />} />
                 <Route element={<ProtectedRoute><GuidedModeProvider><AppLayout /></GuidedModeProvider></ProtectedRoute>}>

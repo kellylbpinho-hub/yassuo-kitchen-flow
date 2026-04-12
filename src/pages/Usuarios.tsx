@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UserPlus, Loader2, AlertCircle, Briefcase, Settings, DollarSign, Leaf, Archive, ShoppingCart, type LucideIcon } from "lucide-react";
+import { UserPlus, Loader2, AlertCircle, Briefcase, Settings, DollarSign, Leaf, Archive, ShoppingCart, Link2, Copy, Check, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import avatarCeoCaio from "@/assets/avatar-ceo-caio.png";
 import avatarGfKaren from "@/assets/avatar-gf-karen.png";
@@ -48,14 +48,21 @@ const roleIcons: Record<string, LucideIcon> = {
 };
 
 export default function Usuarios() {
-  const { canManageUsers, isCeo } = useAuth();
+  const { canManageUsers, isCeo, profile } = useAuth();
   const [users, setUsers] = useState<ProfileUser[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [userUnidades, setUserUnidades] = useState<UserUnidade[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
+    cargo: "estoquista",
+    unidade_ids: [] as string[],
+  });
 
   const [form, setForm] = useState({
     full_name: "", email: "", password: "", cargo: "estoquista", unidade_ids: [] as string[],
@@ -133,6 +140,56 @@ export default function Usuarios() {
     }));
   };
 
+  const toggleInviteUnit = (unitId: string) => {
+    setInviteForm((f) => ({
+      ...f,
+      unidade_ids: f.unidade_ids.includes(unitId)
+        ? f.unidade_ids.filter((id) => id !== unitId)
+        : [...f.unidade_ids, unitId],
+    }));
+  };
+
+  const generateInvite = async () => {
+    if (!profile?.company_id) {
+      toast.error("Empresa não encontrada.");
+      return;
+    }
+    setCreating(true);
+    setError("");
+    setInviteLink("");
+
+    const { data, error: insertError } = await supabase
+      .from("invitations")
+      .insert({
+        company_id: profile.company_id,
+        cargo: inviteForm.cargo as any,
+        unidade_ids: inviteForm.unidade_ids,
+        created_by: profile.user_id,
+      })
+      .select("token")
+      .single();
+
+    if (insertError) {
+      setError("Erro ao gerar convite: " + insertError.message);
+      setCreating(false);
+      return;
+    }
+
+    const link = `${window.location.origin}/convite/${data.token}`;
+    setInviteLink(link);
+    setCreating(false);
+    toast.success("Convite gerado com sucesso!");
+  };
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(inviteLink);
+    setCopied(true);
+    toast.success("Link copiado!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+
+
   if (loading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -142,68 +199,140 @@ export default function Usuarios() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold text-foreground">Usuários</h1>
         {canManageUsers && (
-          <Dialog open={addOpen} onOpenChange={setAddOpen}>
-            <DialogTrigger asChild>
-              <Button><UserPlus className="h-4 w-4 mr-2" />Novo Usuário</Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card border-border max-w-md">
-              <DialogHeader>
-                <DialogTitle className="font-display">Cadastrar Usuário</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                {error && (
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-                    <AlertCircle className="h-4 w-4 shrink-0" />{error}
+          <div className="flex gap-2">
+            <Dialog open={inviteOpen} onOpenChange={(open) => { setInviteOpen(open); if (!open) { setInviteLink(""); setError(""); } }}>
+              <DialogTrigger asChild>
+                <Button variant="outline"><Link2 className="h-4 w-4 mr-2" />Gerar Convite</Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="font-display">Gerar Link de Convite</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    O convidado poderá entrar com Google ou email/senha. O cargo e unidade já estarão definidos.
+                  </p>
+                  {error && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+                      <AlertCircle className="h-4 w-4 shrink-0" />{error}
+                    </div>
+                  )}
+                  <div>
+                    <Label>Cargo</Label>
+                    <Select value={inviteForm.cargo} onValueChange={(v) => setInviteForm({ ...inviteForm, cargo: v })}>
+                      <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(roleLabels).filter(([k]) => isCeo || k !== "ceo").map(([k, v]) => (
+                          <SelectItem key={k} value={k}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                )}
-                <div>
-                  <Label>Nome Completo *</Label>
-                  <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} className="bg-input border-border" />
-                </div>
-                <div>
-                  <Label>Email *</Label>
-                  <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="bg-input border-border" />
-                </div>
-                <div>
-                  <Label>Senha Provisória *</Label>
-                  <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="bg-input border-border" />
-                </div>
-                <div>
-                  <Label>Cargo</Label>
-                  <Select value={form.cargo} onValueChange={(v) => setForm({ ...form, cargo: v })}>
-                    <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(roleLabels).filter(([k]) => isCeo || k !== "ceo").map(([k, v]) => (
-                        <SelectItem key={k} value={k}>{v}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Unidades</Label>
-                  <div className="space-y-2 mt-1 p-3 rounded-lg bg-input border border-border max-h-40 overflow-y-auto">
-                    {units.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">Nenhuma unidade cadastrada.</p>
-                    ) : (
-                      units.map((u) => (
-                        <label key={u.id} className="flex items-center gap-2 cursor-pointer">
-                          <Checkbox
-                            checked={form.unidade_ids.includes(u.id)}
-                            onCheckedChange={() => toggleUnit(u.id)}
-                          />
-                          <span className="text-sm">{u.name}</span>
-                        </label>
-                      ))
-                    )}
+                  <div>
+                    <Label>Unidades</Label>
+                    <div className="space-y-2 mt-1 p-3 rounded-lg bg-input border border-border max-h-40 overflow-y-auto">
+                      {units.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Nenhuma unidade cadastrada.</p>
+                      ) : (
+                        units.map((u) => (
+                          <label key={u.id} className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                              checked={inviteForm.unidade_ids.includes(u.id)}
+                              onCheckedChange={() => toggleInviteUnit(u.id)}
+                            />
+                            <span className="text-sm">{u.name}</span>
+                          </label>
+                        ))
+                      )}
+                    </div>
                   </div>
+
+                  {!inviteLink ? (
+                    <Button onClick={generateInvite} className="w-full" disabled={creating}>
+                      {creating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                      Gerar Link
+                    </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label>Link do Convite</Label>
+                      <div className="flex gap-2">
+                        <Input value={inviteLink} readOnly className="bg-input border-border text-xs" />
+                        <Button size="icon" variant="outline" onClick={copyLink}>
+                          {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Válido por 7 dias. Uso único.
+                      </p>
+                    </div>
+                  )}
                 </div>
-                <Button onClick={createUser} className="w-full" disabled={creating}>
-                  {creating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  Cadastrar
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={addOpen} onOpenChange={setAddOpen}>
+              <DialogTrigger asChild>
+                <Button><UserPlus className="h-4 w-4 mr-2" />Novo Usuário</Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="font-display">Cadastrar Usuário</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  {error && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+                      <AlertCircle className="h-4 w-4 shrink-0" />{error}
+                    </div>
+                  )}
+                  <div>
+                    <Label>Nome Completo *</Label>
+                    <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} className="bg-input border-border" />
+                  </div>
+                  <div>
+                    <Label>Email *</Label>
+                    <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="bg-input border-border" />
+                  </div>
+                  <div>
+                    <Label>Senha Provisória *</Label>
+                    <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="bg-input border-border" />
+                  </div>
+                  <div>
+                    <Label>Cargo</Label>
+                    <Select value={form.cargo} onValueChange={(v) => setForm({ ...form, cargo: v })}>
+                      <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(roleLabels).filter(([k]) => isCeo || k !== "ceo").map(([k, v]) => (
+                          <SelectItem key={k} value={k}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Unidades</Label>
+                    <div className="space-y-2 mt-1 p-3 rounded-lg bg-input border border-border max-h-40 overflow-y-auto">
+                      {units.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Nenhuma unidade cadastrada.</p>
+                      ) : (
+                        units.map((u) => (
+                          <label key={u.id} className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                              checked={form.unidade_ids.includes(u.id)}
+                              onCheckedChange={() => toggleUnit(u.id)}
+                            />
+                            <span className="text-sm">{u.name}</span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                  <Button onClick={createUser} className="w-full" disabled={creating}>
+                    {creating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    Cadastrar
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         )}
       </div>
 
