@@ -48,14 +48,21 @@ const roleIcons: Record<string, LucideIcon> = {
 };
 
 export default function Usuarios() {
-  const { canManageUsers, isCeo } = useAuth();
+  const { canManageUsers, isCeo, profile } = useAuth();
   const [users, setUsers] = useState<ProfileUser[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [userUnidades, setUserUnidades] = useState<UserUnidade[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
+    cargo: "estoquista",
+    unidade_ids: [] as string[],
+  });
 
   const [form, setForm] = useState({
     full_name: "", email: "", password: "", cargo: "estoquista", unidade_ids: [] as string[],
