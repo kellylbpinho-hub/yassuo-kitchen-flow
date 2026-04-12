@@ -350,6 +350,56 @@ export type Database = {
           },
         ]
       }
+      invitations: {
+        Row: {
+          cargo: Database["public"]["Enums"]["app_role"]
+          company_id: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          status: string
+          token: string
+          unidade_ids: string[]
+          updated_at: string
+          used_by: string | null
+        }
+        Insert: {
+          cargo: Database["public"]["Enums"]["app_role"]
+          company_id: string
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          id?: string
+          status?: string
+          token?: string
+          unidade_ids?: string[]
+          updated_at?: string
+          used_by?: string | null
+        }
+        Update: {
+          cargo?: Database["public"]["Enums"]["app_role"]
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          status?: string
+          token?: string
+          unidade_ids?: string[]
+          updated_at?: string
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lotes: {
         Row: {
           codigo: string | null
