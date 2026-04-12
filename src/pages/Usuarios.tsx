@@ -187,12 +187,8 @@ export default function Usuarios() {
     toast.success("Link copiado!");
     setTimeout(() => setCopied(false), 2000);
   };
-      ...f,
-      unidade_ids: f.unidade_ids.includes(unitId)
-        ? f.unidade_ids.filter((id) => id !== unitId)
-        : [...f.unidade_ids, unitId],
-    }));
-  };
+
+
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
