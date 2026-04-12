@@ -140,6 +140,60 @@ export default function Usuarios() {
     }));
   };
 
+  const toggleInviteUnit = (unitId: string) => {
+    setInviteForm((f) => ({
+      ...f,
+      unidade_ids: f.unidade_ids.includes(unitId)
+        ? f.unidade_ids.filter((id) => id !== unitId)
+        : [...f.unidade_ids, unitId],
+    }));
+  };
+
+  const generateInvite = async () => {
+    if (!profile?.company_id) {
+      toast.error("Empresa não encontrada.");
+      return;
+    }
+    setCreating(true);
+    setError("");
+    setInviteLink("");
+
+    const { data, error: insertError } = await supabase
+      .from("invitations")
+      .insert({
+        company_id: profile.company_id,
+        cargo: inviteForm.cargo as any,
+        unidade_ids: inviteForm.unidade_ids,
+        created_by: profile.user_id,
+      })
+      .select("token")
+      .single();
+
+    if (insertError) {
+      setError("Erro ao gerar convite: " + insertError.message);
+      setCreating(false);
+      return;
+    }
+
+    const link = `${window.location.origin}/convite/${data.token}`;
+    setInviteLink(link);
+    setCreating(false);
+    toast.success("Convite gerado com sucesso!");
+  };
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(inviteLink);
+    setCopied(true);
+    toast.success("Link copiado!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+      ...f,
+      unidade_ids: f.unidade_ids.includes(unitId)
+        ? f.unidade_ids.filter((id) => id !== unitId)
+        : [...f.unidade_ids, unitId],
+    }));
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
