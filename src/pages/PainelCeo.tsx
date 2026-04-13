@@ -407,27 +407,30 @@ export default function PainelCeo() {
 function KpiCard({ icon: Icon, label, value, trend, onClick }: {
   icon: any; label: string; value: string; trend: "up" | "down" | "warn" | null; onClick: () => void;
 }) {
+  const glowClass = trend === "down" ? "glow-destructive" : trend === "warn" ? "glow-warning" : "";
   return (
     <Card
-      className="glass-card glow-red cursor-pointer hover:border-primary/30 transition-all group"
+      className={`glass-card cursor-pointer transition-all duration-300 group hover:scale-[1.02] hover:border-primary/30 active:scale-[0.98] ${glowClass}`}
       onClick={onClick}
     >
-      <CardContent className="p-4">
+      <CardContent className="p-5">
         <div className="flex items-start justify-between">
-          <div className="h-9 w-9 rounded-lg bg-primary/15 flex items-center justify-center group-hover:bg-primary/25 transition-colors">
-            <Icon className="h-4.5 w-4.5 text-primary" />
+          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center ring-1 ring-primary/15 group-hover:from-primary/30 group-hover:to-primary/10 transition-all duration-300">
+            <Icon className="h-5 w-5 text-primary" />
           </div>
           {trend && (
-            <div className={`flex items-center gap-0.5 text-[10px] font-medium ${
-              trend === "up" ? "text-success" : trend === "warn" ? "text-warning" : "text-destructive"
+            <div className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+              trend === "up" ? "text-success bg-success/10 ring-1 ring-success/20" :
+              trend === "warn" ? "text-warning bg-warning/10 ring-1 ring-warning/20" :
+              "text-destructive bg-destructive/10 ring-1 ring-destructive/20"
             }`}>
               {trend === "up" ? <TrendingUp className="h-3 w-3" /> : trend === "warn" ? <AlertTriangle className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
               {trend === "up" ? "OK" : trend === "warn" ? "Atenção" : "Crítico"}
             </div>
           )}
         </div>
-        <p className="text-2xl font-bold text-foreground mt-3">{value}</p>
-        <p className="text-[11px] text-muted-foreground mt-0.5">{label}</p>
+        <p className="text-3xl font-extrabold text-foreground mt-4 tracking-tight">{value}</p>
+        <p className="text-[11px] text-muted-foreground/70 mt-1 font-medium uppercase tracking-wider">{label}</p>
       </CardContent>
     </Card>
   );
@@ -436,28 +439,34 @@ function KpiCard({ icon: Icon, label, value, trend, onClick }: {
 function AlertItem({ icon: Icon, color, title, desc, onClick }: {
   icon: any; color: string; title: string; desc: string; onClick: () => void;
 }) {
+  const bgColor = color === "text-destructive"
+    ? "bg-destructive/8 hover:bg-destructive/15 ring-1 ring-destructive/15"
+    : color === "text-warning"
+    ? "bg-warning/8 hover:bg-warning/15 ring-1 ring-warning/15"
+    : "bg-primary/8 hover:bg-primary/15 ring-1 ring-primary/15";
+
   return (
     <div
-      className="flex items-start gap-3 p-2.5 rounded-lg bg-secondary/40 hover:bg-secondary/70 transition-colors cursor-pointer group"
+      className={`flex items-start gap-3 p-3.5 rounded-xl ${bgColor} transition-all duration-200 cursor-pointer group hover:scale-[1.01] active:scale-[0.99]`}
       onClick={onClick}
     >
       <div className={`mt-0.5 ${color}`}>
         <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-foreground">{title}</p>
-        <p className="text-[11px] text-muted-foreground">{desc}</p>
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
       </div>
-      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors mt-1 flex-shrink-0" />
+      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all mt-1 flex-shrink-0" />
     </div>
   );
 }
 
 function FinanceStat({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between py-1.5">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={`text-sm font-bold ${color}`}>{value}</span>
+      <span className={`text-lg font-bold ${color}`}>{value}</span>
     </div>
   );
 }
