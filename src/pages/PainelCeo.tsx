@@ -349,10 +349,10 @@ export default function PainelCeo() {
 
               {/* Recent divergences detail */}
               {recentDivergences.slice(0, 3).map((d, i) => (
-                <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30 text-xs">
-                  <div className="h-1.5 w-1.5 rounded-full bg-warning flex-shrink-0" />
+                <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-warning/5 ring-1 ring-warning/15 text-xs">
+                  <div className="h-2 w-2 rounded-full bg-warning flex-shrink-0 ring-2 ring-warning/20" />
                   <span className="text-muted-foreground truncate">{d.product_name}</span>
-                  <Badge variant="outline" className="ml-auto text-[10px] bg-warning/15 text-warning border-warning/30">
+                  <Badge variant="outline" className="ml-auto text-[10px] font-semibold bg-warning/10 text-warning border-warning/25">
                     {d.percentual_desvio.toFixed(0)}%
                   </Badge>
                 </div>
