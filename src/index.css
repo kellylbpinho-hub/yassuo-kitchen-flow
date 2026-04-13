@@ -77,13 +77,28 @@
 
 @layer utilities {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/40 rounded-xl;
+    @apply bg-card/70 backdrop-blur-2xl border border-border/30 rounded-2xl;
+    box-shadow: 0 4px 24px -4px hsl(228 12% 4% / 0.5), 0 0 0 1px hsl(228 8% 20% / 0.3);
+  }
+  .glass-card-glow {
+    @apply glass-card;
+    box-shadow: 0 4px 24px -4px hsl(228 12% 4% / 0.5), 0 0 30px -8px hsl(350 85% 46% / 0.15), 0 0 0 1px hsl(228 8% 20% / 0.3);
   }
   .glow-red {
-    box-shadow: 0 0 24px hsl(350 85% 46% / 0.12);
+    box-shadow: 0 0 30px hsl(350 85% 46% / 0.12), 0 4px 20px -4px hsl(228 12% 4% / 0.4);
+  }
+  .glow-warning {
+    box-shadow: 0 0 20px hsl(45 100% 50% / 0.1), 0 4px 20px -4px hsl(228 12% 4% / 0.4);
+  }
+  .glow-destructive {
+    box-shadow: 0 0 20px hsl(0 84% 60% / 0.15), 0 4px 20px -4px hsl(228 12% 4% / 0.4);
   }
   .stat-card {
-    @apply glass-card p-5 transition-all duration-300 hover:border-primary/20 hover:glow-red;
+    @apply glass-card p-5 transition-all duration-300 hover:border-primary/20;
+  }
+  .stat-card:hover {
+    box-shadow: 0 0 30px hsl(350 85% 46% / 0.15), 0 8px 32px -8px hsl(228 12% 4% / 0.6);
+    transform: translateY(-1px);
   }
   .sidebar-item {
     @apply flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200 text-sm;

@@ -61,16 +61,16 @@ export default function PainelCeo() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center">
-              <Zap className="h-4 w-4 text-primary" />
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center ring-1 ring-primary/20">
+              <Zap className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">Painel do CEO</h1>
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">Painel do CEO</h1>
               <p className="text-xs text-muted-foreground">Visão executiva em tempo real</p>
             </div>
           </div>
