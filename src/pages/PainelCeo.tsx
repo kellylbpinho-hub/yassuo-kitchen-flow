@@ -128,7 +128,7 @@ export default function PainelCeo() {
       {/* Main content: Charts + Alert Feed */}
       <div className="grid lg:grid-cols-3 gap-5">
         {/* Left: Charts */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-5">
           {/* Consumption Line Chart */}
           <Card className="glass-card overflow-hidden">
             <CardHeader className="pb-2">
@@ -175,7 +175,7 @@ export default function PainelCeo() {
           </Card>
 
           {/* Pie + Unit Map side by side */}
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-5">
             {/* Pie Chart */}
             <Card className="glass-card overflow-hidden">
               <CardHeader className="pb-2">
@@ -268,7 +268,7 @@ export default function PainelCeo() {
         </div>
 
         {/* Right: Alert Center Feed */}
-        <div className="space-y-4">
+        <div className="space-y-5">
           <Card className="glass-card overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
@@ -276,7 +276,7 @@ export default function PainelCeo() {
                 Central de Alertas
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+            <CardContent className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
               {/* Expiring */}
               {kpis.expiringAlerts > 0 && (
                 <AlertItem
