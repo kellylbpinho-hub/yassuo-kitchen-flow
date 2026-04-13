@@ -94,7 +94,7 @@ export default function PainelCeo() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         <KpiCard
           icon={UtensilsCrossed}
           label="Refeições / dia"
@@ -126,9 +126,9 @@ export default function PainelCeo() {
       </div>
 
       {/* Main content: Charts + Alert Feed */}
-      <div className="grid lg:grid-cols-3 gap-5">
+      <div className="grid lg:grid-cols-3 gap-6">
         {/* Left: Charts */}
-        <div className="lg:col-span-2 space-y-5">
+        <div className="lg:col-span-2 space-y-6">
           {/* Consumption Line Chart */}
           <Card className="glass-card overflow-hidden">
             <CardHeader className="pb-2">
@@ -175,7 +175,7 @@ export default function PainelCeo() {
           </Card>
 
           {/* Pie + Unit Map side by side */}
-          <div className="grid md:grid-cols-2 gap-5">
+          <div className="grid md:grid-cols-2 gap-6">
             {/* Pie Chart */}
             <Card className="glass-card overflow-hidden">
               <CardHeader className="pb-2">
@@ -272,15 +272,17 @@ export default function PainelCeo() {
         </div>
 
         {/* Right: Alert Center Feed */}
-        <div className="space-y-5">
-          <Card className="glass-card overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-primary" />
-                Central de Alertas
+        <div className="space-y-6">
+          <Card className="glass-card-glow overflow-hidden">
+            <CardHeader className="pb-3 border-b border-border/30">
+              <CardTitle className="text-base font-bold flex items-center gap-2.5 text-foreground">
+                <div className="h-8 w-8 rounded-lg bg-destructive/15 flex items-center justify-center ring-1 ring-destructive/25">
+                  <ShieldAlert className="h-4 w-4 text-destructive" />
+                </div>
+                Alertas Críticos
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+            <CardContent className="space-y-3.5 max-h-[500px] overflow-y-auto pr-1 pt-4">
               {/* Expiring */}
               {kpis.expiringAlerts > 0 && (
                 <AlertItem
@@ -349,10 +351,10 @@ export default function PainelCeo() {
 
               {/* Recent divergences detail */}
               {recentDivergences.slice(0, 3).map((d, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-warning/5 ring-1 ring-warning/15 text-xs">
-                  <div className="h-2 w-2 rounded-full bg-warning flex-shrink-0 ring-2 ring-warning/20" />
-                  <span className="text-muted-foreground truncate">{d.product_name}</span>
-                  <Badge variant="outline" className="ml-auto text-[10px] font-semibold bg-warning/10 text-warning border-warning/25">
+                <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-warning/8 ring-1 ring-warning/20 text-xs glow-warning">
+                  <div className="h-2.5 w-2.5 rounded-full bg-warning flex-shrink-0 ring-2 ring-warning/30 animate-pulse" />
+                  <span className="text-foreground/80 font-medium truncate">{d.product_name}</span>
+                  <Badge variant="outline" className="ml-auto text-[10px] font-bold bg-warning/15 text-warning border-warning/30 px-2.5 py-0.5">
                     {d.percentual_desvio.toFixed(0)}%
                   </Badge>
                 </div>
@@ -411,30 +413,35 @@ export default function PainelCeo() {
 function KpiCard({ icon: Icon, label, value, trend, onClick }: {
   icon: any; label: string; value: string; trend: "up" | "down" | "warn" | null; onClick: () => void;
 }) {
+  const borderColor = trend === "down" ? "border-l-destructive" : trend === "warn" ? "border-l-warning" : "border-l-primary";
   const glowClass = trend === "down" ? "glow-destructive" : trend === "warn" ? "glow-warning" : "";
   return (
     <Card
-      className={`glass-card cursor-pointer transition-all duration-300 group hover:scale-[1.02] hover:border-primary/30 active:scale-[0.98] ${glowClass}`}
+      className={`relative overflow-hidden cursor-pointer transition-all duration-300 group hover:scale-[1.03] active:scale-[0.97] border-l-[3px] ${borderColor} ${glowClass}`}
       onClick={onClick}
+      style={{
+        background: "linear-gradient(135deg, hsl(228 10% 13%) 0%, hsl(228 10% 10%) 100%)",
+        boxShadow: "0 8px 32px -8px hsl(228 12% 4% / 0.6), inset 0 1px 0 0 hsl(228 8% 22% / 0.4), 0 0 0 1px hsl(228 8% 18% / 0.5)",
+      }}
     >
-      <CardContent className="p-5">
+      <CardContent className="p-6">
         <div className="flex items-start justify-between">
-          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center ring-1 ring-primary/15 group-hover:from-primary/30 group-hover:to-primary/10 transition-all duration-300">
-            <Icon className="h-5 w-5 text-primary" />
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary/25 to-primary/5 flex items-center justify-center ring-1 ring-primary/20 group-hover:from-primary/35 group-hover:to-primary/15 transition-all duration-300 shadow-lg shadow-primary/10">
+            <Icon className="h-5.5 w-5.5 text-primary" />
           </div>
           {trend && (
-            <div className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-              trend === "up" ? "text-success bg-success/10 ring-1 ring-success/20" :
-              trend === "warn" ? "text-warning bg-warning/10 ring-1 ring-warning/20" :
-              "text-destructive bg-destructive/10 ring-1 ring-destructive/20"
+            <div className={`flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full ${
+              trend === "up" ? "text-success bg-success/12 ring-1 ring-success/25" :
+              trend === "warn" ? "text-warning bg-warning/12 ring-1 ring-warning/25" :
+              "text-destructive bg-destructive/12 ring-1 ring-destructive/25"
             }`}>
               {trend === "up" ? <TrendingUp className="h-3 w-3" /> : trend === "warn" ? <AlertTriangle className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
               {trend === "up" ? "OK" : trend === "warn" ? "Atenção" : "Crítico"}
             </div>
           )}
         </div>
-        <p className="text-3xl font-extrabold text-foreground mt-4 tracking-tight">{value}</p>
-        <p className="text-[11px] text-muted-foreground/70 mt-1 font-medium uppercase tracking-wider">{label}</p>
+        <p className="text-4xl font-black text-foreground mt-5 tracking-tight leading-none">{value}</p>
+        <p className="text-[10px] text-muted-foreground/60 mt-2 font-semibold uppercase tracking-[0.15em]">{label}</p>
       </CardContent>
     </Card>
   );
@@ -443,34 +450,38 @@ function KpiCard({ icon: Icon, label, value, trend, onClick }: {
 function AlertItem({ icon: Icon, color, title, desc, onClick }: {
   icon: any; color: string; title: string; desc: string; onClick: () => void;
 }) {
-  const bgColor = color === "text-destructive"
-    ? "bg-destructive/8 hover:bg-destructive/15 ring-1 ring-destructive/15"
-    : color === "text-warning"
-    ? "bg-warning/8 hover:bg-warning/15 ring-1 ring-warning/15"
-    : "bg-primary/8 hover:bg-primary/15 ring-1 ring-primary/15";
+  const isCritical = color === "text-destructive";
+  const isWarning = color === "text-warning";
+  const bgColor = isCritical
+    ? "bg-destructive/10 hover:bg-destructive/20 ring-1 ring-destructive/20"
+    : isWarning
+    ? "bg-warning/10 hover:bg-warning/20 ring-1 ring-warning/20"
+    : "bg-primary/10 hover:bg-primary/20 ring-1 ring-primary/20";
+  const glowStyle = isCritical ? "glow-destructive" : isWarning ? "glow-warning" : "";
 
   return (
     <div
-      className={`flex items-start gap-3 p-3.5 rounded-xl ${bgColor} transition-all duration-200 cursor-pointer group hover:scale-[1.01] active:scale-[0.99]`}
+      className={`flex items-start gap-3.5 px-4 py-4 rounded-2xl ${bgColor} ${glowStyle} transition-all duration-200 cursor-pointer group hover:scale-[1.02] active:scale-[0.98]`}
       onClick={onClick}
     >
-      <div className={`mt-0.5 ${color}`}>
-        <Icon className="h-4 w-4" />
+      <div className={`mt-0.5 ${color} p-1.5 rounded-lg ${isCritical ? "bg-destructive/15" : isWarning ? "bg-warning/15" : "bg-primary/15"}`}>
+        <Icon className="h-4.5 w-4.5" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+        <p className="text-[15px] font-bold text-foreground leading-tight">{title}</p>
+        <p className="text-xs text-muted-foreground mt-1">{desc}</p>
       </div>
-      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all mt-1 flex-shrink-0" />
+      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all mt-1.5 flex-shrink-0" />
     </div>
   );
 }
 
 function FinanceStat({ label, value, color }: { label: string; value: number; color: string }) {
+  const bgTint = color === "text-success" ? "bg-success/8" : color === "text-warning" ? "bg-warning/8" : "bg-destructive/8";
   return (
-    <div className="flex items-center justify-between py-1.5">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={`text-lg font-bold ${color}`}>{value}</span>
+    <div className={`flex items-center justify-between py-2.5 px-3.5 rounded-xl ${bgTint} ring-1 ring-border/10`}>
+      <span className="text-xs text-muted-foreground font-medium">{label}</span>
+      <span className={`text-xl font-black ${color}`}>{value}</span>
     </div>
   );
 }
