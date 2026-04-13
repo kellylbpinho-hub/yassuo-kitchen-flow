@@ -237,23 +237,27 @@ export default function PainelCeo() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Performance das Unidades</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-1.5 max-h-[250px] overflow-y-auto pr-1">
+              <CardContent className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
                 {radarRows.length > 0 ? radarRows.map(r => (
                   <div
                     key={r.name}
-                    className="flex items-center justify-between p-2 rounded-lg bg-secondary/40 hover:bg-secondary/70 transition-colors cursor-pointer"
+                    className="flex items-center justify-between p-3 rounded-xl bg-secondary/30 hover:bg-secondary/60 hover:scale-[1.01] transition-all duration-200 cursor-pointer ring-1 ring-border/20"
                     onClick={() => navigate("/radar-operacao")}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <div className={`h-2.5 w-2.5 rounded-full ${statusDot(r.geral)}`} />
+                    <div className="flex items-center gap-3">
+                      <div className={`h-3 w-3 rounded-full ${statusDot(r.geral)} ring-2 ring-offset-1 ring-offset-card ${
+                        r.geral === "Saudável" ? "ring-success/30" :
+                        r.geral === "Risco" || r.geral === "Atenção" ? "ring-destructive/30" :
+                        "ring-warning/30"
+                      }`} />
                       <span className="text-xs font-medium text-foreground truncate max-w-[120px]">{r.name}</span>
                     </div>
                     <Badge
                       variant="outline"
-                      className={`text-[10px] px-1.5 py-0 ${
-                        r.geral === "Saudável" ? "bg-success/15 text-success border-success/30" :
-                        r.geral === "Risco" || r.geral === "Atenção" ? "bg-destructive/15 text-destructive border-destructive/30" :
-                        "bg-warning/15 text-warning border-warning/30"
+                      className={`text-[10px] px-2 py-0.5 font-semibold ${
+                        r.geral === "Saudável" ? "bg-success/10 text-success border-success/25" :
+                        r.geral === "Risco" || r.geral === "Atenção" ? "bg-destructive/10 text-destructive border-destructive/25" :
+                        "bg-warning/10 text-warning border-warning/25"
                       }`}
                     >
                       {r.geral}
