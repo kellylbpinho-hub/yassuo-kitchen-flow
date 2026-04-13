@@ -94,7 +94,7 @@ export default function PainelCeo() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           icon={UtensilsCrossed}
           label="Refeições / dia"
@@ -126,7 +126,7 @@ export default function PainelCeo() {
       </div>
 
       {/* Main content: Charts + Alert Feed */}
-      <div className="grid lg:grid-cols-3 gap-4">
+      <div className="grid lg:grid-cols-3 gap-5">
         {/* Left: Charts */}
         <div className="lg:col-span-2 space-y-4">
           {/* Consumption Line Chart */}
