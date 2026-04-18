@@ -7,14 +7,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Loader2, UtensilsCrossed, CalendarDays, TrendingDown, TrendingUp, FileDown, Scale } from "lucide-react";
+import { Plus, Loader2, UtensilsCrossed, CalendarDays, FileDown, History } from "lucide-react";
 import { toast } from "sonner";
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { KpiCard } from "@/components/painel-nutri/KpiCard";
+import { WasteHeroKpi } from "@/components/desperdicio/WasteHeroKpi";
+import { WasteTrendChart, type TrendPoint } from "@/components/desperdicio/WasteTrendChart";
+import { WasteTopItems, type TopWasteItem } from "@/components/desperdicio/WasteTopItems";
+import { WasteRecurrenceAlert, type RecurrenceAlert } from "@/components/desperdicio/WasteRecurrenceAlert";
+import { WasteCategoryBreakdown, type CategoryWaste } from "@/components/desperdicio/WasteCategoryBreakdown";
+import { WasteEmptyState } from "@/components/desperdicio/WasteEmptyState";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -41,8 +44,11 @@ interface Unit { id: string; name: string; numero_colaboradores: number; }
 
 type PeriodFilter = "hoje" | "semana" | "mes" | "30d";
 
+// Estimated cost per kg of waste (BRL) — operational baseline for impact estimation
+const COST_PER_KG_WASTE = 18;
+
 export default function Desperdicio() {
-  const { profile, role, isFinanceiro, isCeo } = useAuth();
+  const { profile, isFinanceiro, isCeo } = useAuth();
   const [logs, setLogs] = useState<WasteLog[]>([]);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [categories, setCategories] = useState<DishCategory[]>([]);
@@ -63,6 +69,8 @@ export default function Desperdicio() {
   const [observacao, setObservacao] = useState("");
 
   const userUnitId = profile?.unidade_id || "";
+  const canSeeCost = !!(isCeo || isFinanceiro);
+  const canRegister = !isFinanceiro && !isCeo;
 
   useEffect(() => { loadData(); }, []);
 
@@ -96,7 +104,6 @@ export default function Desperdicio() {
     setLoading(false);
   };
 
-  // Period date range
   const dateRange = useMemo(() => {
     const now = new Date();
     switch (period) {
@@ -119,50 +126,124 @@ export default function Desperdicio() {
     return dishes.filter(d => dishIds.includes(d.id));
   }, [selectedMenuId, menuDishes, dishes]);
 
-  // Filtered logs by unit AND period
-  const filteredLogs = useMemo(() => {
-    let result = logs;
+  const scopedLogs = useMemo(() => {
     if (!isCeo && !isFinanceiro && userUnitId) {
-      result = result.filter(l => l.unidade_id === userUnitId);
+      return logs.filter(l => l.unidade_id === userUnitId);
     }
-    result = result.filter(l => {
+    return logs;
+  }, [logs, userUnitId, isCeo, isFinanceiro]);
+
+  const filteredLogs = useMemo(() => {
+    return scopedLogs.filter(l => {
       const d = new Date(l.created_at);
       return d >= dateRange.start && d <= dateRange.end;
     });
-    return result;
-  }, [logs, userUnitId, isCeo, isFinanceiro, dateRange]);
+  }, [scopedLogs, dateRange]);
 
-  // KPIs
-  const kpis = useMemo(() => {
+  // KPIs + insights
+  const insights = useMemo(() => {
     const totalKg = filteredLogs.reduce((s, l) => s + Number(l.quantidade), 0);
-    const totalPrato = filteredLogs.reduce((s, l) => s + Number(l.sobra_prato), 0);
-    const totalRampa = filteredLogs.reduce((s, l) => s + Number(l.sobra_limpa_rampa), 0);
-    const totalOrganico = filteredLogs.reduce((s, l) => s + Number(l.desperdicio_total_organico), 0);
 
-    // Per capita: total / nº colaboradores (from user's unit)
     const unit = units.find(u => u.id === userUnitId);
     const numColab = unit?.numero_colaboradores || 1;
     const uniqueDays = new Set(filteredLogs.map(l => l.created_at.substring(0, 10))).size;
-    const perCapitaDay = uniqueDays > 0 ? totalKg / (numColab * uniqueDays) : 0;
+    const perCapitaG = uniqueDays > 0 ? (totalKg * 1000) / (numColab * uniqueDays) : 0;
 
-    // Trend: compare with previous period
+    // Trend vs previous period
     const periodDays = Math.max(1, Math.ceil((dateRange.end.getTime() - dateRange.start.getTime()) / 86400000));
     const prevStart = subDays(dateRange.start, periodDays);
     const prevEnd = dateRange.start;
-
-    let prevLogs = logs;
-    if (!isCeo && !isFinanceiro && userUnitId) {
-      prevLogs = prevLogs.filter(l => l.unidade_id === userUnitId);
-    }
-    prevLogs = prevLogs.filter(l => {
+    const prevLogs = scopedLogs.filter(l => {
       const d = new Date(l.created_at);
       return d >= prevStart && d < prevEnd;
     });
     const prevTotal = prevLogs.reduce((s, l) => s + Number(l.quantidade), 0);
     const trendPct = prevTotal > 0 ? ((totalKg - prevTotal) / prevTotal) * 100 : 0;
 
-    return { totalKg, totalPrato, totalRampa, totalOrganico, perCapitaDay, trendPct, registros: filteredLogs.length, uniqueDays };
-  }, [filteredLogs, units, userUnitId, logs, dateRange, isCeo, isFinanceiro]);
+    // Estimated cost
+    const estimatedCost = totalKg * COST_PER_KG_WASTE;
+
+    // Top items (by dish)
+    const dishMap = new Map<string, { totalKg: number; occurrences: number }>();
+    filteredLogs.forEach(l => {
+      if (!l.dish_id) return;
+      const cur = dishMap.get(l.dish_id) || { totalKg: 0, occurrences: 0 };
+      cur.totalKg += Number(l.quantidade);
+      cur.occurrences += 1;
+      dishMap.set(l.dish_id, cur);
+    });
+    const topItems: TopWasteItem[] = Array.from(dishMap.entries())
+      .map(([dishId, v]) => {
+        const dish = dishes.find(d => d.id === dishId);
+        const cat = dish?.category_id ? categories.find(c => c.id === dish.category_id)?.nome ?? null : null;
+        return { name: dish?.nome || "—", category: cat, totalKg: v.totalKg, occurrences: v.occurrences };
+      })
+      .sort((a, b) => b.totalKg - a.totalKg);
+
+    // Category breakdown
+    const catMap = new Map<string, number>();
+    filteredLogs.forEach(l => {
+      const dish = l.dish_id ? dishes.find(d => d.id === l.dish_id) : null;
+      const catName = dish?.category_id ? categories.find(c => c.id === dish.category_id)?.nome ?? "Sem categoria" : "Sem categoria";
+      catMap.set(catName, (catMap.get(catName) || 0) + Number(l.quantidade));
+    });
+    const categoryBreakdown: CategoryWaste[] = Array.from(catMap.entries()).map(([category, totalKg]) => ({
+      category, totalKg,
+    }));
+
+    // Weekly trend (last 6 weeks, scoped logs)
+    const trendData: TrendPoint[] = [];
+    const today = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const weekStart = startOfWeek(subDays(today, i * 7), { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+      const sum = scopedLogs
+        .filter(l => {
+          const d = new Date(l.created_at);
+          return d >= weekStart && d <= weekEnd;
+        })
+        .reduce((s, l) => s + Number(l.quantidade), 0);
+      trendData.push({ label: `S${format(weekStart, "w")}`, kg: sum });
+    }
+
+    // Recurrence: dish appears in 3+ consecutive recent weeks
+    const recurrenceAlerts: RecurrenceAlert[] = [];
+    const dishWeekMap = new Map<string, Set<number>>();
+    scopedLogs.forEach(l => {
+      if (!l.dish_id) return;
+      const d = new Date(l.created_at);
+      // ISO week index (year * 100 + week)
+      const ws = startOfWeek(d, { weekStartsOn: 1 });
+      const wkKey = ws.getFullYear() * 100 + Number(format(ws, "w"));
+      const set = dishWeekMap.get(l.dish_id) || new Set<number>();
+      set.add(wkKey);
+      dishWeekMap.set(l.dish_id, set);
+    });
+    const currentWk = startOfWeek(today, { weekStartsOn: 1 });
+    const currentKey = currentWk.getFullYear() * 100 + Number(format(currentWk, "w"));
+    dishWeekMap.forEach((weeks, dishId) => {
+      // count consecutive weeks ending at currentKey
+      let streak = 0;
+      let cursor = new Date(currentWk);
+      while (true) {
+        const cKey = cursor.getFullYear() * 100 + Number(format(cursor, "w"));
+        if (weeks.has(cKey)) {
+          streak += 1;
+          cursor = subDays(cursor, 7);
+        } else break;
+      }
+      if (streak >= 3) {
+        const dish = dishes.find(d => d.id === dishId);
+        if (dish) recurrenceAlerts.push({ name: dish.nome, weeks: streak });
+      }
+    });
+    recurrenceAlerts.sort((a, b) => b.weeks - a.weeks);
+
+    return {
+      totalKg, perCapitaG, trendPct, estimatedCost, registros: filteredLogs.length, uniqueDays,
+      topItems, categoryBreakdown, trendData, recurrenceAlerts,
+    };
+  }, [filteredLogs, scopedLogs, units, userUnitId, dateRange, dishes, categories]);
 
   const total = (Number(sobraPrato) || 0) + (Number(sobraRampa) || 0) + (Number(organico) || 0);
 
@@ -196,7 +277,6 @@ export default function Desperdicio() {
   const getMenuName = (id: string | null) => (id ? menus.find(m => m.id === id)?.nome : null) || "—";
   const getUnitName = (id: string) => units.find(u => u.id === id)?.name || "—";
   const getCategoryName = (categoryId: string | null) => categoryId ? categories.find(c => c.id === categoryId)?.nome || null : null;
-  const canRegister = !isFinanceiro && !isCeo;
 
   const exportPDF = useCallback(() => {
     const doc = new jsPDF();
@@ -204,7 +284,7 @@ export default function Desperdicio() {
     doc.text("Relatório de Desperdício", 14, 20);
     doc.setFontSize(10);
     doc.text(`Período: ${format(dateRange.start, "dd/MM/yyyy")} – ${format(dateRange.end, "dd/MM/yyyy")}`, 14, 28);
-    doc.text(`Total: ${kpis.totalKg.toFixed(2)} kg | Per capita/dia: ${(kpis.perCapitaDay * 1000).toFixed(0)} g`, 14, 34);
+    doc.text(`Total: ${insights.totalKg.toFixed(2)} kg | Per capita/dia: ${insights.perCapitaG.toFixed(0)} g`, 14, 34);
 
     autoTable(doc, {
       startY: 42,
@@ -222,7 +302,7 @@ export default function Desperdicio() {
 
     doc.save(`desperdicio_${format(new Date(), "yyyyMMdd")}.pdf`);
     toast.success("PDF exportado!");
-  }, [filteredLogs, dateRange, kpis]);
+  }, [filteredLogs, dateRange, insights]);
 
   const exportExcel = useCallback(() => {
     const wb = XLSX.utils.book_new();
@@ -246,17 +326,16 @@ export default function Desperdicio() {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  const periodLabel: Record<PeriodFilter, string> = { hoje: "Hoje", semana: "Esta Semana", mes: "Este Mês", "30d": "Últimos 30 dias" };
-
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Desperdício</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isCeo ? "Visão consolidada de todas as unidades" :
              isFinanceiro ? "Visão financeira de todas as unidades" :
-             `Registros da unidade ${getUnitName(userUnitId)}`}
+             `Insights da unidade ${getUnitName(userUnitId)}`}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -271,10 +350,10 @@ export default function Desperdicio() {
               <SelectItem value="30d">Últimos 30 dias</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={exportPDF} className="h-9">
+          <Button variant="outline" size="sm" onClick={exportPDF} className="h-9" disabled={filteredLogs.length === 0}>
             <FileDown className="h-4 w-4 mr-1" /> PDF
           </Button>
-          <Button variant="outline" size="sm" onClick={exportExcel} className="h-9">
+          <Button variant="outline" size="sm" onClick={exportExcel} className="h-9" disabled={filteredLogs.length === 0}>
             <FileDown className="h-4 w-4 mr-1" /> Excel
           </Button>
           {canRegister && (
@@ -334,15 +413,15 @@ export default function Desperdicio() {
                         <h4 className="text-sm font-semibold text-foreground">Pesagens (kg)</h4>
                         <div className="grid grid-cols-3 gap-2">
                           <div className="space-y-1">
-                            <Label className="text-xs">🍽️ Sobra Prato</Label>
+                            <Label className="text-xs">Sobra Prato</Label>
                             <Input type="number" step="0.01" min="0" placeholder="0.00" value={sobraPrato} onChange={(e) => setSobraPrato(e.target.value)} className="bg-input border-border" />
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-xs">🔽 Sobra Rampa</Label>
+                            <Label className="text-xs">Sobra Rampa</Label>
                             <Input type="number" step="0.01" min="0" placeholder="0.00" value={sobraRampa} onChange={(e) => setSobraRampa(e.target.value)} className="bg-input border-border" />
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-xs">♻️ Orgânico</Label>
+                            <Label className="text-xs">Orgânico</Label>
                             <Input type="number" step="0.01" min="0" placeholder="0.00" value={organico} onChange={(e) => setOrganico(e.target.value)} className="bg-input border-border" />
                           </div>
                         </div>
@@ -371,81 +450,83 @@ export default function Desperdicio() {
         </div>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <KpiCard
-          icon={<Scale className="h-4 w-4" />}
-          label="Total Período"
-          value={`${kpis.totalKg.toFixed(1)} kg`}
-          sub={`${kpis.registros} registro(s)`}
-        />
-        <KpiCard
-          icon={<UtensilsCrossed className="h-4 w-4" />}
-          label="Per Capita/Dia"
-          value={`${(kpis.perCapitaDay * 1000).toFixed(0)} g`}
-          sub={`${kpis.uniqueDays} dia(s) com registro`}
-          accent={kpis.perCapitaDay > 0.04 ? "destructive" : "default"}
-        />
-        <KpiCard
-          icon={<span className="text-sm">🍽️</span>}
-          label="Sobra Prato"
-          value={`${kpis.totalPrato.toFixed(1)} kg`}
-        />
-        <KpiCard
-          icon={<span className="text-sm">🔽</span>}
-          label="Sobra Rampa"
-          value={`${kpis.totalRampa.toFixed(1)} kg`}
-        />
-        <KpiCard
-          icon={kpis.trendPct <= 0 ? <TrendingDown className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
-          label="Tendência"
-          value={kpis.trendPct === 0 ? "—" : `${kpis.trendPct > 0 ? "+" : ""}${kpis.trendPct.toFixed(0)}%`}
-          sub="vs período anterior"
-          accent={kpis.trendPct > 0 ? "destructive" : kpis.trendPct < 0 ? "default" : "muted"}
-        />
-      </div>
+      {/* Empty state */}
+      {filteredLogs.length === 0 && scopedLogs.length === 0 ? (
+        <WasteEmptyState canRegister={canRegister} onRegister={() => setAddOpen(true)} />
+      ) : (
+        <>
+          {/* Hero KPI */}
+          <WasteHeroKpi
+            totalKg={insights.totalKg}
+            trendPct={insights.trendPct}
+            estimatedCost={insights.estimatedCost}
+            perCapitaG={insights.perCapitaG}
+            registros={insights.registros}
+            uniqueDays={insights.uniqueDays}
+            canSeeCost={canSeeCost}
+          />
 
-      {/* Table */}
-      <div className="glass-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead>Data</TableHead>
-                <TableHead>Cardápio</TableHead>
-                <TableHead>Preparação</TableHead>
-                <TableHead className="text-right">🍽️ Prato</TableHead>
-                <TableHead className="text-right">🔽 Rampa</TableHead>
-                <TableHead className="text-right">♻️ Orgânico</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead>Unidade</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredLogs.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                    Nenhum registro de desperdício no período.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredLogs.map((l) => (
-                  <TableRow key={l.id} className="border-border">
-                    <TableCell className="text-sm">{new Date(l.created_at).toLocaleDateString("pt-BR")}</TableCell>
-                    <TableCell className="text-muted-foreground">{getMenuName(l.menu_id)}</TableCell>
-                    <TableCell className="font-medium">{getDishName(l.dish_id)}</TableCell>
-                    <TableCell className="text-right">{l.sobra_prato > 0 ? `${l.sobra_prato} kg` : "—"}</TableCell>
-                    <TableCell className="text-right">{l.sobra_limpa_rampa > 0 ? `${l.sobra_limpa_rampa} kg` : "—"}</TableCell>
-                    <TableCell className="text-right">{l.desperdicio_total_organico > 0 ? `${l.desperdicio_total_organico} kg` : "—"}</TableCell>
-                    <TableCell className="text-right font-semibold">{Number(l.quantidade).toFixed(1)} kg</TableCell>
-                    <TableCell><Badge variant="secondary" className="text-xs">{getUnitName(l.unidade_id)}</Badge></TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+          {/* Recurrence alert */}
+          <WasteRecurrenceAlert alerts={insights.recurrenceAlerts} />
+
+          {/* Insights grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <WasteTrendChart data={insights.trendData} />
+            <WasteCategoryBreakdown data={insights.categoryBreakdown} totalKg={insights.totalKg} />
+          </div>
+
+          <WasteTopItems items={insights.topItems} totalKg={insights.totalKg} />
+
+          {/* Recent records — compact */}
+          <Card className="border-border/60 bg-card/80 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-display font-semibold text-foreground flex items-center gap-1.5">
+                  <History className="h-4 w-4 text-primary" /> Registros recentes
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Últimos lançamentos no período selecionado
+                </p>
+              </div>
+            </div>
+
+            {filteredLogs.length === 0 ? (
+              <div className="text-center text-xs text-muted-foreground py-6">
+                Nenhum registro no período selecionado.
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {filteredLogs.slice(0, 8).map((l) => (
+                  <li
+                    key={l.id}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-muted/20 border border-border/40"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground truncate">{getDishName(l.dish_id)}</span>
+                        <Badge variant="outline" className="text-[10px] border-border/60 text-muted-foreground">
+                          {getUnitName(l.unidade_id)}
+                        </Badge>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {new Date(l.created_at).toLocaleDateString("pt-BR")} · {getMenuName(l.menu_id)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-bold tabular-nums text-foreground">
+                        {Number(l.quantidade).toFixed(1)} kg
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        P {l.sobra_prato || 0} · R {l.sobra_limpa_rampa || 0} · O {l.desperdicio_total_organico || 0}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </>
+      )}
     </div>
   );
 }
