@@ -1,49 +1,69 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Calculator, ShoppingCart, Package, AlertTriangle, TrendingUp, FileText, Download, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calculator,
+  ShoppingCart,
+  Package,
+  AlertTriangle,
+  TrendingUp,
+  FileText,
+  Download,
+  CheckCircle2,
+  Beef,
+  Apple,
+  Wheat,
+  Milk,
+  Soup,
+  GlassWater,
+  Box,
+  Sparkles,
+  Layers,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, startOfWeek, addDays, addWeeks, subWeeks } from "date-fns";
 import { ContextualLoader } from "@/components/ContextualLoader";
-import { EmptyState } from "@/components/EmptyState";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { generateInsumosPDF } from "@/lib/pdfExport";
 import { exportInsumosExcel } from "@/lib/excelExport";
+import { InsumosHeroKpi } from "@/components/insumos/InsumosHeroKpi";
+import {
+  InsumosCategoryCard,
+  type InsumoItem,
+} from "@/components/insumos/InsumosCategoryCard";
+import { InsumosEmptyState } from "@/components/insumos/InsumosEmptyState";
 
-interface ConsolidatedIngredient {
-  productId: string;
-  productName: string;
-  unidadeMedida: string;
+interface ConsolidatedIngredient extends InsumoItem {
   categoria: string;
-  totalNeeded: number;
-  stockAvailable: number;
-  deficit: number;
-  custoUnitario: number;
-  custoTotal: number;
-  appearsInDays: number;
 }
 
-type ItemStatus = "ok" | "atencao" | "falta";
+const CATEGORY_ORDER = [
+  "Proteínas",
+  "Hortifruti",
+  "Grãos",
+  "Laticínios",
+  "Temperos",
+  "Bebidas",
+  "Descartáveis",
+  "Limpeza",
+  "Outros",
+];
 
-function getItemStatus(item: ConsolidatedIngredient): ItemStatus {
-  if (item.deficit > 0) return "falta";
-  const ratio = item.totalNeeded > 0 ? item.stockAvailable / item.totalNeeded : 999;
-  if (ratio <= 1.2) return "atencao";
-  return "ok";
-}
-
-const STATUS_CONFIG: Record<ItemStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; dotClass: string }> = {
-  ok: { label: "Suficiente", variant: "secondary", dotClass: "bg-emerald-500" },
-  atencao: { label: "Atenção", variant: "outline", dotClass: "bg-amber-500" },
-  falta: { label: "Falta", variant: "destructive", dotClass: "bg-destructive" },
+const CATEGORY_ICONS: Record<string, typeof Beef> = {
+  Proteínas: Beef,
+  Hortifruti: Apple,
+  Grãos: Wheat,
+  Laticínios: Milk,
+  Temperos: Soup,
+  Bebidas: GlassWater,
+  Descartáveis: Box,
+  Limpeza: Box,
+  Outros: Layers,
 };
-
-const CATEGORY_ORDER = ["Proteínas", "Hortifruti", "Grãos", "Laticínios", "Temperos", "Bebidas", "Descartáveis", "Limpeza", "Outros"];
 
 export default function PlanejamentoInsumos() {
   const { profile } = useAuth();
@@ -66,7 +86,7 @@ export default function PlanejamentoInsumos() {
       const { data } = await supabase.from("units").select("id, name, numero_colaboradores, type").order("name");
       const list = (data || []) as typeof units;
       setUnits(list);
-      const kitchens = list.filter(u => u.type === "kitchen");
+      const kitchens = list.filter((u) => u.type === "kitchen");
       if (kitchens.length > 0 && !unitId) setUnitId(kitchens[0].id);
       else if (list.length > 0 && !unitId) setUnitId(list[0].id);
     })();
@@ -80,19 +100,24 @@ export default function PlanejamentoInsumos() {
       const endStr = format(addDays(weekStart, 6), "yyyy-MM-dd");
 
       const { data: menus } = await supabase
-        .from("menus").select("id, nome, data, unidade_id")
-        .eq("unidade_id", unitId).gte("data", startStr).lte("data", endStr);
+        .from("menus")
+        .select("id, nome, data, unidade_id")
+        .eq("unidade_id", unitId)
+        .gte("data", startStr)
+        .lte("data", endStr);
 
       const menuList = menus || [];
-      const validMenus = menuList.filter(m => !["Folga", "Feriado", "Sem Produção"].includes(m.nome));
+      const validMenus = menuList.filter((m) => !["Folga", "Feriado", "Sem Produção"].includes(m.nome));
       setMenuCount(validMenus.length);
 
       if (validMenus.length === 0) {
-        setConsolidated([]); setDishCount(0); setLoading(false); return;
+        setConsolidated([]);
+        setDishCount(0);
+        setLoading(false);
+        return;
       }
 
-      const menuIds = validMenus.map(m => m.id);
-
+      const menuIds = validMenus.map((m) => m.id);
       const [mdRes, unitRes] = await Promise.all([
         supabase.from("menu_dishes").select("menu_id, dish_id").in("menu_id", menuIds),
         supabase.from("units").select("numero_colaboradores").eq("id", unitId).single(),
@@ -102,13 +127,13 @@ export default function PlanejamentoInsumos() {
       const numColab = unitRes.data?.numero_colaboradores || 0;
       setDishCount(menuDishes.length);
 
-      // Get unique dish_ids to query recipe_ingredients by dish
-      const dishIds = [...new Set(menuDishes.map(md => md.dish_id).filter(Boolean))];
+      const dishIds = [...new Set(menuDishes.map((md) => md.dish_id).filter(Boolean))];
       if (dishIds.length === 0) {
-        setConsolidated([]); setLoading(false); return;
+        setConsolidated([]);
+        setLoading(false);
+        return;
       }
 
-      // Count how many times each dish appears (across menu days)
       const dishAppearances = new Map<string, number>();
       for (const md of menuDishes) {
         dishAppearances.set(md.dish_id, (dishAppearances.get(md.dish_id) || 0) + 1);
@@ -120,13 +145,13 @@ export default function PlanejamentoInsumos() {
         .in("dish_id", dishIds);
 
       const recipeIngredients = riData || [];
-
       if (recipeIngredients.length === 0) {
-        setConsolidated([]); setLoading(false); return;
+        setConsolidated([]);
+        setLoading(false);
+        return;
       }
 
-      const productIds = [...new Set(recipeIngredients.map(ri => ri.product_id))];
-
+      const productIds = [...new Set(recipeIngredients.map((ri) => ri.product_id))];
       const [prodRes, stockRes] = await Promise.all([
         supabase.from("products").select("id, nome, unidade_medida, custo_unitario, categoria").in("id", productIds),
         supabase.from("v_estoque_por_unidade").select("product_id, saldo").eq("unidade_id", unitId).in("product_id", productIds),
@@ -134,8 +159,8 @@ export default function PlanejamentoInsumos() {
 
       const products = prodRes.data || [];
       const stockData = stockRes.data || [];
-      const productMap = new Map(products.map(p => [p.id, p]));
-      const stockMap = new Map(stockData.map(s => [s.product_id, Number(s.saldo) || 0]));
+      const productMap = new Map(products.map((p) => [p.id, p]));
+      const stockMap = new Map(stockData.map((s) => [s.product_id, Number(s.saldo) || 0]));
 
       const map = new Map<string, ConsolidatedIngredient>();
       for (const ri of recipeIngredients) {
@@ -167,12 +192,11 @@ export default function PlanejamentoInsumos() {
       }
 
       const result: ConsolidatedIngredient[] = [];
-      map.forEach(item => {
+      map.forEach((item) => {
         item.deficit = Math.max(0, item.totalNeeded - item.stockAvailable);
         item.custoTotal = item.totalNeeded * item.custoUnitario;
         result.push(item);
       });
-
       result.sort((a, b) => b.deficit - a.deficit);
       setConsolidated(result);
     } finally {
@@ -180,15 +204,24 @@ export default function PlanejamentoInsumos() {
     }
   }, [profile, unitId, weekStart]);
 
-  useEffect(() => { loadForecast(); }, [loadForecast]);
+  useEffect(() => {
+    loadForecast();
+  }, [loadForecast]);
 
-  const selectedUnit = units.find(u => u.id === unitId);
+  const selectedUnit = units.find((u) => u.id === unitId);
   const totalCost = consolidated.reduce((s, i) => s + i.custoTotal, 0);
-  const itemsWithDeficit = consolidated.filter(i => i.deficit > 0);
-  const itemsAtencao = consolidated.filter(i => getItemStatus(i) === "atencao");
+  const itemsWithDeficit = consolidated.filter((i) => i.deficit > 0);
+  const itemsAtencao = consolidated.filter((i) => {
+    if (i.deficit > 0) return false;
+    const ratio = i.totalNeeded > 0 ? i.stockAvailable / i.totalNeeded : 999;
+    return ratio <= 1.2;
+  });
+  const itemsOk = consolidated.length - itemsWithDeficit.length - itemsAtencao.length;
   const purchaseCost = itemsWithDeficit.reduce((s, i) => s + i.deficit * i.custoUnitario, 0);
+  const coverageRate = consolidated.length > 0
+    ? Math.round((itemsOk / consolidated.length) * 100)
+    : 0;
 
-  // Group by category
   const groupedByCategory = useMemo(() => {
     const groups = new Map<string, ConsolidatedIngredient[]>();
     for (const item of consolidated) {
@@ -196,7 +229,6 @@ export default function PlanejamentoInsumos() {
       if (!groups.has(cat)) groups.set(cat, []);
       groups.get(cat)!.push(item);
     }
-    // Sort by predefined order
     const sorted: [string, ConsolidatedIngredient[]][] = [];
     for (const cat of CATEGORY_ORDER) {
       if (groups.has(cat)) {
@@ -208,24 +240,29 @@ export default function PlanejamentoInsumos() {
     return sorted;
   }, [consolidated]);
 
-  const exportData = useMemo(() => consolidated.map(i => ({
-    ingrediente: i.productName,
-    unidade: i.unidadeMedida,
-    categoria: i.categoria,
-    necessario: i.totalNeeded,
-    estoque: i.stockAvailable,
-    falta: i.deficit,
-    custoUnit: i.custoUnitario,
-    custoTotal: i.custoTotal,
-  })), [consolidated]);
+  const exportData = useMemo(
+    () =>
+      consolidated.map((i) => ({
+        ingrediente: i.productName,
+        unidade: i.unidadeMedida,
+        categoria: i.categoria,
+        necessario: i.totalNeeded,
+        estoque: i.stockAvailable,
+        falta: i.deficit,
+        custoUnit: i.custoUnitario,
+        custoTotal: i.custoTotal,
+      })),
+    [consolidated],
+  );
 
   const handleGeneratePurchaseOrder = async () => {
     if (itemsWithDeficit.length === 0) {
-      toast.info("Não há itens com déficit para gerar pedido de compra."); return;
+      toast.info("Não há itens com déficit para gerar pedido de compra.");
+      return;
     }
     if (!profile) return;
     try {
-      const cdUnit = units.find(u => u.type === "cd");
+      const cdUnit = units.find((u) => u.type === "cd");
       const targetUnitId = cdUnit?.id || unitId;
 
       const { data: po, error: poErr } = await supabase
@@ -236,11 +273,12 @@ export default function PlanejamentoInsumos() {
           company_id: profile.company_id,
           observacao: `Gerado automaticamente - Previsão ${weekLabel} - ${selectedUnit?.name || ""}`,
         })
-        .select("id").single();
+        .select("id")
+        .single();
 
       if (poErr || !po) throw poErr;
 
-      const items = itemsWithDeficit.map(item => ({
+      const items = itemsWithDeficit.map((item) => ({
         purchase_order_id: po.id,
         product_id: item.productId,
         quantidade: Math.ceil(item.deficit * 10) / 10,
@@ -261,185 +299,249 @@ export default function PlanejamentoInsumos() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Planejamento de Insumos</h1>
-          <p className="text-sm text-muted-foreground">Previsão de compra baseada no cardápio planejado</p>
+      {/* Hero header */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-surface-2 via-surface-1 to-surface-2 p-5 sm:p-7">
+        <div className="absolute right-0 top-0 h-48 w-48 -translate-y-1/3 translate-x-1/4 rounded-full bg-primary/[0.07] blur-3xl" />
+
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-primary">
+              <Calculator className="h-3.5 w-3.5" />
+              Previsão inteligente
+            </div>
+            <h1 className="font-display text-2xl font-bold leading-tight text-foreground sm:text-3xl">
+              Planejamento de Insumos
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Consequência direta do cardápio.{" "}
+              <span className="text-foreground/80">{weekLabel}</span>
+              {selectedUnit && <> · {selectedUnit.name}</>}
+            </p>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Select value={unitId} onValueChange={setUnitId}>
+              <SelectTrigger
+                className="h-9 w-[170px] border-border/60 bg-surface-1 text-xs"
+                data-guide="select-unit-insumos"
+              >
+                <SelectValue placeholder="Unidade" />
+              </SelectTrigger>
+              <SelectContent>
+                {units
+                  .filter((u) => u.type === "kitchen")
+                  .map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            <Button
+              data-guide="btn-prev-week"
+              variant="outline"
+              size="icon"
+              onClick={() => setWeekStart(subWeeks(weekStart, 1))}
+              className="h-9 w-9 border-border/60 bg-surface-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+              className="h-9 px-3 text-xs font-medium"
+            >
+              Hoje
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setWeekStart(addWeeks(weekStart, 1))}
+              className="h-9 w-9 border-border/60 bg-surface-1"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Select value={unitId} onValueChange={setUnitId}>
-            <SelectTrigger className="w-[180px]" data-guide="select-unit-insumos">
-              <SelectValue placeholder="Unidade" />
-            </SelectTrigger>
-            <SelectContent>
-              {units.filter(u => u.type === "kitchen").map(u => (
-                <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button data-guide="btn-prev-week" variant="outline" size="icon" onClick={() => setWeekStart(subWeeks(weekStart, 1))}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-medium text-foreground min-w-[160px] text-center">{weekLabel}</span>
-          <Button variant="outline" size="icon" onClick={() => setWeekStart(addWeeks(weekStart, 1))}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}>
-            Hoje
-          </Button>
-        </div>
+
+        {/* KPI strip */}
+        {!loading && consolidated.length > 0 && (
+          <div data-guide="kpi-insumos" className="relative mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <InsumosHeroKpi
+              icon={Calculator}
+              label="Dias planejados"
+              value={menuCount}
+              sub={`${dishCount} preparações`}
+              tone="primary"
+            />
+            <InsumosHeroKpi
+              icon={Package}
+              label="Ingredientes"
+              value={consolidated.length}
+              sub={`${selectedUnit?.numero_colaboradores || 0} refeições/dia`}
+              tone="accent"
+            />
+            <InsumosHeroKpi
+              icon={CheckCircle2}
+              label="Cobertos"
+              value={`${itemsOk}/${consolidated.length}`}
+              sub={`${coverageRate}% de cobertura`}
+              tone="success"
+            />
+            <InsumosHeroKpi
+              icon={AlertTriangle}
+              label="Em falta"
+              value={itemsWithDeficit.length}
+              sub={purchaseCost > 0 ? `R$ ${purchaseCost.toFixed(2)} a comprar` : undefined}
+              tone="destructive"
+              pulse={itemsWithDeficit.length > 0}
+            />
+            <InsumosHeroKpi
+              icon={TrendingUp}
+              label="Custo total"
+              value={`R$ ${totalCost.toFixed(0)}`}
+              sub={itemsAtencao.length > 0 ? `${itemsAtencao.length} em atenção` : "Projeção da semana"}
+              tone="warning"
+            />
+          </div>
+        )}
+
+        {/* Export actions */}
+        {!loading && consolidated.length > 0 && (
+          <div className="relative mt-4 flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 border-border/60 bg-surface-1 text-xs"
+              onClick={() => {
+                exportInsumosExcel({
+                  weekLabel,
+                  unitName: selectedUnit?.name || "",
+                  numColaboradores: selectedUnit?.numero_colaboradores || 0,
+                  items: exportData,
+                });
+                toast.success("Excel exportado.");
+              }}
+            >
+              <Download className="h-3.5 w-3.5" />
+              Excel
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 border-border/60 bg-surface-1 text-xs"
+              onClick={() => {
+                generateInsumosPDF({
+                  weekLabel,
+                  unitName: selectedUnit?.name || "",
+                  numColaboradores: selectedUnit?.numero_colaboradores || 0,
+                  totalCost,
+                  purchaseCost,
+                  items: exportData,
+                });
+                toast.success("PDF exportado.");
+              }}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              PDF
+            </Button>
+          </div>
+        )}
       </div>
 
+      {/* Body */}
       {loading ? (
         <ContextualLoader message="Calculando previsão de insumos..." />
       ) : consolidated.length === 0 ? (
-        <EmptyState
-          icon={Calculator}
-          title="Nenhum ingrediente encontrado"
-          description={menuCount === 0
-            ? "Não há cardápio planejado para esta semana nesta unidade."
-            : "Os cardápios desta semana não possuem fichas técnicas com ingredientes cadastrados."}
-          actionLabel="Ir para Cardápio"
-          onAction={() => navigate("/cardapio-semanal")}
+        <InsumosEmptyState
+          onGoToMenu={() => navigate("/cardapio-semanal")}
+          variant={menuCount === 0 ? "no-menu" : "no-recipes"}
         />
       ) : (
         <>
-          {/* KPI Cards */}
-          <div data-guide="kpi-insumos" className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-            <KpiCard icon={<Calculator className="h-5 w-5" />} label="Dias c/ cardápio" value={menuCount} sub={`${dishCount} preparações`} />
-            <KpiCard icon={<Package className="h-5 w-5" />} label="Ingredientes" value={consolidated.length} sub={`${selectedUnit?.numero_colaboradores || 0} refeições/dia`} />
-            <KpiCard icon={<CheckCircle2 className="h-5 w-5" />} label="Estoque OK" value={consolidated.length - itemsWithDeficit.length - itemsAtencao.length} accent="ok" />
-            <KpiCard icon={<AlertTriangle className="h-5 w-5" />} label="Em falta" value={itemsWithDeficit.length} sub={`R$ ${purchaseCost.toFixed(2)}`} accent="falta" />
-            <KpiCard icon={<TrendingUp className="h-5 w-5" />} label="Custo total" value={`R$ ${totalCost.toFixed(2)}`} sub={itemsAtencao.length > 0 ? `${itemsAtencao.length} em atenção` : undefined} />
-          </div>
-
-          {/* Action bar */}
+          {/* Critical action bar */}
           {itemsWithDeficit.length > 0 && (
-            <Card className="border-destructive/30 bg-destructive/5">
-              <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-destructive" />
+            <div
+              data-guide="btn-gerar-compra"
+              className="relative overflow-hidden rounded-xl border border-destructive/35 bg-gradient-to-r from-destructive/[0.08] via-destructive/[0.04] to-transparent"
+            >
+              <div className="absolute -right-10 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-destructive/15 blur-3xl" />
+              <div className="relative flex flex-col items-start justify-between gap-3 p-4 sm:flex-row sm:items-center sm:p-5">
+                <div className="flex items-start gap-3">
+                  <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-destructive/40 bg-destructive/10 text-destructive">
+                    <span className="absolute inset-0 animate-ping rounded-lg bg-destructive/20" />
+                    <ShoppingCart className="relative h-4.5 w-4.5" />
+                  </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">
-                      {itemsWithDeficit.length} {itemsWithDeficit.length === 1 ? "ingrediente" : "ingredientes"} com estoque insuficiente
+                      {itemsWithDeficit.length}{" "}
+                      {itemsWithDeficit.length === 1 ? "item crítico" : "itens críticos"} sem cobertura
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      Custo estimado de compra: R$ {purchaseCost.toFixed(2)}
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Custo estimado de compra:{" "}
+                      <span className="font-semibold text-destructive">
+                        R$ {purchaseCost.toFixed(2)}
+                      </span>
                     </p>
                   </div>
                 </div>
-                <Button data-guide="btn-gerar-compra" size="sm" className="gap-1" onClick={handleGeneratePurchaseOrder}>
-                  <ShoppingCart className="h-4 w-4" />
-                  Gerar Pedido de Compra
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Table grouped by category */}
-          <Card>
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Consolidação de Insumos</CardTitle>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="gap-1" onClick={() => {
-                  exportInsumosExcel({ weekLabel, unitName: selectedUnit?.name || "", numColaboradores: selectedUnit?.numero_colaboradores || 0, items: exportData });
-                  toast.success("Excel exportado.");
-                }}>
-                  <Download className="h-4 w-4" /> Excel
-                </Button>
-                <Button variant="outline" size="sm" className="gap-1" onClick={() => {
-                  generateInsumosPDF({ weekLabel, unitName: selectedUnit?.name || "", numColaboradores: selectedUnit?.numero_colaboradores || 0, totalCost, purchaseCost, items: exportData });
-                  toast.success("PDF exportado.");
-                }}>
-                  <FileText className="h-4 w-4" /> PDF
+                <Button
+                  size="sm"
+                  className="h-10 gap-2 bg-primary px-4 font-semibold shadow-[0_8px_24px_-8px_hsl(var(--primary)/0.6)] hover:bg-primary/90"
+                  onClick={handleGeneratePurchaseOrder}
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Gerar pedido de compra
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ingrediente</TableHead>
-                    <TableHead className="text-center">Dias</TableHead>
-                    <TableHead className="text-right">Necessidade</TableHead>
-                    <TableHead className="text-right">Estoque</TableHead>
-                    <TableHead className="text-right">Saldo</TableHead>
-                    <TableHead className="text-right">Custo Unit.</TableHead>
-                    <TableHead className="text-right">Custo Total</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {groupedByCategory.map(([category, items]) => (
-                    <>
-                      <TableRow key={`cat-${category}`} className="bg-muted/40 hover:bg-muted/40">
-                        <TableCell colSpan={8} className="py-2">
-                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{category}</span>
-                          <span className="ml-2 text-xs text-muted-foreground">({items.length})</span>
-                        </TableCell>
-                      </TableRow>
-                      {items.map((item) => {
-                        const balance = item.stockAvailable - item.totalNeeded;
-                        const status = getItemStatus(item);
-                        const cfg = STATUS_CONFIG[status];
-                        return (
-                          <TableRow key={item.productId}>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <span className={`h-2 w-2 rounded-full shrink-0 ${cfg.dotClass}`} />
-                                <div>
-                                  <p className="font-medium text-sm">{item.productName}</p>
-                                  <p className="text-xs text-muted-foreground">{item.unidadeMedida}</p>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center text-sm">{item.appearsInDays}</TableCell>
-                            <TableCell className="text-right text-sm font-medium">{item.totalNeeded.toFixed(2)}</TableCell>
-                            <TableCell className="text-right text-sm">{item.stockAvailable.toFixed(2)}</TableCell>
-                            <TableCell className={`text-right text-sm font-semibold ${balance < 0 ? "text-destructive" : balance / item.totalNeeded <= 0.2 ? "text-amber-500" : "text-emerald-600"}`}>
-                              {balance >= 0 ? `+${balance.toFixed(2)}` : balance.toFixed(2)}
-                            </TableCell>
-                            <TableCell className="text-right text-sm">R$ {item.custoUnitario.toFixed(2)}</TableCell>
-                            <TableCell className="text-right text-sm">R$ {item.custoTotal.toFixed(2)}</TableCell>
-                            <TableCell className="text-center">
-                              <Badge variant={cfg.variant} className="text-[10px]">{cfg.label}</Badge>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+            </div>
+          )}
+
+          {/* Healthy state when nothing is missing */}
+          {itemsWithDeficit.length === 0 && itemsAtencao.length === 0 && (
+            <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.05] px-4 py-3.5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-300">
+                  <CheckCircle2 className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-200">
+                    Estoque cobre toda a previsão
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Nenhuma compra necessária para o cardápio desta semana.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Category cards */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Cobertura por categoria
+              </h2>
+              <span className="text-[11px] text-muted-foreground">
+                {groupedByCategory.length}{" "}
+                {groupedByCategory.length === 1 ? "categoria" : "categorias"}
+              </span>
+            </div>
+
+            {groupedByCategory.map(([category, items]) => (
+              <InsumosCategoryCard
+                key={category}
+                category={category}
+                icon={CATEGORY_ICONS[category] || Layers}
+                items={items}
+                defaultOpen={items.some((i) => i.deficit > 0)}
+              />
+            ))}
+          </div>
         </>
       )}
     </div>
-  );
-}
-
-function KpiCard({ icon, label, value, sub, accent = "default" }: {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  sub?: string;
-  accent?: "default" | "ok" | "falta";
-}) {
-  const bgClass = accent === "falta" ? "bg-destructive/10 text-destructive"
-    : accent === "ok" ? "bg-emerald-500/10 text-emerald-600"
-    : "bg-primary/10 text-primary";
-  return (
-    <Card>
-      <CardContent className="p-4 flex items-start gap-3">
-        <div className={`rounded-lg p-2 ${bgClass}`}>{icon}</div>
-        <div>
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="text-lg font-bold text-foreground">{value}</p>
-          {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
-        </div>
-      </CardContent>
-    </Card>
   );
 }
