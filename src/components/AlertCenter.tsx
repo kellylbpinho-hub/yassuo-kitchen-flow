@@ -240,12 +240,12 @@ export function AlertCenter() {
   const totalCount = alerts.length;
 
   const iconConfig = {
-    estoque: { icon: Package, color: "text-warning" },
-    validade: { icon: Clock, color: "text-destructive" },
-    pedido: { icon: ClipboardList, color: "text-primary" },
-    financeiro: { icon: AlertTriangle, color: "text-destructive" },
-    previsao: { icon: ShoppingCart, color: "text-destructive" },
-    peso: { icon: Scale, color: "text-warning" },
+    estoque: { icon: Package, color: "text-warning", bg: "bg-warning/15" },
+    validade: { icon: Clock, color: "text-destructive", bg: "bg-destructive/15" },
+    pedido: { icon: ClipboardList, color: "text-primary", bg: "bg-primary/15" },
+    financeiro: { icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/15" },
+    previsao: { icon: ShoppingCart, color: "text-destructive", bg: "bg-destructive/15" },
+    peso: { icon: Scale, color: "text-warning", bg: "bg-warning/15" },
   };
 
   const handleClick = (route: string) => {
@@ -256,61 +256,77 @@ export function AlertCenter() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="relative p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
-          <Bell className="h-5 w-5" />
+        <button className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200 group">
+          <Bell className="h-5 w-5 group-hover:scale-110 transition-transform" />
           {totalCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+            <span className="absolute top-0.5 right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground ring-2 ring-background animate-pulse-glow">
               {totalCount > 99 ? "99+" : totalCount}
             </span>
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0" sideOffset={8}>
-        <div className="px-4 py-3 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground">Alertas Operacionais</h3>
-          <p className="text-xs text-muted-foreground">
-            {totalCount === 0 ? "Nenhum alerta ativo" : `${totalCount} alerta${totalCount > 1 ? "s" : ""}`}
-          </p>
+      <PopoverContent
+        align="end"
+        className="w-[340px] p-0 surface-elevated border-border/60 overflow-hidden"
+        sideOffset={10}
+      >
+        <div className="px-4 py-3.5 border-b border-border/50 bg-surface-3/50">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-foreground tracking-tight">Central de alertas</h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {totalCount === 0 ? "Tudo certo na operação" : `${totalCount} ${totalCount > 1 ? "eventos pendentes" : "evento pendente"}`}
+              </p>
+            </div>
+            {totalCount > 0 && <span className="pill pill-danger text-numeric">{totalCount}</span>}
+          </div>
         </div>
-        <div className="max-h-80 overflow-y-auto">
+        <div className="max-h-[380px] overflow-y-auto">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex items-center justify-center py-10">
               <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : alerts.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              ✅ Tudo certo por aqui!
+            <div className="py-10 text-center">
+              <div className="h-10 w-10 rounded-2xl bg-success/15 flex items-center justify-center mx-auto mb-2.5 ring-1 ring-success/25">
+                <Bell className="h-4 w-4 text-success" />
+              </div>
+              <p className="text-sm text-success font-semibold">Operação saudável</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Nenhum alerta pendente</p>
             </div>
           ) : (
-            alerts.map((alert) => {
-              const config = iconConfig[alert.type];
-              const Icon = config.icon;
-              return (
-                <button
-                  key={alert.id}
-                  onClick={() => handleClick(alert.route)}
-                  className="flex items-center gap-3 w-full px-4 py-2.5 text-left hover:bg-accent/50 transition-colors border-b border-border/50 last:border-0"
-                >
-                  <div className={cn("shrink-0", config.color)}>
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{alert.title}</p>
-                    <p className="text-xs text-muted-foreground">{alert.description}</p>
-                  </div>
-                  <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                </button>
-              );
-            })
+            <div className="py-1">
+              {alerts.map((alert, idx) => {
+                const config = iconConfig[alert.type];
+                const Icon = config.icon;
+                return (
+                  <button
+                    key={alert.id}
+                    onClick={() => handleClick(alert.route)}
+                    style={{ animationDelay: `${idx * 20}ms` }}
+                    className="animate-rise flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-surface-3 transition-colors border-b border-border/30 last:border-0 group"
+                  >
+                    <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0", config.bg, config.color)}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{alert.title}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{alert.description}</p>
+                    </div>
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
         {totalCount > 0 && (
-          <div className="px-4 py-2 border-t border-border">
+          <div className="px-4 py-2.5 border-t border-border/50 bg-surface-3/30">
             <button
-              onClick={() => handleClick("/dashboard")}
-              className="text-xs text-primary hover:underline font-medium"
+              onClick={() => handleClick("/alertas")}
+              className="text-xs text-primary hover:text-primary-glow font-semibold flex items-center gap-1 transition-colors"
             >
-              Ver dashboard completo →
+              Abrir central completa <ChevronRight className="h-3 w-3" />
             </button>
           </div>
         )}

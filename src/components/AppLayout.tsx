@@ -48,13 +48,17 @@ export function AppLayout() {
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-sidebar-border shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-sidebar-border/60 shrink-0">
           <div className="flex items-center gap-2.5">
-            <h1 className="text-lg font-sans font-bold tracking-tight">
-              <span className="text-white">Yassuo</span> <span className="text-destructive">App</span>
+            <div className="h-8 w-8 rounded-lg bg-gradient-primary-soft ring-1 ring-primary/30 flex items-center justify-center shadow-glow-primary">
+              <span className="brand-mark text-primary text-base">Y</span>
+            </div>
+            <h1 className="brand-mark text-[17px] tracking-[-0.04em]">
+              <span className="text-foreground">Yassuo</span>
+              <span className="text-primary ml-1">App</span>
             </h1>
           </div>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground hover:text-foreground">
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground hover:text-foreground transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -127,22 +131,25 @@ export function AppLayout() {
       </aside>
 
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="flex items-center justify-between px-4 py-2 border-b border-border bg-card lg:px-5 shrink-0">
+        <header className="flex items-center justify-between px-4 py-2.5 border-b border-border/60 bg-surface-1/80 backdrop-blur-xl lg:px-6 shrink-0 sticky top-0 z-30">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden text-muted-foreground hover:text-foreground"
+            className="lg:hidden text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-accent transition-colors"
           >
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex-1 flex justify-center lg:hidden">
-            <span className="text-lg font-sans font-bold tracking-tight"><span className="text-white">Yassuo</span> <span className="text-destructive">App</span></span>
+            <span className="brand-mark text-base tracking-[-0.04em]">
+              <span className="text-foreground">Yassuo</span>
+              <span className="text-primary ml-1">App</span>
+            </span>
           </div>
           <div className="flex items-center gap-1 lg:hidden">
             <AlertCenter />
             <GuidedModeToggleMobile />
             <button
               onClick={handleSignOut}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-accent transition-colors"
               title="Sair"
             >
               <LogOut className="h-5 w-5" />
