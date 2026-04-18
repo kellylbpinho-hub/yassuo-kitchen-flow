@@ -1,16 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Plus, Loader2, UtensilsCrossed, Search, Pencil } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Plus, Loader2, Search, ChefHat, BookOpen } from "lucide-react";
 import { toast } from "sonner";
+import { DishCard, type DishCardData, type FichaStatus } from "@/components/pratos/DishCard";
+import { PratosEmptyState } from "@/components/pratos/PratosEmptyState";
 
 interface DishCategory {
   id: string;
@@ -18,7 +30,7 @@ interface DishCategory {
   ordem: number;
 }
 
-interface Dish {
+interface DishRow {
   id: string;
   nome: string;
   descricao: string | null;
@@ -26,22 +38,48 @@ interface Dish {
   is_padrao: boolean;
   ativo: boolean;
   company_id: string;
+  peso_porcao: number | null;
+}
+
+interface IngredientRow {
+  dish_id: string;
+  product_id: string;
+  peso_limpo_per_capita: number;
+  fator_correcao: number;
+}
+
+interface ProductCost {
+  id: string;
+  custo_unitario: number | null;
+}
+
+interface MenuUsageRow {
+  dish_id: string;
+  data: string;
 }
 
 export default function Pratos() {
   const { user, profile, isFinanceiro } = useAuth();
   const [categories, setCategories] = useState<DishCategory[]>([]);
-  const [dishes, setDishes] = useState<Dish[]>([]);
+  const [dishes, setDishes] = useState<DishRow[]>([]);
+  const [ingredients, setIngredients] = useState<IngredientRow[]>([]);
+  const [productCosts, setProductCosts] = useState<Map<string, number>>(new Map());
+  const [usage, setUsage] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterFicha, setFilterFicha] = useState<string>("all");
+  const [filterUsage, setFilterUsage] = useState<string>("all");
+
   const [addOpen, setAddOpen] = useState(false);
-  const [editDish, setEditDish] = useState<Dish | null>(null);
+  const [editDish, setEditDish] = useState<DishRow | null>(null);
 
   const [form, setForm] = useState({
     nome: "",
     descricao: "",
     category_id: "",
+    peso_porcao: "",
   });
 
   useEffect(() => {
@@ -50,16 +88,44 @@ export default function Pratos() {
 
   const loadData = async () => {
     setLoading(true);
-    const [{ data: cats }, { data: d }] = await Promise.all([
-      supabase.from("dish_categories").select("*").order("ordem"),
-      supabase.from("dishes").select("*").order("nome"),
-    ]);
+    const [{ data: cats }, { data: d }, { data: ing }, { data: prods }, { data: menuRows }] =
+      await Promise.all([
+        supabase.from("dish_categories").select("*").order("ordem"),
+        supabase.from("dishes").select("*").order("nome"),
+        supabase
+          .from("recipe_ingredients")
+          .select("dish_id, product_id, peso_limpo_per_capita, fator_correcao"),
+        supabase.from("products").select("id, custo_unitario"),
+        supabase
+          .from("menu_dishes")
+          .select("dish_id, menus!inner(data)")
+          .order("created_at", { ascending: false }),
+      ]);
+
     setCategories((cats || []) as DishCategory[]);
-    setDishes((d || []) as Dish[]);
+    setDishes((d || []) as DishRow[]);
+    setIngredients(((ing || []) as IngredientRow[]).filter((r) => r.dish_id));
+
+    const costMap = new Map<string, number>();
+    ((prods || []) as ProductCost[]).forEach((p) => {
+      if (p.custo_unitario) costMap.set(p.id, Number(p.custo_unitario));
+    });
+    setProductCosts(costMap);
+
+    const usageMap = new Map<string, string>();
+    (menuRows || []).forEach((row: any) => {
+      const data = row.menus?.data;
+      if (!data || !row.dish_id) return;
+      const existing = usageMap.get(row.dish_id);
+      if (!existing || data > existing) usageMap.set(row.dish_id, data);
+    });
+    setUsage(usageMap);
+
     setLoading(false);
   };
 
-  const resetForm = () => setForm({ nome: "", descricao: "", category_id: "" });
+  const resetForm = () =>
+    setForm({ nome: "", descricao: "", category_id: "", peso_porcao: "" });
 
   const saveDish = async () => {
     if (!form.nome.trim()) {
@@ -67,56 +133,172 @@ export default function Pratos() {
       return;
     }
 
+    const payload = {
+      nome: form.nome.trim(),
+      descricao: form.descricao.trim() || null,
+      category_id: form.category_id || null,
+      peso_porcao: form.peso_porcao ? Number(form.peso_porcao) : null,
+    };
+
     if (editDish) {
-      const { error } = await supabase.from("dishes").update({
-        nome: form.nome.trim(),
-        descricao: form.descricao.trim() || null,
-        category_id: form.category_id || null,
-      }).eq("id", editDish.id);
+      const { error } = await supabase.from("dishes").update(payload).eq("id", editDish.id);
       if (error) toast.error(error.message);
-      else { toast.success("Prato atualizado!"); setEditDish(null); resetForm(); loadData(); }
+      else {
+        toast.success("Prato atualizado.");
+        setEditDish(null);
+        resetForm();
+        loadData();
+      }
     } else {
       const { error } = await supabase.from("dishes").insert({
-        nome: form.nome.trim(),
-        descricao: form.descricao.trim() || null,
-        category_id: form.category_id || null,
+        ...payload,
         is_padrao: false,
         company_id: profile!.company_id,
         created_by: user!.id,
       });
       if (error) toast.error(error.message);
-      else { toast.success("Prato criado!"); setAddOpen(false); resetForm(); loadData(); }
+      else {
+        toast.success("Prato criado.");
+        setAddOpen(false);
+        resetForm();
+        loadData();
+      }
     }
   };
 
-  const toggleAtivo = async (dish: Dish) => {
-    const { error } = await supabase.from("dishes").update({ ativo: !dish.ativo }).eq("id", dish.id);
+  const handleArchive = async (id: string) => {
+    const dish = dishes.find((d) => d.id === id);
+    if (!dish) return;
+    const { error } = await supabase
+      .from("dishes")
+      .update({ ativo: !dish.ativo })
+      .eq("id", id);
     if (error) toast.error(error.message);
-    else loadData();
+    else {
+      toast.success(dish.ativo ? "Prato arquivado." : "Prato reativado.");
+      loadData();
+    }
   };
 
-  const openEdit = (dish: Dish) => {
-    setForm({ nome: dish.nome, descricao: dish.descricao || "", category_id: dish.category_id || "" });
+  const handleDuplicate = async (id: string) => {
+    const dish = dishes.find((d) => d.id === id);
+    if (!dish) return;
+    const { error } = await supabase.from("dishes").insert({
+      nome: `${dish.nome} (cópia)`,
+      descricao: dish.descricao,
+      category_id: dish.category_id,
+      peso_porcao: dish.peso_porcao,
+      is_padrao: false,
+      company_id: profile!.company_id,
+      created_by: user!.id,
+    });
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Prato duplicado.");
+      loadData();
+    }
+  };
+
+  const handleEdit = (id: string) => {
+    const dish = dishes.find((d) => d.id === id);
+    if (!dish) return;
+    setForm({
+      nome: dish.nome,
+      descricao: dish.descricao || "",
+      category_id: dish.category_id || "",
+      peso_porcao: dish.peso_porcao ? String(dish.peso_porcao) : "",
+    });
     setEditDish(dish);
   };
 
-  const getCategoryName = (id: string | null) =>
-    id ? categories.find((c) => c.id === id)?.nome || "—" : "Sem categoria";
+  const handleAddToMenu = (id: string) => {
+    sessionStorage.setItem("preselectedDishId", id);
+    window.location.href = "/cardapio-semanal";
+  };
 
-  const filtered = dishes.filter((d) => {
-    const matchSearch = d.nome.toLowerCase().includes(search.toLowerCase());
-    const matchCat = filterCategory === "all" || d.category_id === filterCategory;
-    return matchSearch && matchCat;
-  });
+  // Derive computed dish data
+  const enriched: DishCardData[] = useMemo(() => {
+    return dishes.map((d) => {
+      const dishIngredients = ingredients.filter((i) => i.dish_id === d.id);
+      const ingredientes_count = dishIngredients.length;
 
-  const grouped = categories
-    .map((cat) => ({
-      category: cat,
-      items: filtered.filter((d) => d.category_id === cat.id),
-    }))
-    .filter((g) => g.items.length > 0);
+      let custo_estimado: number | null = null;
+      if (ingredientes_count > 0) {
+        let total = 0;
+        let allHaveCost = true;
+        for (const ing of dishIngredients) {
+          const cost = productCosts.get(ing.product_id);
+          if (cost === undefined) {
+            allHaveCost = false;
+            break;
+          }
+          // peso_limpo_per_capita em kg/g convertido + fator_correcao
+          const consumo = Number(ing.peso_limpo_per_capita) * Number(ing.fator_correcao || 1);
+          total += consumo * cost;
+        }
+        if (allHaveCost) custo_estimado = total;
+      }
 
-  const uncategorized = filtered.filter((d) => !d.category_id);
+      let ficha_status: FichaStatus = "pendente";
+      if (ingredientes_count === 0) ficha_status = "pendente";
+      else if (!d.peso_porcao || ingredientes_count < 2) ficha_status = "incompleta";
+      else ficha_status = "completa";
+
+      const category_name = d.category_id
+        ? categories.find((c) => c.id === d.category_id)?.nome || null
+        : null;
+
+      return {
+        id: d.id,
+        nome: d.nome,
+        descricao: d.descricao,
+        category_name,
+        peso_porcao: d.peso_porcao,
+        ingredientes_count,
+        custo_estimado,
+        ultimo_uso: usage.get(d.id) || null,
+        ficha_status,
+        is_padrao: d.is_padrao,
+        ativo: d.ativo,
+      };
+    });
+  }, [dishes, ingredients, productCosts, usage, categories]);
+
+  const filtered = useMemo(() => {
+    const now = Date.now();
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+
+    return enriched.filter((d) => {
+      if (!d.nome.toLowerCase().includes(search.toLowerCase())) return false;
+      if (filterCategory !== "all") {
+        const dish = dishes.find((x) => x.id === d.id);
+        if (dish?.category_id !== filterCategory) return false;
+      }
+      if (filterFicha !== "all" && d.ficha_status !== filterFicha) return false;
+      if (filterUsage !== "all") {
+        const last = d.ultimo_uso ? new Date(d.ultimo_uso).getTime() : 0;
+        const diff = last ? now - last : Infinity;
+        if (filterUsage === "recent" && diff > sevenDaysMs) return false;
+        if (filterUsage === "month" && diff > thirtyDaysMs) return false;
+        if (filterUsage === "never" && d.ultimo_uso) return false;
+      }
+      return true;
+    });
+  }, [enriched, dishes, search, filterCategory, filterFicha, filterUsage]);
+
+  const stats = useMemo(() => {
+    const total = enriched.length;
+    const completa = enriched.filter((d) => d.ficha_status === "completa").length;
+    const pendente = enriched.filter((d) => d.ficha_status !== "completa").length;
+    return { total, completa, pendente };
+  }, [enriched]);
+
+  const hasFilters =
+    search.length > 0 ||
+    filterCategory !== "all" ||
+    filterFicha !== "all" ||
+    filterUsage !== "all";
 
   if (loading) {
     return (
@@ -128,99 +310,150 @@ export default function Pratos() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-display font-bold text-foreground">Pratos</h1>
-        {!isFinanceiro && (
-          <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) resetForm(); }}>
-            <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" />Novo Prato</Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card border-border max-w-sm">
-              <DialogHeader><DialogTitle className="font-display">Novo Prato</DialogTitle></DialogHeader>
-              <DishForm form={form} setForm={setForm} categories={categories} onSave={saveDish} />
-            </DialogContent>
-          </Dialog>
+      {/* Hero header */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card/80 via-card/60 to-background/40 backdrop-blur-sm p-5 sm:p-6">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,hsl(var(--primary)/0.08),transparent_50%)] pointer-events-none" />
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30">
+              <BookOpen className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground leading-tight">
+                Biblioteca de Pratos
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                Sua base técnica para montar cardápios com agilidade
+              </p>
+            </div>
+          </div>
+          {!isFinanceiro && (
+            <Dialog
+              open={addOpen}
+              onOpenChange={(o) => {
+                setAddOpen(o);
+                if (!o) resetForm();
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button className="gap-2 shadow-lg shadow-primary/20">
+                  <Plus className="h-4 w-4" />
+                  Novo Prato
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border max-w-sm">
+                <DialogHeader>
+                  <DialogTitle className="font-display">Novo Prato</DialogTitle>
+                </DialogHeader>
+                <DishForm
+                  form={form}
+                  setForm={setForm}
+                  categories={categories}
+                  onSave={saveDish}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+
+        {/* Stats chips */}
+        {stats.total > 0 && (
+          <div className="relative mt-4 flex flex-wrap gap-2">
+            <StatChip label="Total" value={stats.total} />
+            <StatChip label="Ficha completa" value={stats.completa} tone="success" />
+            <StatChip label="Pendentes" value={stats.pendente} tone="warning" />
+          </div>
         )}
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-3">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar prato..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-input border-border"
+            className="pl-9 bg-input border-border h-10"
           />
         </div>
-        <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-full sm:w-48 bg-input border-border">
-            <SelectValue placeholder="Categoria" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas categorias</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="bg-input border-border h-9 text-xs">
+              <SelectValue placeholder="Categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas categorias</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterFicha} onValueChange={setFilterFicha}>
+            <SelectTrigger className="bg-input border-border h-9 text-xs">
+              <SelectValue placeholder="Ficha técnica" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as fichas</SelectItem>
+              <SelectItem value="completa">Completa</SelectItem>
+              <SelectItem value="pendente">Pendente</SelectItem>
+              <SelectItem value="incompleta">Incompleta</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterUsage} onValueChange={setFilterUsage}>
+            <SelectTrigger className="bg-input border-border h-9 text-xs">
+              <SelectValue placeholder="Uso recente" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Qualquer uso</SelectItem>
+              <SelectItem value="recent">Últimos 7 dias</SelectItem>
+              <SelectItem value="month">Últimos 30 dias</SelectItem>
+              <SelectItem value="never">Nunca utilizado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Edit dialog */}
-      <Dialog open={!!editDish} onOpenChange={(o) => { if (!o) { setEditDish(null); resetForm(); } }}>
+      <Dialog
+        open={!!editDish}
+        onOpenChange={(o) => {
+          if (!o) {
+            setEditDish(null);
+            resetForm();
+          }
+        }}
+      >
         <DialogContent className="bg-card border-border max-w-sm">
-          <DialogHeader><DialogTitle className="font-display">Editar Prato</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle className="font-display">Editar Prato</DialogTitle>
+          </DialogHeader>
           <DishForm form={form} setForm={setForm} categories={categories} onSave={saveDish} />
         </DialogContent>
       </Dialog>
 
-      {/* Grouped list */}
-      {grouped.length === 0 && uncategorized.length === 0 ? (
-        <div className="glass-card p-8 text-center text-muted-foreground">
-          <UtensilsCrossed className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p>Nenhum prato encontrado.</p>
-        </div>
+      {/* Cards grid or empty */}
+      {filtered.length === 0 ? (
+        <PratosEmptyState
+          onCreate={() => setAddOpen(true)}
+          hasFilters={hasFilters}
+          canCreate={!isFinanceiro}
+        />
       ) : (
-        <div className="space-y-4">
-          {grouped.map(({ category, items }) => (
-            <div key={category.id} className="glass-card overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-border bg-muted/30">
-                <h3 className="text-sm font-semibold text-foreground">{category.nome}</h3>
-              </div>
-              <div className="divide-y divide-border">
-                {items.map((dish) => (
-                  <DishRow
-                    key={dish.id}
-                    dish={dish}
-                    getCategoryName={getCategoryName}
-                    onToggle={toggleAtivo}
-                    onEdit={openEdit}
-                    isFinanceiro={isFinanceiro}
-                  />
-                ))}
-              </div>
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filtered.map((dish) => (
+            <DishCard
+              key={dish.id}
+              dish={dish}
+              onAddToMenu={handleAddToMenu}
+              onEdit={handleEdit}
+              onDuplicate={handleDuplicate}
+              onArchive={handleArchive}
+              isFinanceiro={isFinanceiro}
+            />
           ))}
-          {uncategorized.length > 0 && (
-            <div className="glass-card overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-border bg-muted/30">
-                <h3 className="text-sm font-semibold text-muted-foreground">Sem categoria</h3>
-              </div>
-              <div className="divide-y divide-border">
-                {uncategorized.map((dish) => (
-                  <DishRow
-                    key={dish.id}
-                    dish={dish}
-                    getCategoryName={getCategoryName}
-                    onToggle={toggleAtivo}
-                    onEdit={openEdit}
-                    isFinanceiro={isFinanceiro}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
@@ -229,13 +462,38 @@ export default function Pratos() {
 
 /* ---------- Sub-components ---------- */
 
+function StatChip({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: number;
+  tone?: "default" | "success" | "warning";
+}) {
+  const toneCls =
+    tone === "success"
+      ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-300"
+      : tone === "warning"
+        ? "border-amber-500/30 bg-amber-500/5 text-amber-300"
+        : "border-border/60 bg-background/40 text-foreground";
+  return (
+    <div
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] ${toneCls}`}
+    >
+      <span className="font-semibold">{value}</span>
+      <span className="opacity-70">{label}</span>
+    </div>
+  );
+}
+
 function DishForm({
   form,
   setForm,
   categories,
   onSave,
 }: {
-  form: { nome: string; descricao: string; category_id: string };
+  form: { nome: string; descricao: string; category_id: string; peso_porcao: string };
   setForm: (f: typeof form) => void;
   categories: DishCategory[];
   onSave: () => void;
@@ -244,63 +502,53 @@ function DishForm({
     <div className="space-y-3">
       <div>
         <Label>Nome *</Label>
-        <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="bg-input border-border" />
+        <Input
+          value={form.nome}
+          onChange={(e) => setForm({ ...form, nome: e.target.value })}
+          className="bg-input border-border"
+        />
       </div>
-      <div>
-        <Label>Categoria</Label>
-        <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
-          <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-          <SelectContent>
-            {categories.map((c) => (
-              <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label>Categoria</Label>
+          <Select
+            value={form.category_id}
+            onValueChange={(v) => setForm({ ...form, category_id: v })}
+          >
+            <SelectTrigger className="bg-input border-border">
+              <SelectValue placeholder="Selecione..." />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Porção (g)</Label>
+          <Input
+            type="number"
+            value={form.peso_porcao}
+            onChange={(e) => setForm({ ...form, peso_porcao: e.target.value })}
+            className="bg-input border-border"
+            placeholder="Ex: 350"
+          />
+        </div>
       </div>
       <div>
         <Label>Descrição</Label>
-        <Textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} className="bg-input border-border" />
+        <Textarea
+          value={form.descricao}
+          onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+          className="bg-input border-border"
+        />
       </div>
-      <Button onClick={onSave} className="w-full">Salvar</Button>
-    </div>
-  );
-}
-
-function DishRow({
-  dish,
-  getCategoryName,
-  onToggle,
-  onEdit,
-  isFinanceiro,
-}: {
-  dish: Dish;
-  getCategoryName: (id: string | null) => string;
-  onToggle: (d: Dish) => void;
-  onEdit: (d: Dish) => void;
-  isFinanceiro: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3 gap-3">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className={`text-sm font-medium ${dish.ativo ? "text-foreground" : "text-muted-foreground line-through"}`}>
-            {dish.nome}
-          </span>
-          {dish.is_padrao && <Badge variant="secondary" className="text-[10px] px-1.5">Padrão</Badge>}
-          {!dish.ativo && <Badge variant="outline" className="text-[10px] px-1.5 text-destructive border-destructive/30">Inativo</Badge>}
-        </div>
-        {dish.descricao && (
-          <p className="text-xs text-muted-foreground mt-0.5 truncate">{dish.descricao}</p>
-        )}
-      </div>
-      {!isFinanceiro && (
-        <div className="flex items-center gap-2 shrink-0">
-          <button onClick={() => onEdit(dish)} className="text-muted-foreground hover:text-foreground">
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
-          <Switch checked={dish.ativo} onCheckedChange={() => onToggle(dish)} />
-        </div>
-      )}
+      <Button onClick={onSave} className="w-full">
+        Salvar
+      </Button>
     </div>
   );
 }
