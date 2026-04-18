@@ -39,8 +39,17 @@ export function MobileBottomNav() {
       ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border lg:hidden">
-      <div className="flex items-center justify-around h-14">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 lg:hidden"
+      style={{
+        background: "linear-gradient(180deg, hsl(222 14% 5% / 0.85) 0%, hsl(222 14% 4%) 60%)",
+        backdropFilter: "blur(20px) saturate(140%)",
+        WebkitBackdropFilter: "blur(20px) saturate(140%)",
+        borderTop: "1px solid hsl(var(--sidebar-border))",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
+    >
+      <div className="flex items-center justify-around h-16 px-2">
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.path);
           return (
@@ -48,14 +57,27 @@ export function MobileBottomNav() {
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
-                isActive
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                "relative flex flex-col items-center justify-center gap-1 flex-1 h-full transition-all duration-200 active:scale-95",
+                isActive ? "text-primary" : "text-muted-foreground/80 hover:text-foreground"
               )}
             >
-              <item.icon className={cn("h-5 w-5", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary))]")} />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              {isActive && (
+                <span
+                  aria-hidden
+                  className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-10 rounded-full bg-primary shadow-[0_0_12px_hsl(var(--primary))]"
+                />
+              )}
+              <div
+                className={cn(
+                  "flex items-center justify-center h-9 w-9 rounded-xl transition-all duration-200",
+                  isActive && "bg-primary/12 ring-1 ring-primary/25"
+                )}
+              >
+                <item.icon className={cn("h-5 w-5", isActive && "drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]")} />
+              </div>
+              <span className={cn("text-[10px] font-medium tracking-tight", isActive && "font-semibold")}>
+                {item.label}
+              </span>
             </button>
           );
         })}
