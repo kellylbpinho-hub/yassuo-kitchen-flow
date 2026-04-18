@@ -2,19 +2,28 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Search, Send, Plus, Trash2, Clock, ShieldX, FileText } from "lucide-react";
+import {
+  ClipboardList,
+  Clock,
+  History,
+  Sparkles,
+  Building2,
+  ChefHat,
+  ArrowRight,
+  Package,
+} from "lucide-react";
 import { ContextualLoader } from "@/components/ContextualLoader";
-import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { fuzzyMatchProduct } from "@/lib/fuzzySearch";
-import { generateInternalOrderPDF } from "@/lib/pdfExport";
+import { ptBR } from "date-fns/locale";
+import { ProductQuickAdd } from "@/components/pedido-interno/ProductQuickAdd";
+import { CartItemCard, type CartItem } from "@/components/pedido-interno/CartItemCard";
+import { CartSummaryBar } from "@/components/pedido-interno/CartSummaryBar";
+import { PedidoEmptyCart } from "@/components/pedido-interno/PedidoEmptyCart";
 
 interface Product {
   id: string;
@@ -30,14 +39,6 @@ interface Unit {
   type: string;
 }
 
-interface OrderItem {
-  productId: string;
-  productName: string;
-  unidade_medida: string;
-  quantidade: number;
-  observacao: string;
-}
-
 interface InternalOrder {
   id: string;
   numero: number;
@@ -50,15 +51,15 @@ interface InternalOrder {
   items_pending: number;
 }
 
-const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pendente: { label: "Pendente", variant: "secondary" },
-  parcial: { label: "Parcial", variant: "outline" },
-  aprovado: { label: "Aprovado", variant: "default" },
-  rejeitado: { label: "Rejeitado", variant: "destructive" },
+const statusConfig: Record<string, { label: string; cls: string }> = {
+  pendente: { label: "Pendente", cls: "bg-amber-500/15 text-amber-300 border-amber-500/30" },
+  parcial: { label: "Parcial", cls: "bg-blue-500/15 text-blue-300 border-blue-500/30" },
+  aprovado: { label: "Aprovado", cls: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" },
+  rejeitado: { label: "Rejeitado", cls: "bg-destructive/15 text-destructive border-destructive/30" },
 };
 
 export default function PedidoInterno() {
-  const { profile, user, isCeo, isGerenteOperacional, isNutricionista } = useAuth();
+  const { profile, user, isCeo, isGerenteOperacional } = useAuth();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -71,17 +72,11 @@ export default function PedidoInterno() {
   const [selectedKitchenId, setSelectedKitchenId] = useState("");
   const [headerObs, setHeaderObs] = useState("");
 
-  // Item form
-  const [search, setSearch] = useState("");
-  const [selectedProductId, setSelectedProductId] = useState("");
-  const [quantidade, setQuantidade] = useState("");
-  const [itemObs, setItemObs] = useState("");
-
   // Items list
-  const [items, setItems] = useState<OrderItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>([]);
 
-  // Contract check
-  const [blockedByContract, setBlockedByContract] = useState(false);
+  // Blocked products by contract
+  const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
 
   const isAdmin = isCeo || isGerenteOperacional;
   const kitchenUnitId = profile?.unidade_id;
@@ -116,25 +111,18 @@ export default function PedidoInterno() {
     setUnits(allUnits);
 
     const cdUnitsArr = allUnits.filter((u) => u.type === "cd");
-    if (cdUnitsArr.length > 0 && !selectedCdId) {
-      setSelectedCdId(cdUnitsArr[0].id);
+    if (cdUnitsArr.length > 0) {
+      setSelectedCdId((prev) => prev || cdUnitsArr[0].id);
     }
 
-    // Enrich orders
     const rawOrders = ordersRes.data || [];
     if (rawOrders.length > 0) {
       const orderIds = rawOrders.map((o: any) => o.id);
       const userIds = [...new Set(rawOrders.map((o: any) => o.solicitado_por))];
 
       const [itemsRes, profilesRes] = await Promise.all([
-        supabase
-          .from("internal_order_items")
-          .select("order_id, status")
-          .in("order_id", orderIds),
-        supabase
-          .from("profiles")
-          .select("user_id, full_name")
-          .in("user_id", userIds),
+        supabase.from("internal_order_items").select("order_id, status").in("order_id", orderIds),
+        supabase.from("profiles").select("user_id, full_name").in("user_id", userIds),
       ]);
 
       const allItems = itemsRes.data || [];
@@ -166,99 +154,129 @@ export default function PedidoInterno() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const cdUnits = useMemo(() => units.filter((u) => u.type === "cd"), [units]);
   const kitchenUnits = useMemo(() => units.filter((u) => u.type === "kitchen"), [units]);
 
-  const filteredProducts = useMemo(() => {
-    if (!search.trim()) return products.slice(0, 20);
-    return products.filter((p) => fuzzyMatchProduct(p, search));
-  }, [products, search]);
+  const destinationId = isAdmin ? selectedKitchenId : kitchenUnitId;
 
-  const selectedProduct = products.find((p) => p.id === selectedProductId);
-
-  // Contract check
+  // Load contract-blocked product list when destination changes
   useEffect(() => {
-    const destId = isAdmin ? selectedKitchenId : kitchenUnitId;
-    if (!selectedProductId || !destId) {
-      setBlockedByContract(false);
+    if (!destinationId) {
+      setBlockedIds(new Set());
       return;
     }
     let cancelled = false;
-    const checkContract = async () => {
+    (async () => {
       const { data } = await supabase
         .from("unit_product_rules")
-        .select("status")
-        .eq("unit_id", destId)
-        .eq("product_id", selectedProductId)
-        .eq("status", "bloqueado")
-        .maybeSingle();
-      if (!cancelled) setBlockedByContract(!!data);
+        .select("product_id")
+        .eq("unit_id", destinationId)
+        .eq("status", "bloqueado");
+      if (!cancelled) {
+        setBlockedIds(new Set((data || []).map((r: any) => r.product_id)));
+      }
+    })();
+    return () => {
+      cancelled = true;
     };
-    checkContract();
-    return () => { cancelled = true; };
-  }, [selectedProductId, selectedKitchenId, kitchenUnitId, isAdmin]);
+  }, [destinationId]);
 
-  const handleAddItem = () => {
-    if (!selectedProductId || !selectedProduct) {
-      toast.error("Selecione um produto.");
-      return;
-    }
-    if (blockedByContract) {
-      toast.error("Produto não permitido para esta unidade conforme contrato.");
-      return;
-    }
-    const qty = parseFloat(String(quantidade).replace(",", "."));
-    if (isNaN(qty) || qty <= 0) {
-      toast.error("Quantidade deve ser maior que zero.");
-      return;
-    }
-    // Check duplicate
-    if (items.some((i) => i.productId === selectedProductId)) {
-      toast.error("Produto já adicionado ao pedido.");
-      return;
-    }
-    setItems([...items, {
-      productId: selectedProductId,
-      productName: selectedProduct.nome,
-      unidade_medida: selectedProduct.unidade_medida,
-      quantidade: qty,
-      observacao: itemObs.trim(),
-    }]);
-    setSelectedProductId("");
-    setQuantidade("");
-    setItemObs("");
-    setSearch("");
+  const productMap = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
+  const excludedIds = useMemo(() => new Set(items.map((i) => i.productId)), [items]);
+
+  // Group items by category
+  const groupedItems = useMemo(() => {
+    const groups = new Map<string, { name: string; items: { item: CartItem; index: number }[] }>();
+    items.forEach((item, index) => {
+      const cat = item.category || "Outros";
+      if (!groups.has(cat)) groups.set(cat, { name: cat, items: [] });
+      groups.get(cat)!.items.push({ item, index });
+    });
+    return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  }, [items]);
+
+  const totalUnits = useMemo(
+    () => items.reduce((sum, i) => sum + (Number.isFinite(i.quantidade) ? i.quantidade : 0), 0),
+    [items],
+  );
+  const forecastCount = useMemo(() => items.filter((i) => i.fromForecast).length, [items]);
+
+  const destLabel = useMemo(() => {
+    const id = isAdmin ? selectedKitchenId : kitchenUnitId;
+    return units.find((u) => u.id === id)?.name;
+  }, [units, isAdmin, selectedKitchenId, kitchenUnitId]);
+
+  const originLabel = useMemo(
+    () => units.find((u) => u.id === selectedCdId)?.name,
+    [units, selectedCdId],
+  );
+
+  const handleAddItem = useCallback(
+    (productId: string, qty: number, observacao: string) => {
+      const product = productMap.get(productId);
+      if (!product) return false;
+      if (blockedIds.has(productId)) {
+        toast.error("Produto bloqueado por contrato para esta unidade.");
+        return false;
+      }
+      if (items.some((i) => i.productId === productId)) {
+        toast.error("Item já está no pedido. Edite a quantidade no card.");
+        return false;
+      }
+      setItems((prev) => [
+        ...prev,
+        {
+          productId,
+          productName: product.nome,
+          marca: product.marca,
+          category: product.category_name || "Outros",
+          unidade_medida: product.unidade_medida,
+          quantidade: qty,
+          observacao,
+        },
+      ]);
+      return true;
+    },
+    [productMap, blockedIds, items],
+  );
+
+  const handleUpdateItem = (index: number, patch: Partial<CartItem>) => {
+    setItems((prev) => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)));
   };
 
-  const handleRemoveItem = (idx: number) => {
-    setItems(items.filter((_, i) => i !== idx));
+  const handleRemoveItem = (index: number) => {
+    setItems((prev) => prev.filter((_, i) => i !== index));
   };
+
+  const handleClear = () => {
+    setItems([]);
+    setHeaderObs("");
+  };
+
+  const disabledReason = useMemo(() => {
+    if (!selectedCdId) return "Selecione o CD de origem.";
+    if (isAdmin && !selectedKitchenId) return "Selecione a cozinha de destino.";
+    if (!destinationId) return "Unidade de destino não definida.";
+    return null;
+  }, [selectedCdId, isAdmin, selectedKitchenId, destinationId]);
 
   const handleSubmit = async () => {
-    if (items.length === 0) {
-      toast.error("Adicione pelo menos um item ao pedido.");
+    if (items.length === 0) return;
+    if (disabledReason) {
+      toast.error(disabledReason);
       return;
     }
-    if (!selectedCdId) {
-      toast.error("Selecione o CD de origem.");
-      return;
-    }
-    const destinationId = isAdmin ? selectedKitchenId : kitchenUnitId;
-    if (!destinationId) {
-      toast.error(isAdmin ? "Selecione a cozinha de destino." : "Sua unidade (cozinha) não está configurada.");
-      return;
-    }
-
     setSending(true);
     try {
-      // Create order header
       const { data: order, error: orderError } = await supabase
         .from("internal_orders")
         .insert({
           unidade_origem_id: selectedCdId,
-          unidade_destino_id: destinationId,
+          unidade_destino_id: destinationId!,
           solicitado_por: user!.id,
           observacao: headerObs.trim() || null,
           company_id: profile!.company_id,
@@ -268,7 +286,6 @@ export default function PedidoInterno() {
 
       if (orderError) throw orderError;
 
-      // Insert all items
       const itemsToInsert = items.map((item) => ({
         order_id: order.id,
         product_id: item.productId,
@@ -283,7 +300,9 @@ export default function PedidoInterno() {
 
       if (itemsError) throw itemsError;
 
-      toast.success(`Pedido #${order.numero} enviado com ${items.length} ${items.length === 1 ? "item" : "itens"}!`);
+      toast.success(
+        `Pedido #${order.numero} enviado com ${items.length} ${items.length === 1 ? "item" : "itens"}!`,
+      );
       window.dispatchEvent(new CustomEvent("guided:transfer:success"));
       setItems([]);
       setHeaderObs("");
@@ -306,7 +325,8 @@ export default function PedidoInterno() {
         <h1 className="text-2xl font-display font-bold text-foreground">Pedido Interno</h1>
         <div className="glass-card p-6 max-w-md">
           <p className="text-muted-foreground">
-            Você não está vinculado a nenhuma unidade (cozinha). Contate o administrador para ser associado.
+            Você não está vinculado a nenhuma unidade (cozinha). Contate o administrador para ser
+            associado.
           </p>
         </div>
       </div>
@@ -317,244 +337,238 @@ export default function PedidoInterno() {
   const pastOrders = orders.filter((o) => o.status !== "pendente" && o.status !== "parcial");
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <h1 className="text-2xl font-display font-bold text-foreground">Pedido Interno</h1>
+    <div className="space-y-6 animate-fade-in pb-28 lg:pb-6">
+      {/* Hero Header */}
+      <header className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card/80 via-card/60 to-card/80 p-5 sm:p-6">
+        <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-primary/15 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 -left-20 w-48 h-48 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="h-11 w-11 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+              <ClipboardList className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground leading-tight">
+                Pedido Interno
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Monte um pedido ao CD com itens da sua cozinha. Use a previsão da semana para ganhar
+                tempo.
+              </p>
+            </div>
+          </div>
+          {items.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClear}
+              className="self-start sm:self-center text-muted-foreground hover:text-destructive"
+            >
+              Limpar carrinho
+            </Button>
+          )}
+        </div>
+      </header>
 
-      {/* Order form */}
-      <div className="glass-card p-6 space-y-5">
-        <h2 className="font-display font-bold text-foreground">Novo Pedido ao CD</h2>
-
-        {/* Header fields */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" data-guide="order-header">
-          {cdUnits.length > 1 && (
-            <div className="space-y-2" data-guide="select-cd">
-              <Label>CD de origem *</Label>
+      {/* Route header (origin / destination / observation) */}
+      <section className="rounded-2xl border border-border/60 bg-card/40 p-4 sm:p-5 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {(cdUnits.length > 1 || isAdmin) && (
+            <div className="space-y-1.5" data-guide="select-cd">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5" /> CD de origem
+              </Label>
               <Select value={selectedCdId} onValueChange={setSelectedCdId}>
-                <SelectTrigger className="bg-input border-border">
+                <SelectTrigger className="bg-background/40 border-border/60 h-10">
                   <SelectValue placeholder="Selecione o CD" />
                 </SelectTrigger>
                 <SelectContent>
                   {cdUnits.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           )}
 
-          {isAdmin && (
-            <div className="space-y-2">
-              <Label>Cozinha de destino *</Label>
+          {isAdmin ? (
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                <ChefHat className="h-3.5 w-3.5" /> Cozinha de destino
+              </Label>
               <Select value={selectedKitchenId} onValueChange={setSelectedKitchenId}>
-                <SelectTrigger className="bg-input border-border">
+                <SelectTrigger className="bg-background/40 border-border/60 h-10">
                   <SelectValue placeholder="Selecione a cozinha" />
                 </SelectTrigger>
                 <SelectContent>
                   {kitchenUnits.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                <ChefHat className="h-3.5 w-3.5" /> Cozinha de destino
+              </Label>
+              <div className="h-10 px-3 rounded-md border border-border/60 bg-background/40 flex items-center text-sm text-foreground/90">
+                {destLabel || "—"}
+              </div>
+            </div>
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label>Observação geral</Label>
+        <div className="space-y-1.5">
+          <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+            Observação geral do pedido
+          </Label>
           <Textarea
             value={headerObs}
             onChange={(e) => setHeaderObs(e.target.value)}
-            placeholder="Observação do pedido..."
+            placeholder="Ex.: Entregar até quinta às 8h. Verificar lotes mais recentes."
             rows={2}
+            className="bg-background/40 border-border/60 resize-none text-sm"
           />
         </div>
+      </section>
 
-        {/* Add item section */}
-        <div className="border border-border rounded-lg p-4 space-y-3 bg-muted/30">
-          <h3 className="text-sm font-semibold text-foreground">Adicionar item</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Product search */}
-            <div className="space-y-1 sm:col-span-2">
-              <Label className="text-xs">Produto</Label>
-              <div className="relative" data-guide="search-product">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar produto..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              {search.trim() && (
-                <div className="max-h-40 overflow-auto rounded-md border border-border bg-popover">
-                  {filteredProducts.length === 0 ? (
-                    <p className="p-3 text-sm text-muted-foreground">Nenhum produto encontrado.</p>
-                  ) : (
-                    filteredProducts.map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        className={`w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors ${
-                          selectedProductId === p.id ? "bg-accent text-accent-foreground" : "text-foreground"
-                        }`}
-                        onClick={() => { setSelectedProductId(p.id); setSearch(p.nome); }}
-                      >
-                        <span className="font-medium">{p.nome}</span>
-                        {p.marca && <span className="ml-1 text-xs text-muted-foreground">— {p.marca}</span>}
-                        <span className="ml-2 text-xs text-muted-foreground">· {p.unidade_medida}</span>
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-              {selectedProduct && !search.trim() && (
-                <div className="mt-1">
-                  <Badge variant="secondary">
-                    {selectedProduct.nome} ({selectedProduct.unidade_medida})
-                  </Badge>
-                  {blockedByContract && (
-                    <div className="flex items-center gap-1.5 text-destructive text-sm font-medium mt-1">
-                      <ShieldX className="h-4 w-4" />
-                      Produto bloqueado por contrato.
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+      {/* Add item */}
+      <ProductQuickAdd
+        products={products}
+        excludedIds={excludedIds}
+        onAdd={handleAddItem}
+        blockedProductIds={blockedIds}
+      />
 
-            {/* Quantity */}
-            <div className="space-y-1" data-guide="input-qty">
-              <Label className="text-xs">Quantidade</Label>
-              <Input
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={quantidade}
-                onChange={(e) => setQuantidade(e.target.value)}
-                placeholder={selectedProduct ? selectedProduct.unidade_medida : "0.00"}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs">Obs. do item</Label>
-            <Input
-              value={itemObs}
-              onChange={(e) => setItemObs(e.target.value)}
-              placeholder="Observação deste item (opcional)"
-            />
-          </div>
-
-          <Button variant="outline" size="sm" onClick={handleAddItem} className="gap-1" data-guide="btn-add-item">
-            <Plus className="h-4 w-4" /> Adicionar item
-          </Button>
+      {/* Cart */}
+      <section className="space-y-3" data-guide="items-list">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
+            <Package className="h-4 w-4 text-primary" />
+            Itens do pedido
+            {items.length > 0 && (
+              <span className="text-sm text-muted-foreground font-normal">({items.length})</span>
+            )}
+          </h2>
+          {forecastCount > 0 && (
+            <Badge className="bg-primary/15 text-primary border-primary/30 hover:bg-primary/15 gap-1">
+              <Sparkles className="h-3 w-3" /> {forecastCount} do cardápio
+            </Badge>
+          )}
         </div>
 
-        {/* Items table */}
-        {items.length > 0 && (
-          <div className="space-y-2" data-guide="items-list">
-            <h3 className="text-sm font-semibold text-foreground">
-              Itens do pedido ({items.length})
-            </h3>
-            <div className="rounded-md border border-border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Produto</TableHead>
-                    <TableHead className="w-24 text-right">Qtd</TableHead>
-                    <TableHead className="w-16 text-right">Und</TableHead>
-                    <TableHead className="w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>
-                        <span className="text-sm font-medium">{item.productName}</span>
-                        {item.observacao && (
-                          <p className="text-xs text-muted-foreground">{item.observacao}</p>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right text-sm">{item.quantidade}</TableCell>
-                      <TableCell className="text-right text-xs text-muted-foreground">{item.unidade_medida}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-destructive"
-                          onClick={() => handleRemoveItem(idx)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
+        {items.length === 0 ? (
+          <PedidoEmptyCart />
+        ) : (
+          <div className="space-y-5">
+            {groupedItems.map((group) => (
+              <div key={group.name} className="space-y-2">
+                <div className="flex items-center gap-2 px-1">
+                  <span className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground/80">
+                    {group.name}
+                  </span>
+                  <span className="h-px flex-1 bg-border/40" />
+                  <span className="text-[11px] text-muted-foreground/60">
+                    {group.items.length} {group.items.length === 1 ? "item" : "itens"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                  {group.items.map(({ item, index }) => (
+                    <CartItemCard
+                      key={item.productId}
+                      item={item}
+                      index={index}
+                      onUpdate={handleUpdateItem}
+                      onRemove={handleRemoveItem}
+                    />
                   ))}
-                </TableBody>
-              </Table>
-            </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
+      </section>
 
-        <Button
-          onClick={handleSubmit}
-          disabled={sending || items.length === 0}
-          className="w-full gap-2"
-          data-guide="btn-submit-transfer"
-        >
-          {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          Enviar Pedido ({items.length} {items.length === 1 ? "item" : "itens"})
-        </Button>
-      </div>
-
-      {/* Pending orders */}
+      {/* Pending */}
       {pendingOrders.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="font-display font-bold text-foreground flex items-center gap-2">
-            <Clock className="h-5 w-5 text-warning" />
-            Pedidos Pendentes ({pendingOrders.length})
+        <section className="space-y-3 pt-2">
+          <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
+            <Clock className="h-4 w-4 text-amber-300" />
+            Pedidos em aprovação
+            <span className="text-sm text-muted-foreground font-normal">({pendingOrders.length})</span>
           </h2>
-          <div className="grid gap-3">
+          <div className="grid gap-2.5">
             {pendingOrders.map((o) => (
-              <OrderCard key={o.id} order={o} units={units} />
+              <OrderCard key={o.id} order={o} />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Past orders */}
+      {/* History */}
       {pastOrders.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="font-display font-bold text-foreground text-sm">Histórico recente</h2>
+        <section className="space-y-3 pt-2">
+          <h2 className="text-sm font-display font-bold text-muted-foreground flex items-center gap-2 uppercase tracking-wider">
+            <History className="h-4 w-4" />
+            Histórico recente
+          </h2>
           <div className="grid gap-2">
             {pastOrders.map((o) => (
-              <OrderCard key={o.id} order={o} units={units} />
+              <OrderCard key={o.id} order={o} />
             ))}
           </div>
-        </div>
+        </section>
       )}
+
+      {/* Sticky summary bar */}
+      <CartSummaryBar
+        totalItems={items.length}
+        totalUnits={totalUnits}
+        forecastCount={forecastCount}
+        destinationLabel={destLabel}
+        originLabel={originLabel}
+        sending={sending}
+        onSubmit={handleSubmit}
+        disabledReason={disabledReason}
+      />
     </div>
   );
 }
 
-function OrderCard({ order }: { order: InternalOrder; units: Unit[] }) {
+function OrderCard({ order }: { order: InternalOrder }) {
   const cfg = statusConfig[order.status] || statusConfig.pendente;
   return (
-    <div className="glass-card p-4 flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-foreground">
-          Pedido #{order.numero}
-          <span className="text-xs text-muted-foreground ml-2">
-            ({order.items_count} {order.items_count === 1 ? "item" : "itens"})
+    <div className="rounded-xl border border-border/60 bg-card/40 hover:bg-card/60 hover:border-border transition-all p-3.5 flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-sm font-semibold text-foreground">Pedido #{order.numero}</p>
+          <span className="text-[11px] text-muted-foreground/80">
+            {order.items_count} {order.items_count === 1 ? "item" : "itens"}
+            {order.items_pending > 0 && (
+              <span className="text-amber-300/90"> · {order.items_pending} pendente(s)</span>
+            )}
           </span>
+        </div>
+        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5 truncate">
+          <span className="truncate">{order.unidade_origem_name}</span>
+          <ArrowRight className="h-3 w-3 text-primary/70 shrink-0" />
+          <span className="truncate">{order.unidade_destino_name}</span>
         </p>
-        <p className="text-xs text-muted-foreground">
-          {order.unidade_origem_name} → {order.unidade_destino_name} · {order.solicitado_por_name}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {format(new Date(order.created_at), "dd/MM/yyyy HH:mm")}
+        <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+          {order.solicitado_por_name} ·{" "}
+          {format(new Date(order.created_at), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}
         </p>
       </div>
-      <Badge variant={cfg.variant}>{cfg.label}</Badge>
+      <span
+        className={`text-[11px] font-semibold px-2 py-1 rounded-full border shrink-0 ${cfg.cls}`}
+      >
+        {cfg.label}
+      </span>
     </div>
   );
 }
