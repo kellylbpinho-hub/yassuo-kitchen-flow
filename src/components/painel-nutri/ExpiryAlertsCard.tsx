@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, ArrowRight } from "lucide-react";
+import { AlertTriangle, ArrowRight, ShieldCheck } from "lucide-react";
 import type { ExpiryAlert } from "@/hooks/usePainelNutriData";
+import { cn } from "@/lib/utils";
 
 interface Props {
   alerts: ExpiryAlert[];
@@ -11,42 +11,100 @@ interface Props {
 
 export function ExpiryAlertsCard({ alerts }: Props) {
   const navigate = useNavigate();
+  const visible = alerts.slice(0, 5);
+  const remainder = Math.max(0, alerts.length - visible.length);
 
   return (
-    <Card className="bg-card border-border">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-            <AlertTriangle className="h-4 w-4 text-amber-500" /> Alertas de Validade
+    <Card className="bg-card/80 border-border/60 backdrop-blur-sm">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <span
+              className={cn(
+                "flex h-7 w-7 items-center justify-center rounded-md border",
+                alerts.length > 0
+                  ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
+                  : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+              )}
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+            </span>
+            Alertas de validade
+            {alerts.length > 0 && (
+              <span className="ml-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-amber-300">
+                {alerts.length}
+              </span>
+            )}
           </CardTitle>
           {alerts.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-xs text-muted-foreground hover:text-foreground"
+              className="h-7 text-xs text-muted-foreground hover:text-primary"
               onClick={() => navigate("/estoque")}
             >
-              Ver estoque <ArrowRight className="h-3 w-3 ml-1" />
+              Estoque <ArrowRight className="h-3 w-3 ml-1" />
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-4">
         {alerts.length === 0 ? (
-          <p className="text-xs text-muted-foreground py-2">Sem alertas de validade.</p>
+          <div className="flex items-center gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.04] px-3 py-3">
+            <ShieldCheck className="h-4 w-4 text-emerald-300 shrink-0" />
+            <div>
+              <p className="text-xs font-medium text-foreground">Sem riscos de validade</p>
+              <p className="text-[11px] text-muted-foreground">
+                Nenhum lote próximo do vencimento.
+              </p>
+            </div>
+          </div>
         ) : (
           <div className="space-y-1.5">
-            {alerts.map((a, i) => (
-              <div key={i} className="flex items-center justify-between text-sm">
-                <span className="text-foreground truncate max-w-[55%]">{a.nome}</span>
-                <Badge
-                  variant={a.dias <= 0 ? "destructive" : "secondary"}
-                  className="text-xs"
+            {visible.map((a, i) => {
+              const isExpired = a.dias <= 0;
+              return (
+                <div
+                  key={i}
+                  className={cn(
+                    "flex items-center justify-between rounded-lg border px-3 py-2 text-sm",
+                    isExpired
+                      ? "border-destructive/30 bg-destructive/[0.04]"
+                      : "border-border/40 bg-surface-1/40",
+                  )}
                 >
-                  {a.dias <= 0 ? "Vencido" : `${a.dias}d`} · {a.qtd} un
-                </Badge>
-              </div>
-            ))}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className={cn(
+                        "h-1.5 w-1.5 shrink-0 rounded-full",
+                        isExpired ? "bg-destructive animate-pulse" : "bg-amber-400",
+                      )}
+                    />
+                    <span className="text-foreground/90 truncate">{a.nome}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={cn(
+                        "rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider tabular-nums",
+                        isExpired
+                          ? "bg-destructive/15 text-destructive"
+                          : "bg-amber-500/15 text-amber-300",
+                      )}
+                    >
+                      {isExpired ? "Vencido" : `${a.dias}d`}
+                    </span>
+                    <span className="text-[11px] tabular-nums text-muted-foreground">
+                      {a.qtd} un
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+            {remainder > 0 && (
+              <p className="pt-1 text-[11px] text-muted-foreground">
+                +{remainder} alerta(s) adicional(is)
+              </p>
+            )}
           </div>
         )}
       </CardContent>
