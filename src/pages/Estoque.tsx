@@ -99,7 +99,7 @@ const CATEGORIAS_FIXAS = [
 ];
 
 export default function Estoque() {
-  const { canSeeCosts, profile, isFinanceiro, isNutricionista } = useAuth();
+  const { canSeeCosts, profile, isFinanceiro, isNutricionista, isCeo, isEstoquista, isComprador } = useAuth();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
