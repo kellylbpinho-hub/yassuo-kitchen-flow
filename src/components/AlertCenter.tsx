@@ -335,6 +335,7 @@ export function AlertCenter() {
     financeiro: { icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/15" },
     previsao: { icon: ShoppingCart, color: "text-destructive", bg: "bg-destructive/15" },
     peso: { icon: Scale, color: "text-warning", bg: "bg-warning/15" },
+    cardapio: { icon: CalendarX, color: "text-warning", bg: "bg-warning/15" },
   };
 
   const handleClick = (route: string) => {
