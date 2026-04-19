@@ -417,6 +417,18 @@ export default function Estoque() {
             <FileSpreadsheet className="h-4 w-4 mr-1" />
             Exportar
           </Button>
+          {canManualEntry && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setManualEntryOpen(true)}
+              className="gap-1.5 ring-1 ring-primary/30 hover:ring-primary/50 hover:bg-primary/5"
+            >
+              <PackagePlus className="h-4 w-4 text-primary" />
+              <span className="hidden sm:inline">Entrada manual</span>
+              <span className="sm:hidden">Entrada</span>
+            </Button>
+          )}
           {canManage && (
             <>
               <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
