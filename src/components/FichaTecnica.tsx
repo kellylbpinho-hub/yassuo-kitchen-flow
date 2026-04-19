@@ -508,13 +508,43 @@ export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCateg
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Fator de Correção</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label className="text-xs">Fator de Correção</Label>
+                    <TooltipProvider delayDuration={150}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label="Ajuda sobre fator de correção"
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <HelpCircle className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                          <p className="font-semibold mb-1">O que é o Fator de Correção (FC)?</p>
+                          <p className="mb-1.5">Indica quanto do alimento bruto é aproveitável após limpeza/preparo.</p>
+                          <p className="mb-1.5">
+                            <span className="font-medium">Exemplo:</span> 1 kg de frango bruto → 0,72 kg limpo →
+                            FC = 1,38 (1 ÷ 0,72).
+                          </p>
+                          <p className="text-muted-foreground">
+                            Se não souber o FC, use <span className="font-semibold text-foreground">1.0</span> —
+                            significa 100% aproveitável.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Input
                     type="number" step="0.01" min="1" placeholder="Ex: 1.15"
                     value={newForm.fator_correcao}
                     onChange={(e) => setNewForm({ ...newForm, fator_correcao: e.target.value })}
                     className="bg-input border-border"
                   />
+                  <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
+                    Ex.: Frango peito 1.38 · Feijão cru 1.00 · Cebola 1.10 · Cenoura 1.14 · Arroz cru 1.00
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2">
