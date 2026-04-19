@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.accept-invite]
 verify_jwt = false
+
+[functions.admin-bulk-reset]
+verify_jwt = false
