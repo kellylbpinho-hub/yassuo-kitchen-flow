@@ -53,7 +53,7 @@ function getDeviationStatus(real: number, target: number | null): { color: strin
   const diff = real - target;
   const percent = (diff / target) * 100;
   if (percent <= 0) return { color: "text-success", label: "Dentro da meta", percent, diff };
-  if (percent <= 5) return { color: "text-yellow-500", label: "Atenção", percent, diff };
+  if (percent <= 5) return { color: "text-warning", label: "Atenção", percent, diff };
   return { color: "text-destructive", label: "Acima da meta", percent, diff };
 }
 
@@ -63,7 +63,7 @@ function DeviationBadge({ real, target }: { real: number; target: number | null 
   if (real === 0) return <span className="text-[11px] text-muted-foreground">—</span>;
 
   const bgClass = s.percent <= 0 ? "bg-success/15 text-success border-success/30"
-    : s.percent <= 5 ? "bg-yellow-500/15 text-yellow-500 border-yellow-500/30"
+    : s.percent <= 5 ? "bg-warning/15 text-warning border-warning/30"
     : "bg-destructive/15 text-destructive border-destructive/30";
 
   return (
@@ -275,7 +275,7 @@ export default function RealMealCostSection({ period, filterUnit, onDataReady }:
           <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${
             avgTarget === null ? "bg-muted-foreground"
             : deviationKpi.percent <= 0 ? "bg-success"
-            : deviationKpi.percent <= 5 ? "bg-yellow-500"
+            : deviationKpi.percent <= 5 ? "bg-warning/15"
             : "bg-destructive"
           }`} />
           <CardContent className="p-4">

@@ -22,13 +22,13 @@ interface UnitRadar {
 
 const statusColors: Record<StatusLevel, string> = {
   verde: "bg-success/15 text-success border-success/30",
-  amarelo: "bg-yellow-500/15 text-yellow-500 border-yellow-500/30",
+  amarelo: "bg-warning/15 text-warning border-warning/30",
   vermelho: "bg-destructive/15 text-destructive border-destructive/30",
 };
 
 const geralColors: Record<string, string> = {
   "Saudável": "bg-success/15 text-success border-success/30",
-  "Monitorar": "bg-yellow-500/15 text-yellow-500 border-yellow-500/30",
+  "Monitorar": "bg-warning/15 text-warning border-warning/30",
   "Atenção": "bg-orange-500/15 text-orange-400 border-orange-500/30",
   "Risco": "bg-destructive/15 text-destructive border-destructive/30",
 };
@@ -153,7 +153,7 @@ export default function RadarOperacao() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "Saudável", value: summary.saudavel, color: "text-success" },
-          { label: "Monitorar", value: summary.monitorar, color: "text-yellow-500" },
+          { label: "Monitorar", value: summary.monitorar, color: "text-warning" },
           { label: "Atenção", value: summary.atencao, color: "text-orange-400" },
           { label: "Risco", value: summary.risco, color: "text-destructive" },
         ].map(item => (

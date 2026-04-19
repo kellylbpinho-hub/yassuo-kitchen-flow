@@ -48,7 +48,7 @@ export default function EfficiencyTable({ data }: { data: EfficiencyRow[] }) {
                   badgeClass = "bg-success/15 text-success border-success/30";
                   label = `${efficiency.toFixed(0)}%`;
                 } else if (efficiency <= 105) {
-                  badgeClass = "bg-yellow-500/15 text-yellow-500 border-yellow-500/30";
+                  badgeClass = "bg-warning/15 text-warning border-warning/30";
                   label = `${efficiency.toFixed(0)}%`;
                 } else {
                   badgeClass = "bg-destructive/15 text-destructive border-destructive/30";
