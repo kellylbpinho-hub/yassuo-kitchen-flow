@@ -187,35 +187,44 @@ export type Database = {
       fornecedores: {
         Row: {
           ativo: boolean
+          categoria: string | null
           cnpj: string | null
           company_id: string
+          condicao_pagamento: string | null
           contato: string | null
           created_at: string
           email: string | null
           id: string
           nome: string
+          observacao: string | null
           telefone: string | null
         }
         Insert: {
           ativo?: boolean
+          categoria?: string | null
           cnpj?: string | null
           company_id: string
+          condicao_pagamento?: string | null
           contato?: string | null
           created_at?: string
           email?: string | null
           id?: string
           nome: string
+          observacao?: string | null
           telefone?: string | null
         }
         Update: {
           ativo?: boolean
+          categoria?: string | null
           cnpj?: string | null
           company_id?: string
+          condicao_pagamento?: string | null
           contato?: string | null
           created_at?: string
           email?: string | null
           id?: string
           nome?: string
+          observacao?: string | null
           telefone?: string | null
         }
         Relationships: [
