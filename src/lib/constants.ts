@@ -27,6 +27,7 @@ export const ROLE_BLOCKED_ROUTES: Record<string, string[]> = {
     "/dashboard",
     "/dashboard-financeiro",
     "/compras",
+    "/fornecedores",
     "/recebimento-digital",
     "/estoque",
     "/alertas",
@@ -39,6 +40,7 @@ export const ROLE_BLOCKED_ROUTES: Record<string, string[]> = {
   ],
   estoquista: [
     "/compras",
+    "/fornecedores",
     "/dashboard-financeiro",
     "/usuarios",
     "/unidades",
@@ -62,6 +64,7 @@ export const ROLE_BLOCKED_ROUTES: Record<string, string[]> = {
   ],
   funcionario: [
     "/compras",
+    "/fornecedores",
     "/dashboard-financeiro",
     "/recebimento-digital",
     "/pedido-interno",
