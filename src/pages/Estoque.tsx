@@ -131,6 +131,7 @@ export default function Estoque() {
   const [movForm, setMovForm] = useState({ tipo: "saida", quantidade: "", motivo: "" });
 
   const canManage = !isFinanceiro && !isNutricionista;
+  const canManualEntry = isCeo || isEstoquista || isComprador;
 
   useEffect(() => {
     loadData();
