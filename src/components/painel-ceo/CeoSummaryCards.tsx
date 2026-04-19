@@ -24,7 +24,7 @@ export function CeoSummaryCards({ kpis, recentDivergences }: Props) {
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Margem crítica</span>
-            <Badge variant="outline" className="bg-yellow-500/15 text-yellow-500 border-yellow-500/30">{kpis.marginCriticalUnits}</Badge>
+            <Badge variant="outline" className="bg-warning/15 text-warning border-warning/30">{kpis.marginCriticalUnits}</Badge>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Com prejuízo</span>
@@ -71,7 +71,7 @@ export function CeoSummaryCards({ kpis, recentDivergences }: Props) {
               {recentDivergences.slice(0, 3).map((d, i) => (
                 <div key={i} className="text-xs text-muted-foreground flex justify-between">
                   <span className="truncate max-w-[140px]">{d.product_name}</span>
-                  <Badge variant="outline" className="bg-yellow-500/15 text-yellow-500 border-yellow-500/30 text-[10px]">
+                  <Badge variant="outline" className="bg-warning/15 text-warning border-warning/30 text-[10px]">
                     {d.percentual_desvio.toFixed(0)}%
                   </Badge>
                 </div>

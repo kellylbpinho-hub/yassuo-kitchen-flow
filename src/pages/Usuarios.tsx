@@ -365,8 +365,8 @@ export default function Usuarios() {
                           ) : (() => {
                             const IconComp = roleIcons[u.cargo];
                             return (
-                              <div className="h-8 w-8 rounded-full bg-[#D90429] flex items-center justify-center shrink-0">
-                                {IconComp ? <IconComp className="h-4 w-4 text-white" /> : <Briefcase className="h-4 w-4 text-white" />}
+                              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                                {IconComp ? <IconComp className="h-4 w-4 text-primary-foreground" /> : <Briefcase className="h-4 w-4 text-primary-foreground" />}
                               </div>
                             );
                           })()}

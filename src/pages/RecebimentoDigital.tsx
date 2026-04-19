@@ -184,10 +184,10 @@ export default function RecebimentoDigital() {
 
       {/* Product not found */}
       {step === "not_found" && (
-        <div className="glass-card p-5 sm:p-6 max-w-md space-y-4 ring-1 ring-amber-500/30 shadow-[0_0_24px_-12px_rgba(245,158,11,0.4)]">
+        <div className="glass-card p-5 sm:p-6 max-w-md space-y-4 ring-1 ring-warning/30 shadow-[0_0_24px_-12px_hsl(var(--warning)/0.4)]">
           <div className="flex items-center gap-2.5">
-            <div className="rounded-lg bg-amber-500/15 ring-1 ring-amber-500/30 p-1.5">
-              <Package className="h-4 w-4 text-amber-400" />
+            <div className="rounded-lg bg-warning/15 ring-1 ring-warning/30 p-1.5">
+              <Package className="h-4 w-4 text-warning" />
             </div>
             <h2 className="font-display font-bold text-foreground">
               Produto não cadastrado

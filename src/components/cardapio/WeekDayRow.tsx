@@ -60,9 +60,9 @@ const STATUS_META: Record<
   },
   em_montagem: {
     label: "Em montagem",
-    tone: "text-amber-200 bg-amber-500/10 border-amber-500/30",
-    ring: "border-amber-500/30",
-    dot: "bg-amber-400",
+    tone: "text-warning bg-warning/10 border-warning/30",
+    ring: "border-warning/30",
+    dot: "bg-warning/10",
     icon: Pencil,
   },
   completo: {

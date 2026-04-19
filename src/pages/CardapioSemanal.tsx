@@ -393,7 +393,7 @@ function SummaryChip({
     tone === "primary"
       ? "border-primary/30 bg-primary/[0.06] text-primary"
       : tone === "warning"
-        ? "border-amber-500/30 bg-amber-500/[0.06] text-amber-300"
+        ? "border-warning/30 bg-warning/15/[0.06] text-warning"
         : tone === "accent"
           ? "border-border/60 bg-surface-3/60 text-foreground"
           : "border-border/60 bg-surface-1/60 text-muted-foreground";

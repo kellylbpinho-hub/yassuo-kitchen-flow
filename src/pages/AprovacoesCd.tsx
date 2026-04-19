@@ -264,9 +264,9 @@ export default function AprovacoesCd() {
 
       {/* Priority banner */}
       {kpis.pendentes > 0 && (
-        <div className="glass-card p-4 ring-1 ring-amber-500/30 bg-amber-500/5 flex items-start gap-3 animate-fade-in">
-          <div className="rounded-lg bg-amber-500/15 p-2 shrink-0">
-            <Clock className="h-4 w-4 text-amber-400 animate-pulse" />
+        <div className="glass-card p-4 ring-1 ring-warning/30 bg-warning/5 flex items-start gap-3 animate-fade-in">
+          <div className="rounded-lg bg-warning/15 p-2 shrink-0">
+            <Clock className="h-4 w-4 text-warning animate-pulse" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-display font-bold text-foreground">
@@ -327,7 +327,7 @@ export default function AprovacoesCd() {
       {orders.length > 0 && (
         <div className="space-y-3">
           <h2 className="font-display font-bold text-foreground flex items-center gap-2">
-            <Clock className="h-4 w-4 text-amber-400" />
+            <Clock className="h-4 w-4 text-warning" />
             Pedidos pendentes
             <span className="text-xs font-normal text-muted-foreground">({pending.length})</span>
           </h2>
@@ -344,7 +344,7 @@ export default function AprovacoesCd() {
                   <div key={order.id} className="glass-card relative overflow-hidden">
                     <div className={cn(
                       "absolute left-0 top-0 bottom-0 w-1",
-                      order.status === "parcial" ? "bg-amber-500" : "bg-primary",
+                      order.status === "parcial" ? "bg-warning/15" : "bg-primary",
                     )} />
                     <div className="p-4 pl-5 space-y-3">
                       {/* Order header */}
@@ -410,7 +410,7 @@ export default function AprovacoesCd() {
                                         <Button
                                           size="icon"
                                           variant="ghost"
-                                          className="h-8 w-8 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                                          className="h-8 w-8 text-success hover:text-success hover:bg-success/10"
                                           onClick={() => handleApproveItem(order.id, item.id)}
                                           disabled={processing === item.id}
                                           title="Aprovar"
@@ -490,9 +490,9 @@ export default function AprovacoesCd() {
           <div className="grid gap-2">
             {processed.map((order) => {
               const isExpanded = expandedOrderId === order.id;
-              const stripeCls = order.status === "aprovado" ? "bg-emerald-500"
+              const stripeCls = order.status === "aprovado" ? "bg-success/15"
                 : order.status === "rejeitado" ? "bg-destructive"
-                : "bg-amber-500";
+                : "bg-warning/15";
               return (
                 <div
                   key={order.id}
@@ -522,7 +522,7 @@ export default function AprovacoesCd() {
                                 <span className="text-muted-foreground ml-2">
                                   {item.quantidade}
                                   {item.quantidade_aprovada != null && item.quantidade_aprovada !== item.quantidade && (
-                                    <> → <span className="text-emerald-400 font-medium">{item.quantidade_aprovada}</span></>
+                                    <> → <span className="text-success font-medium">{item.quantidade_aprovada}</span></>
                                   )}
                                   {" "}{item.product_medida}
                                 </span>

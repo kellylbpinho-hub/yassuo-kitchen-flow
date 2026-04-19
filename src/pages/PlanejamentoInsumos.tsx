@@ -501,13 +501,13 @@ export default function PlanejamentoInsumos() {
 
           {/* Healthy state when nothing is missing */}
           {itemsWithDeficit.length === 0 && itemsAtencao.length === 0 && (
-            <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.05] px-4 py-3.5">
+            <div className="rounded-xl border border-success/25 bg-success/15/[0.05] px-4 py-3.5">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-300">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-success/30 bg-success/10 text-success">
                   <CheckCircle2 className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-emerald-200">
+                  <p className="text-sm font-semibold text-success">
                     Estoque cobre toda a previsão
                   </p>
                   <p className="text-xs text-muted-foreground">

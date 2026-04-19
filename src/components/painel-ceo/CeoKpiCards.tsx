@@ -20,9 +20,9 @@ export function CeoKpiCards({ kpis }: Props) {
     { label: "Refeições estimadas/dia", value: kpis.mealsToday.toLocaleString("pt-BR"), icon: UtensilsCrossed, color: "text-primary", route: "/dashboard-financeiro" },
     { label: "Produtos críticos", value: kpis.criticalProducts, icon: Package, color: kpis.criticalProducts > 0 ? "text-destructive" : "text-success", route: "/estoque" },
     { label: "Custo médio/refeição", value: kpis.avgMealCost > 0 ? formatCurrency(kpis.avgMealCost) : "—", icon: DollarSign, color: "text-primary", route: "/dashboard-financeiro" },
-    { label: "Margem crítica", value: kpis.marginCriticalUnits, icon: AlertTriangle, color: kpis.marginCriticalUnits > 0 ? "text-yellow-500" : "text-success", route: "/dashboard-financeiro" },
+    { label: "Margem crítica", value: kpis.marginCriticalUnits, icon: AlertTriangle, color: kpis.marginCriticalUnits > 0 ? "text-warning" : "text-success", route: "/dashboard-financeiro" },
     { label: "Com prejuízo", value: kpis.lossUnits, icon: TrendingDown, color: kpis.lossUnits > 0 ? "text-destructive" : "text-success", route: "/dashboard-financeiro" },
-    { label: "Diverg. recebimento (48h)", value: kpis.weightDivergences, icon: Scale, color: kpis.weightDivergences > 0 ? "text-yellow-500" : "text-success", route: "/recebimento-digital" },
+    { label: "Diverg. recebimento (48h)", value: kpis.weightDivergences, icon: Scale, color: kpis.weightDivergences > 0 ? "text-warning" : "text-success", route: "/recebimento-digital" },
   ];
 
   return (

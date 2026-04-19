@@ -9,7 +9,7 @@ const formatCurrency = (v: number) =>
 
 const statusBadge = (s: string) => {
   if (s === "Saudável") return "bg-success/15 text-success border-success/30";
-  if (s === "Margem Crítica") return "bg-yellow-500/15 text-yellow-500 border-yellow-500/30";
+  if (s === "Margem Crítica") return "bg-warning/15 text-warning border-warning/30";
   return "bg-destructive/15 text-destructive border-destructive/30";
 };
 

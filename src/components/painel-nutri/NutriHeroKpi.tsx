@@ -26,9 +26,9 @@ export function NutriHeroKpi({
       valueCls: "text-foreground",
     },
     warning: {
-      ring: "border-amber-500/30 bg-amber-500/[0.05]",
-      iconCls: "border-amber-500/40 bg-amber-500/10 text-amber-300",
-      valueCls: "text-amber-200",
+      ring: "border-warning/30 bg-warning/15/[0.05]",
+      iconCls: "border-warning/40 bg-warning/10 text-warning",
+      valueCls: "text-warning",
     },
     destructive: {
       ring: "border-destructive/30 bg-destructive/[0.05]",
@@ -37,7 +37,7 @@ export function NutriHeroKpi({
     },
     success: {
       ring: "border-border/60 bg-surface-1/70",
-      iconCls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+      iconCls: "border-success/30 bg-success/10 text-success",
       valueCls: "text-foreground",
     },
     muted: {

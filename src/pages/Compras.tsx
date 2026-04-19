@@ -38,8 +38,8 @@ const ALL_STATUSES = ["rascunho", "enviado", "aprovado", "recebido", "cancelado"
 const statusStripe: Record<string, string> = {
   rascunho: "bg-muted-foreground/40",
   enviado: "bg-primary",
-  aprovado: "bg-emerald-500",
-  recebido: "bg-emerald-500/80",
+  aprovado: "bg-success/15",
+  recebido: "bg-success/80",
   cancelado: "bg-destructive",
 };
 

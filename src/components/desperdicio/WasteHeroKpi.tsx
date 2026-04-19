@@ -27,8 +27,8 @@ export function WasteHeroKpi({
 
   const sevConfig = {
     neutral: { ring: "ring-border/50", text: "text-foreground", glow: "" },
-    ok: { ring: "ring-emerald-500/30", text: "text-emerald-400", glow: "shadow-[0_0_40px_-10px_hsl(160_70%_45%/0.4)]" },
-    warn: { ring: "ring-amber-500/30", text: "text-amber-400", glow: "shadow-[0_0_40px_-10px_hsl(45_90%_55%/0.4)]" },
+    ok: { ring: "ring-success/30", text: "text-success", glow: "shadow-[0_0_40px_-10px_hsl(160_70%_45%/0.4)]" },
+    warn: { ring: "ring-warning/30", text: "text-warning", glow: "shadow-[0_0_40px_-10px_hsl(45_90%_55%/0.4)]" },
     crit: { ring: "ring-destructive/40", text: "text-destructive", glow: "shadow-[0_0_50px_-10px_hsl(var(--destructive)/0.5)]" },
   }[severity];
 
@@ -43,7 +43,7 @@ export function WasteHeroKpi({
 
   const trendColor =
     Math.abs(trendPct) < 5 ? "text-muted-foreground" :
-    trendPct < 0 ? "text-emerald-400" : "text-destructive";
+    trendPct < 0 ? "text-success" : "text-destructive";
 
   return (
     <Card className={cn("relative overflow-hidden border-border/60 bg-gradient-to-br from-card to-card/80 p-6 ring-1", sevConfig.ring, sevConfig.glow)}>

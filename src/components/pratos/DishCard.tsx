@@ -85,12 +85,12 @@ const fichaStatusMap: Record<
 > = {
   completa: {
     label: "Ficha completa",
-    cls: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
+    cls: "bg-success/10 text-success border-success/30",
     Icon: CheckCircle2,
   },
   pendente: {
     label: "Pendente",
-    cls: "bg-amber-500/10 text-amber-300 border-amber-500/30",
+    cls: "bg-warning/10 text-warning border-warning/30",
     Icon: CircleDashed,
   },
   incompleta: {

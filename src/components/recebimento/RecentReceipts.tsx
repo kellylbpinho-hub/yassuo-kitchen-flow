@@ -69,8 +69,8 @@ export function RecentReceipts() {
               "hover:ring-primary/30 transition-all duration-200",
             )}
           >
-            <div className="rounded-md bg-emerald-500/10 ring-1 ring-emerald-500/20 p-1.5 shrink-0">
-              <PackageCheck className="h-3.5 w-3.5 text-emerald-400" />
+            <div className="rounded-md bg-success/10 ring-1 ring-success/20 p-1.5 shrink-0">
+              <PackageCheck className="h-3.5 w-3.5 text-success" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate leading-tight">

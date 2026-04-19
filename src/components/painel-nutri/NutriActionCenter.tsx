@@ -23,10 +23,10 @@ export function NutriActionCenter({ alerts, weekProgress, weekCount, hasAnyAlert
   // Empty / all-clear state
   if (!hasAnyAlert) {
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.05] via-transparent to-transparent p-5">
-        <div className="pointer-events-none absolute -top-16 -right-10 h-40 w-40 rounded-full bg-emerald-500/[0.08] blur-3xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-success/20 bg-gradient-to-br from-success/[0.05] via-transparent to-transparent p-5">
+        <div className="pointer-events-none absolute -top-16 -right-10 h-40 w-40 rounded-full bg-success/15/[0.08] blur-3xl" />
         <div className="relative flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-success/30 bg-success/10 text-success">
             <CheckCircle2 className="h-5 w-5" />
           </div>
           <div className="flex-1">
@@ -98,7 +98,7 @@ export function NutriActionCenter({ alerts, weekProgress, weekCount, hasAnyAlert
                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border",
                     alert.type === "danger"
                       ? "border-destructive/40 bg-destructive/10 text-destructive"
-                      : "border-amber-500/40 bg-amber-500/10 text-amber-300",
+                      : "border-warning/40 bg-warning/10 text-warning",
                   )}
                 >
                   <AlertTriangle className="h-3.5 w-3.5" />

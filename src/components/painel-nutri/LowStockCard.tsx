@@ -24,7 +24,7 @@ export function LowStockCard({ items }: Props) {
                 "flex h-7 w-7 items-center justify-center rounded-md border",
                 items.length > 0
                   ? "border-destructive/40 bg-destructive/10 text-destructive"
-                  : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+                  : "border-success/30 bg-success/10 text-success",
               )}
             >
               <Package className="h-3.5 w-3.5" />
@@ -50,8 +50,8 @@ export function LowStockCard({ items }: Props) {
       </CardHeader>
       <CardContent className="pb-4">
         {items.length === 0 ? (
-          <div className="flex items-center gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.04] px-3 py-3">
-            <ShieldCheck className="h-4 w-4 text-emerald-300 shrink-0" />
+          <div className="flex items-center gap-3 rounded-lg border border-success/20 bg-success/15/[0.04] px-3 py-3">
+            <ShieldCheck className="h-4 w-4 text-success shrink-0" />
             <div>
               <p className="text-xs font-medium text-foreground">Estoque saudável</p>
               <p className="text-[11px] text-muted-foreground">

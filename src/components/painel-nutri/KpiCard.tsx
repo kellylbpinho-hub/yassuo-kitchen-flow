@@ -13,7 +13,7 @@ export function KpiCard({ icon, label, value, sub, accent = "default" }: KpiCard
     accent === "destructive"
       ? "text-destructive"
       : accent === "warning"
-      ? "text-amber-500"
+      ? "text-warning"
       : accent === "muted"
       ? "text-muted-foreground"
       : "text-foreground";

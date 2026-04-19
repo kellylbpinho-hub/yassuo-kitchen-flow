@@ -50,8 +50,8 @@ function getStatus(saldo: number, minimo: number): Status {
 const stripeCls: Record<Status, string> = {
   zero: "bg-destructive",
   critico: "bg-destructive",
-  atencao: "bg-amber-500",
-  saudavel: "bg-emerald-500/70",
+  atencao: "bg-warning/15",
+  saudavel: "bg-success/70",
 };
 
 const statusBadge: Record<
@@ -68,11 +68,11 @@ const statusBadge: Record<
   },
   atencao: {
     label: "Atenção",
-    cls: "border-amber-500/30 bg-amber-500/10 text-amber-300",
+    cls: "border-warning/30 bg-warning/10 text-warning",
   },
   saudavel: {
     label: "Saudável",
-    cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+    cls: "border-success/30 bg-success/10 text-success",
   },
 };
 
@@ -89,8 +89,8 @@ function fefoBadge(dias: number) {
   if (dias <= 7)
     return { cls: "border-destructive/35 bg-destructive/10 text-destructive", label: `${dias}d` };
   if (dias <= 15)
-    return { cls: "border-amber-500/30 bg-amber-500/10 text-amber-300", label: `${dias}d` };
-  return { cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300", label: `${dias}d` };
+    return { cls: "border-warning/30 bg-warning/10 text-warning", label: `${dias}d` };
+  return { cls: "border-success/30 bg-success/10 text-success", label: `${dias}d` };
 }
 
 export function EstoqueItemRow({
@@ -148,7 +148,7 @@ export function EstoqueItemRow({
               status === "critico" || status === "zero"
                 ? "text-destructive"
                 : status === "atencao"
-                  ? "text-amber-300"
+                  ? "text-warning"
                   : "text-foreground",
             )}
           >
