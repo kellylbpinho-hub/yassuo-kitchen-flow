@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Calculator, Users, Loader2, ShoppingCart, Printer, FileText, Save, ChefHat } from "lucide-react";
+import { Plus, Trash2, Calculator, Users, Loader2, ShoppingCart, Printer, FileText, Save, ChefHat, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { fuzzyMatch } from "@/lib/fuzzySearch";
@@ -115,7 +116,13 @@ export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCateg
       return;
     }
     const peso = Number(newForm.peso_limpo_per_capita);
-    const fator = Number(newForm.fator_correcao) || 1;
+    const fatorRaw = newForm.fator_correcao.trim();
+    let fator = Number(fatorRaw);
+    const fatorVazio = fatorRaw === "" || !Number.isFinite(fator) || fator <= 0;
+    if (fatorVazio) {
+      fator = 1;
+      toast.warning("Fator de correção não informado. Usando 1.0 (100% aproveitável). Atualize se souber o valor correto.");
+    }
     if (peso <= 0) { toast.error("Peso per capita deve ser maior que zero."); return; }
     if (fator < 1) { toast.error("Fator de correção deve ser ≥ 1."); return; }
 
@@ -501,13 +508,43 @@ export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCateg
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Fator de Correção</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label className="text-xs">Fator de Correção</Label>
+                    <TooltipProvider delayDuration={150}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label="Ajuda sobre fator de correção"
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <HelpCircle className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                          <p className="font-semibold mb-1">O que é o Fator de Correção (FC)?</p>
+                          <p className="mb-1.5">Indica quanto do alimento bruto é aproveitável após limpeza/preparo.</p>
+                          <p className="mb-1.5">
+                            <span className="font-medium">Exemplo:</span> 1 kg de frango bruto → 0,72 kg limpo →
+                            FC = 1,38 (1 ÷ 0,72).
+                          </p>
+                          <p className="text-muted-foreground">
+                            Se não souber o FC, use <span className="font-semibold text-foreground">1.0</span> —
+                            significa 100% aproveitável.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Input
                     type="number" step="0.01" min="1" placeholder="Ex: 1.15"
                     value={newForm.fator_correcao}
                     onChange={(e) => setNewForm({ ...newForm, fator_correcao: e.target.value })}
                     className="bg-input border-border"
                   />
+                  <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
+                    Ex.: Frango peito 1.38 · Feijão cru 1.00 · Cebola 1.10 · Cenoura 1.14 · Arroz cru 1.00
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2">
