@@ -41,6 +41,7 @@ const PlanejamentoInsumos = lazy(() => import("./pages/PlanejamentoInsumos"));
 const RadarOperacao = lazy(() => import("./pages/RadarOperacao"));
 const PainelCeo = lazy(() => import("./pages/PainelCeo"));
 const Cotacoes = lazy(() => import("./pages/Cotacoes"));
+const Fornecedores = lazy(() => import("./pages/Fornecedores"));
 const CotacaoPublica = lazy(() => import("./pages/CotacaoPublica"));
 const Convite = lazy(() => import("./pages/Convite"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -98,6 +99,7 @@ const App = () => (
                   <Route path="/radar-operacao" element={<RadarOperacao />} />
                   <Route path="/painel-ceo" element={<PainelCeo />} />
                   <Route path="/cotacoes" element={<Cotacoes />} />
+                  <Route path="/fornecedores" element={<Fornecedores />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>
