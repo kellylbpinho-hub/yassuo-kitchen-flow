@@ -23,10 +23,10 @@ const toneStyles: Record<
     glow: "bg-primary/20",
   },
   warning: {
-    ring: "border-amber-500/30 bg-amber-500/[0.05]",
-    iconCls: "text-amber-300",
-    valueCls: "text-amber-200",
-    glow: "bg-amber-500/20",
+    ring: "border-warning/30 bg-warning/15/[0.05]",
+    iconCls: "text-warning",
+    valueCls: "text-warning",
+    glow: "bg-warning/20",
   },
   destructive: {
     ring: "border-destructive/35 bg-destructive/[0.07]",
@@ -35,10 +35,10 @@ const toneStyles: Record<
     glow: "bg-destructive/25",
   },
   success: {
-    ring: "border-emerald-500/30 bg-emerald-500/[0.05]",
-    iconCls: "text-emerald-300",
-    valueCls: "text-emerald-200",
-    glow: "bg-emerald-500/20",
+    ring: "border-success/30 bg-success/15/[0.05]",
+    iconCls: "text-success",
+    valueCls: "text-success",
+    glow: "bg-success/20",
   },
   accent: {
     ring: "border-border/60 bg-surface-2/60",

@@ -52,9 +52,9 @@ interface InternalOrder {
 }
 
 const statusConfig: Record<string, { label: string; cls: string }> = {
-  pendente: { label: "Pendente", cls: "bg-amber-500/15 text-amber-300 border-amber-500/30" },
-  parcial: { label: "Parcial", cls: "bg-blue-500/15 text-blue-300 border-blue-500/30" },
-  aprovado: { label: "Aprovado", cls: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" },
+  pendente: { label: "Pendente", cls: "bg-warning/15 text-warning border-warning/30" },
+  parcial: { label: "Parcial", cls: "bg-info/15 text-info border-info/30" },
+  aprovado: { label: "Aprovado", cls: "bg-success/15 text-success border-success/30" },
   rejeitado: { label: "Rejeitado", cls: "bg-destructive/15 text-destructive border-destructive/30" },
 };
 
@@ -498,7 +498,7 @@ export default function PedidoInterno() {
       {pendingOrders.length > 0 && (
         <section className="space-y-3 pt-2">
           <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
-            <Clock className="h-4 w-4 text-amber-300" />
+            <Clock className="h-4 w-4 text-warning" />
             Pedidos em aprovação
             <span className="text-sm text-muted-foreground font-normal">({pendingOrders.length})</span>
           </h2>
@@ -550,7 +550,7 @@ function OrderCard({ order }: { order: InternalOrder }) {
           <span className="text-[11px] text-muted-foreground/80">
             {order.items_count} {order.items_count === 1 ? "item" : "itens"}
             {order.items_pending > 0 && (
-              <span className="text-amber-300/90"> · {order.items_pending} pendente(s)</span>
+              <span className="text-warning/90"> · {order.items_pending} pendente(s)</span>
             )}
           </span>
         </div>

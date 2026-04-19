@@ -14,12 +14,12 @@ export type OrderStatus =
 
 const config: Record<string, { label: string; cls: string; Icon: typeof Clock }> = {
   rascunho:    { label: "Rascunho",    cls: "bg-muted/50 text-muted-foreground border-border",                    Icon: FileEdit },
-  pendente:    { label: "Pendente",    cls: "bg-amber-500/15 text-amber-400 border-amber-500/30",                  Icon: Clock },
-  parcial:     { label: "Parcial",     cls: "bg-amber-500/15 text-amber-400 border-amber-500/30",                  Icon: Clock },
+  pendente:    { label: "Pendente",    cls: "bg-warning/15 text-warning border-warning/30",                  Icon: Clock },
+  parcial:     { label: "Parcial",     cls: "bg-warning/15 text-warning border-warning/30",                  Icon: Clock },
   enviado:     { label: "Enviado",     cls: "bg-primary/15 text-primary border-primary/30",                        Icon: Send },
-  aprovado:    { label: "Aprovado",    cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",            Icon: CheckCircle2 },
-  em_entrega:  { label: "Em entrega",  cls: "bg-sky-500/15 text-sky-400 border-sky-500/30",                        Icon: Truck },
-  recebido:    { label: "Recebido",    cls: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",            Icon: PackageCheck },
+  aprovado:    { label: "Aprovado",    cls: "bg-success/15 text-success border-success/30",            Icon: CheckCircle2 },
+  em_entrega:  { label: "Em entrega",  cls: "bg-info/15 text-info border-info/30",                        Icon: Truck },
+  recebido:    { label: "Recebido",    cls: "bg-success/20 text-success border-success/40",            Icon: PackageCheck },
   rejeitado:   { label: "Rejeitado",   cls: "bg-destructive/15 text-destructive border-destructive/30",            Icon: XCircle },
   cancelado:   { label: "Cancelado",   cls: "bg-destructive/10 text-destructive/80 border-destructive/20",         Icon: XCircle },
 };

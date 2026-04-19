@@ -83,7 +83,7 @@ export function CartItemCard({ item, index, onUpdate, onRemove }: CartItemCardPr
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-emerald-400 hover:bg-emerald-500/10"
+              className="h-7 w-7 text-success hover:bg-success/10"
               onClick={commit}
               aria-label="Salvar"
             >

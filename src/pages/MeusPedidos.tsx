@@ -235,7 +235,7 @@ export default function MeusPedidos() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-display font-bold text-foreground flex items-center gap-2">
-              <Clock className="h-4 w-4 text-amber-400" />
+              <Clock className="h-4 w-4 text-warning" />
               Em andamento
               <span className="text-xs font-normal text-muted-foreground">({pending.length})</span>
             </h2>
@@ -287,16 +287,16 @@ function PedidoCard({
   highlight?: boolean;
 }) {
   const stripeCls =
-    pedido.status === "aprovado" ? "bg-emerald-500"
+    pedido.status === "aprovado" ? "bg-success/15"
     : pedido.status === "rejeitado" ? "bg-destructive"
-    : pedido.status === "parcial" ? "bg-amber-500"
+    : pedido.status === "parcial" ? "bg-warning/15"
     : "bg-primary";
 
   return (
     <div
       className={cn(
         "glass-card relative overflow-hidden cursor-pointer transition-all duration-200 hover:ring-1",
-        highlight ? "hover:ring-amber-500/40" : "hover:ring-border",
+        highlight ? "hover:ring-warning/40" : "hover:ring-border",
       )}
       onClick={onToggle}
     >
@@ -342,7 +342,7 @@ function PedidoCard({
                     <span className="text-muted-foreground ml-2">
                       {item.quantidade}
                       {item.quantidade_aprovada != null && item.quantidade_aprovada !== item.quantidade && (
-                        <> → <span className="text-emerald-400 font-medium">{item.quantidade_aprovada}</span></>
+                        <> → <span className="text-success font-medium">{item.quantidade_aprovada}</span></>
                       )}
                       {" "}{item.product_medida}
                     </span>

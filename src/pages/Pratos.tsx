@@ -473,9 +473,9 @@ function StatChip({
 }) {
   const toneCls =
     tone === "success"
-      ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-300"
+      ? "border-success/30 bg-success/5 text-success"
       : tone === "warning"
-        ? "border-amber-500/30 bg-amber-500/5 text-amber-300"
+        ? "border-warning/30 bg-warning/5 text-warning"
         : "border-border/60 bg-background/40 text-foreground";
   return (
     <div

@@ -672,14 +672,14 @@ export default function Estoque() {
                       dias <= 3
                         ? "text-destructive"
                         : dias <= 7
-                          ? "text-amber-300"
-                          : "text-emerald-300";
+                          ? "text-warning"
+                          : "text-success";
                     const statusBg =
                       dias <= 3
                         ? "bg-destructive/10 border-destructive/30"
                         : dias <= 7
-                          ? "bg-amber-500/10 border-amber-500/30"
-                          : "bg-emerald-500/10 border-emerald-500/30";
+                          ? "bg-warning/10 border-warning/30"
+                          : "bg-success/10 border-success/30";
                     const statusLabel = dias <= 3 ? "Crítico" : dias <= 7 ? "Atenção" : "OK";
 
                     return (

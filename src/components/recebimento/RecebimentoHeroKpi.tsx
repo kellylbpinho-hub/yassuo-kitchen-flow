@@ -14,8 +14,8 @@ interface KpiItem {
 
 const toneCls: Record<KpiItem["tone"], { glow: string; icon: string; ring: string }> = {
   primary: { glow: "shadow-[0_0_24px_-10px_hsl(var(--primary)/0.6)]", icon: "text-primary",       ring: "ring-primary/30" },
-  success: { glow: "shadow-[0_0_24px_-10px_rgba(16,185,129,0.6)]",     icon: "text-emerald-400",   ring: "ring-emerald-500/30" },
-  warning: { glow: "shadow-[0_0_24px_-10px_rgba(245,158,11,0.6)]",     icon: "text-amber-400",     ring: "ring-amber-500/30" },
+  success: { glow: "shadow-[0_0_24px_-10px_rgba(16,185,129,0.6)]",     icon: "text-success",   ring: "ring-success/30" },
+  warning: { glow: "shadow-[0_0_24px_-10px_rgba(245,158,11,0.6)]",     icon: "text-warning",     ring: "ring-warning/30" },
   muted:   { glow: "",                                                  icon: "text-muted-foreground", ring: "ring-border" },
 };
 

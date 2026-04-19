@@ -31,14 +31,14 @@ function getStatus(item: InsumoItem): Status {
 }
 
 const statusBar: Record<Status, string> = {
-  ok: "bg-emerald-500",
-  atencao: "bg-amber-500",
+  ok: "bg-success/15",
+  atencao: "bg-warning/15",
   falta: "bg-destructive",
 };
 
 const statusDot: Record<Status, string> = {
-  ok: "bg-emerald-400 shadow-[0_0_8px_hsl(var(--success-500,142_71%_45%)/0.6)]",
-  atencao: "bg-amber-400",
+  ok: "bg-success/10 shadow-[0_0_8px_hsl(var(--success-500,142_71%_45%)/0.6)]",
+  atencao: "bg-warning/10",
   falta: "bg-destructive shadow-[0_0_10px_hsl(var(--destructive)/0.6)]",
 };
 
@@ -49,8 +49,8 @@ const statusLabel: Record<Status, string> = {
 };
 
 const statusLabelCls: Record<Status, string> = {
-  ok: "text-emerald-300",
-  atencao: "text-amber-300",
+  ok: "text-success",
+  atencao: "text-warning",
   falta: "text-destructive",
 };
 
@@ -104,14 +104,14 @@ export function InsumosCategoryCard({
             </span>
           )}
           {counts.atencao > 0 && (
-            <span className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+            <span className="flex items-center gap-1 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-[10px] font-semibold text-warning">
+              <span className="h-1.5 w-1.5 rounded-full bg-warning/10" />
               {counts.atencao}
             </span>
           )}
           {counts.ok > 0 && counts.falta === 0 && counts.atencao === 0 && (
-            <span className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <span className="flex items-center gap-1 rounded-full border border-success/30 bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
+              <span className="h-1.5 w-1.5 rounded-full bg-success/10" />
               tudo coberto
             </span>
           )}
@@ -161,9 +161,9 @@ export function InsumosCategoryCard({
                           className={cn(
                             "h-full rounded-full transition-all",
                             status === "ok"
-                              ? "bg-gradient-to-r from-emerald-500/70 to-emerald-400"
+                              ? "bg-gradient-to-r from-success/70 to-success"
                               : status === "atencao"
-                                ? "bg-gradient-to-r from-amber-500/70 to-amber-400"
+                                ? "bg-gradient-to-r from-warning/70 to-warning"
                                 : "bg-gradient-to-r from-destructive/70 to-destructive",
                           )}
                           style={{ width: `${coverage}%` }}

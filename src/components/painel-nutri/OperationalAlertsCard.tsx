@@ -22,7 +22,7 @@ export function OperationalAlertsCard({ alerts }: Props) {
             <div key={i} className="flex items-center gap-2 text-sm">
               <span
                 className={`h-1.5 w-1.5 rounded-full shrink-0 ${
-                  alert.type === "danger" ? "bg-destructive" : "bg-amber-500"
+                  alert.type === "danger" ? "bg-destructive" : "bg-warning/15"
                 }`}
               />
               <span className="text-foreground">{alert.message}</span>

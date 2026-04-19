@@ -81,14 +81,14 @@ const ACCESS_MATRIX: PageAccess[] = [
 ];
 
 function AccessIcon({ level }: { level: "full" | "readonly" | "blocked" }) {
-  if (level === "full") return <Check className="h-4 w-4 text-emerald-400" />;
-  if (level === "readonly") return <Minus className="h-4 w-4 text-yellow-400" />;
+  if (level === "full") return <Check className="h-4 w-4 text-success" />;
+  if (level === "readonly") return <Minus className="h-4 w-4 text-warning" />;
   return <XIcon className="h-4 w-4 text-destructive" />;
 }
 
 function AccessLabel({ level }: { level: "full" | "readonly" | "blocked" }) {
-  if (level === "full") return <span className="text-emerald-400 text-xs">Acesso total</span>;
-  if (level === "readonly") return <span className="text-yellow-400 text-xs">Leitura</span>;
+  if (level === "full") return <span className="text-success text-xs">Acesso total</span>;
+  if (level === "readonly") return <span className="text-warning text-xs">Leitura</span>;
   return <span className="text-destructive text-xs">Bloqueado</span>;
 }
 
@@ -184,11 +184,11 @@ export default function ConfiguracoesAcesso() {
       {/* Legend */}
       <div className="flex flex-wrap gap-4 text-sm">
         <div className="flex items-center gap-1.5">
-          <Check className="h-4 w-4 text-emerald-400" />
+          <Check className="h-4 w-4 text-success" />
           <span className="text-muted-foreground">Acesso total</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <Minus className="h-4 w-4 text-yellow-400" />
+          <Minus className="h-4 w-4 text-warning" />
           <span className="text-muted-foreground">Somente leitura</span>
         </div>
         <div className="flex items-center gap-1.5">

@@ -57,7 +57,7 @@ export function CartSummaryBar({
             </p>
           )}
           {disabledReason && !empty && (
-            <p className="text-[11px] sm:text-xs text-amber-300/90 mt-0.5 truncate">{disabledReason}</p>
+            <p className="text-[11px] sm:text-xs text-warning/90 mt-0.5 truncate">{disabledReason}</p>
           )}
         </div>
 

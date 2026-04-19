@@ -37,7 +37,7 @@ export function WasteTopItems({ items, totalKg }: WasteTopItemsProps) {
           const severity = sharePct >= 30 ? "crit" : sharePct >= 15 ? "warn" : "ok";
           const sevColor = {
             crit: "text-destructive bg-destructive/10 border-destructive/30",
-            warn: "text-amber-400 bg-amber-500/10 border-amber-500/30",
+            warn: "text-warning bg-warning/10 border-warning/30",
             ok: "text-muted-foreground bg-muted/40 border-border",
           }[severity];
 

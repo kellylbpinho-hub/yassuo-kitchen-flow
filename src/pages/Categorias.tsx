@@ -246,7 +246,7 @@ export default function Categorias() {
                               Bloqueado
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-600/30">
+                            <Badge variant="outline" className="gap-1 text-success border-success/30">
                               <ShieldCheck className="h-3 w-3" />
                               Permitido
                             </Badge>
