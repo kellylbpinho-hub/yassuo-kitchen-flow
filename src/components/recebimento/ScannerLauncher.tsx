@@ -86,7 +86,7 @@ export function ScannerLauncher({ onScan, onSearch, onNfe }: ScannerLauncherProp
             </div>
             <div className="text-left min-w-0">
               <p className="text-sm font-semibold text-foreground leading-tight">Importar NF-e</p>
-              <p className="text-[10px] text-muted-foreground truncate">XML do fornecedor</p>
+              <p className="text-[10px] text-muted-foreground truncate">XML ou PDF do fornecedor</p>
             </div>
           </button>
         </div>
