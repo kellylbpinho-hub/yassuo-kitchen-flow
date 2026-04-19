@@ -23,6 +23,7 @@ import {
   CalendarClock,
   PackageX,
   Layers,
+  PackagePlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -34,6 +35,7 @@ import { ImportProductsDialog } from "@/components/ImportProductsDialog";
 import { EstoqueHeroKpi } from "@/components/estoque/EstoqueHeroKpi";
 import { EstoqueItemRow, type EstoqueItemLote } from "@/components/estoque/EstoqueItemRow";
 import { EstoqueEmptyState } from "@/components/estoque/EstoqueEmptyState";
+import { ManualEntryDialog } from "@/components/estoque/ManualEntryDialog";
 
 interface Category {
   id: string;
@@ -97,7 +99,7 @@ const CATEGORIAS_FIXAS = [
 ];
 
 export default function Estoque() {
-  const { canSeeCosts, profile, isFinanceiro, isNutricionista } = useAuth();
+  const { canSeeCosts, profile, isFinanceiro, isNutricionista, isCeo, isEstoquista, isComprador } = useAuth();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -111,6 +113,7 @@ export default function Estoque() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [addOpen, setAddOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [manualEntryOpen, setManualEntryOpen] = useState(false);
   const [movOpen, setMovOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
@@ -128,6 +131,7 @@ export default function Estoque() {
   const [movForm, setMovForm] = useState({ tipo: "saida", quantidade: "", motivo: "" });
 
   const canManage = !isFinanceiro && !isNutricionista;
+  const canManualEntry = isCeo || isEstoquista || isComprador;
 
   useEffect(() => {
     loadData();
@@ -413,6 +417,18 @@ export default function Estoque() {
             <FileSpreadsheet className="h-4 w-4 mr-1" />
             Exportar
           </Button>
+          {canManualEntry && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setManualEntryOpen(true)}
+              className="gap-1.5 ring-1 ring-primary/30 hover:ring-primary/50 hover:bg-primary/5"
+            >
+              <PackagePlus className="h-4 w-4 text-primary" />
+              <span className="hidden sm:inline">Entrada manual</span>
+              <span className="sm:hidden">Entrada</span>
+            </Button>
+          )}
           {canManage && (
             <>
               <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
@@ -806,6 +822,22 @@ export default function Estoque() {
         onImported={loadData}
         units={units}
         defaultUnitId={profile?.unidade_id || units[0]?.id || ""}
+      />
+
+      {/* Manual stock entry dialog */}
+      <ManualEntryDialog
+        open={manualEntryOpen}
+        onOpenChange={setManualEntryOpen}
+        products={products.map((p) => ({
+          id: p.id,
+          nome: p.nome,
+          marca: p.marca,
+          unidade_medida: p.unidade_medida,
+          unidade_id: p.unidade_id,
+        }))}
+        units={units}
+        defaultUnitId={profile?.unidade_id || units.find((u) => u.type === "cd")?.id || units[0]?.id}
+        onSuccess={loadData}
       />
     </div>
   );
