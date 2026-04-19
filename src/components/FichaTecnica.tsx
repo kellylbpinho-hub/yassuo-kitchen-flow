@@ -116,7 +116,13 @@ export function FichaTecnica({ menuId, unidadeId, companyId, dishName, dishCateg
       return;
     }
     const peso = Number(newForm.peso_limpo_per_capita);
-    const fator = Number(newForm.fator_correcao) || 1;
+    const fatorRaw = newForm.fator_correcao.trim();
+    let fator = Number(fatorRaw);
+    const fatorVazio = fatorRaw === "" || !Number.isFinite(fator) || fator <= 0;
+    if (fatorVazio) {
+      fator = 1;
+      toast.warning("Fator de correção não informado. Usando 1.0 (100% aproveitável). Atualize se souber o valor correto.");
+    }
     if (peso <= 0) { toast.error("Peso per capita deve ser maior que zero."); return; }
     if (fator < 1) { toast.error("Fator de correção deve ser ≥ 1."); return; }
 
