@@ -129,31 +129,44 @@ export default function RecebimentoDigital() {
     );
   }
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <h1 className="text-2xl font-display font-bold text-foreground">
-        Recebimento Digital
-      </h1>
+  const showBackButton = step !== "idle" && step !== "success";
 
-      {/* Idle */}
+  return (
+    <div className="space-y-5 sm:space-y-6 animate-fade-in pb-20 md:pb-6">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground leading-tight">
+            Recebimento Digital
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 flex items-center gap-1.5">
+            <ScanLine className="h-3.5 w-3.5 text-primary" />
+            Conferência rápida com leitor de código de barras
+          </p>
+        </div>
+        {showBackButton && (
+          <Button variant="ghost" size="sm" onClick={reset} className="gap-1.5 shrink-0">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Voltar</span>
+          </Button>
+        )}
+      </div>
+
+      {/* Idle: hero scanner + KPIs + recentes */}
       {step === "idle" && (
-        <>
-          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 max-w-xl" data-guide="btn-scan">
-            <Button className="h-24 text-lg gap-3" onClick={() => setStep("scanning")}>
-              <ScanBarcode className="h-7 w-7" />
-              Escanear código
-            </Button>
-            <Button variant="outline" className="h-24 text-lg gap-3" onClick={() => setStep("manual")}>
-              <Keyboard className="h-7 w-7" />
-              Buscar produto
-            </Button>
-            <Button variant="outline" className="h-24 text-lg gap-3 col-span-2 sm:col-span-1" onClick={() => setStep("nfe")}>
-              <FileText className="h-7 w-7" />
-              Importar NF-e
-            </Button>
-          </div>
+        <div className="space-y-5">
+          <ScannerLauncher
+            onScan={() => setStep("scanning")}
+            onSearch={() => setStep("manual")}
+            onNfe={() => setStep("nfe")}
+          />
+          <RecebimentoHeroKpi />
           <RecentReceipts />
-        </>
+          <RecebimentoEmptyState
+            onScan={() => setStep("scanning")}
+            onSearch={() => setStep("manual")}
+          />
+        </div>
       )}
 
       {/* Manual search */}
@@ -171,18 +184,23 @@ export default function RecebimentoDigital() {
 
       {/* Product not found */}
       {step === "not_found" && (
-        <div className="glass-card p-6 max-w-md space-y-4">
-          <div className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-warning" />
+        <div className="glass-card p-5 sm:p-6 max-w-md space-y-4 ring-1 ring-amber-500/30 shadow-[0_0_24px_-12px_rgba(245,158,11,0.4)]">
+          <div className="flex items-center gap-2.5">
+            <div className="rounded-lg bg-amber-500/15 ring-1 ring-amber-500/30 p-1.5">
+              <Package className="h-4 w-4 text-amber-400" />
+            </div>
             <h2 className="font-display font-bold text-foreground">
               Produto não cadastrado
             </h2>
           </div>
           {barcode && (
             <p className="text-sm text-muted-foreground">
-              Código: <Badge variant="secondary">{barcode}</Badge>
+              Código lido: <Badge variant="secondary" className="font-mono">{barcode}</Badge>
             </p>
           )}
+          <p className="text-xs text-muted-foreground">
+            Cadastre o produto agora para liberar o recebimento.
+          </p>
           <div className="flex gap-2">
             <Button onClick={() => setStep("register")}>Cadastrar produto</Button>
             <Button variant="ghost" onClick={reset}>Voltar</Button>
