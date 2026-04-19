@@ -414,6 +414,7 @@ export type Database = {
           codigo: string | null
           company_id: string
           created_at: string
+          entrada_manual: boolean
           id: string
           product_id: string
           quantidade: number
@@ -427,6 +428,7 @@ export type Database = {
           codigo?: string | null
           company_id: string
           created_at?: string
+          entrada_manual?: boolean
           id?: string
           product_id: string
           quantidade?: number
@@ -440,6 +442,7 @@ export type Database = {
           codigo?: string | null
           company_id?: string
           created_at?: string
+          entrada_manual?: boolean
           id?: string
           product_id?: string
           quantidade?: number
@@ -1690,6 +1693,17 @@ export type Database = {
           p_quantidade: number
           p_tipo: string
           p_unidade_id: string
+        }
+        Returns: Json
+      }
+      rpc_create_manual_lote: {
+        Args: {
+          p_fornecedor_id?: string
+          p_lote_codigo?: string
+          p_product_id: string
+          p_quantidade: number
+          p_unidade_id: string
+          p_validade: string
         }
         Returns: Json
       }
