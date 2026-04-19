@@ -823,6 +823,22 @@ export default function Estoque() {
         units={units}
         defaultUnitId={profile?.unidade_id || units[0]?.id || ""}
       />
+
+      {/* Manual stock entry dialog */}
+      <ManualEntryDialog
+        open={manualEntryOpen}
+        onOpenChange={setManualEntryOpen}
+        products={products.map((p) => ({
+          id: p.id,
+          nome: p.nome,
+          marca: p.marca,
+          unidade_medida: p.unidade_medida,
+          unidade_id: p.unidade_id,
+        }))}
+        units={units}
+        defaultUnitId={profile?.unidade_id || units.find((u) => u.type === "cd")?.id || units[0]?.id}
+        onSuccess={loadData}
+      />
     </div>
   );
 }
