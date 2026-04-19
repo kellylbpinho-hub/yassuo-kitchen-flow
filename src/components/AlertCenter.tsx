@@ -23,30 +23,43 @@ interface AlertItem {
 async function fetchAlerts(companyId: string): Promise<AlertItem[]> {
   const items: AlertItem[] = [];
 
-  // 1. Estoque mínimo — single query, client filter
-  const { data: allProducts } = await supabase
-    .from("products")
-    .select("id, nome, estoque_atual, estoque_minimo")
-    .eq("ativo", true);
+  // 1. Estoque baixo — saldo REAL via v_estoque_por_unidade (lotes), não products.estoque_atual
+  const [{ data: allProducts }, { data: saldoRows }] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, nome, estoque_minimo")
+      .eq("ativo", true)
+      .gt("estoque_minimo", 0),
+    supabase
+      .from("v_estoque_por_unidade")
+      .select("product_id, saldo"),
+  ]);
+
+  // Sum saldo across all units for each product
+  const saldoMap: Record<string, number> = {};
+  (saldoRows || []).forEach((r: any) => {
+    if (!r.product_id) return;
+    saldoMap[r.product_id] = (saldoMap[r.product_id] || 0) + Number(r.saldo || 0);
+  });
 
   if (allProducts) {
-    const lowItems = allProducts.filter(
-      (p) => Number(p.estoque_atual) <= Number(p.estoque_minimo) && Number(p.estoque_minimo) > 0
-    );
+    const lowItems = allProducts
+      .map((p) => ({ ...p, saldo: saldoMap[p.id] || 0 }))
+      .filter((p) => p.saldo < Number(p.estoque_minimo));
     for (const p of lowItems.slice(0, 10)) {
       items.push({
         id: `est-${p.id}`,
         type: "estoque",
         title: p.nome,
-        description: `Estoque: ${Number(p.estoque_atual)} (mín: ${Number(p.estoque_minimo)})`,
+        description: `Estoque: ${p.saldo.toFixed(2)} (mín: ${Number(p.estoque_minimo)})`,
         route: "/estoque",
       });
     }
   }
 
-  // 2. Validade próxima (≤ 5 dias)
+  // 2. Validade próxima (≤ 7 dias)
   const futureDate = new Date();
-  futureDate.setDate(futureDate.getDate() + 5);
+  futureDate.setDate(futureDate.getDate() + 7);
   const futureDateStr = futureDate.toISOString().split("T")[0];
 
   const { data: expiringLots } = await supabase
@@ -81,27 +94,94 @@ async function fetchAlerts(companyId: string): Promise<AlertItem[]> {
     }
   }
 
-  // 3. Pedidos internos pendentes
-  const { data: pendingOrders } = await supabase
-    .from("internal_orders")
-    .select("id, numero, created_at")
-    .eq("status", "pendente")
-    .order("created_at", { ascending: false })
-    .limit(5);
+  // 3. Pedidos pendentes — internos + compras externas
+  const [{ data: pendingInternal }, { data: pendingPurchase }] = await Promise.all([
+    supabase
+      .from("internal_orders")
+      .select("id, numero, created_at")
+      .eq("status", "pendente")
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("purchase_orders")
+      .select("id, numero, created_at, status")
+      .in("status", ["aguardando_aprovacao", "pendente", "rascunho"])
+      .order("created_at", { ascending: false })
+      .limit(5),
+  ]);
 
-  if (pendingOrders) {
-    for (const o of pendingOrders) {
+  if (pendingInternal) {
+    for (const o of pendingInternal) {
       items.push({
-        id: `ped-${o.id}`,
+        id: `ped-int-${o.id}`,
         type: "pedido",
-        title: `Pedido #${o.numero}`,
+        title: `Pedido interno #${o.numero}`,
         description: "Aguardando aprovação",
         route: "/aprovacoes-cd",
       });
     }
   }
 
-  // 4. Radar financeiro — prejuízo ou margem crítica
+  if (pendingPurchase) {
+    for (const o of pendingPurchase) {
+      items.push({
+        id: `ped-com-${o.id}`,
+        type: "pedido",
+        title: `Compra #${o.numero}`,
+        description: o.status === "rascunho" ? "Rascunho aguardando envio" : "Aguardando aprovação",
+        route: "/compras",
+      });
+    }
+  }
+
+  // 4. Cardápio incompleto — dias úteis (seg-sex) da semana atual sem menu
+  const today = new Date();
+  const dow = today.getDay(); // 0=dom, 1=seg ... 6=sab
+  const monday = new Date(today);
+  const diffToMonday = dow === 0 ? -6 : 1 - dow;
+  monday.setDate(today.getDate() + diffToMonday);
+  monday.setHours(0, 0, 0, 0);
+  const friday = new Date(monday);
+  friday.setDate(monday.getDate() + 4);
+
+  const fmt = (d: Date) => d.toISOString().split("T")[0];
+  const { data: weekMenus } = await supabase
+    .from("menus")
+    .select("data, unidade_id")
+    .gte("data", fmt(monday))
+    .lte("data", fmt(friday));
+
+  const { data: kitchenUnitsAll } = await supabase
+    .from("units")
+    .select("id, name")
+    .eq("type", "kitchen");
+
+  if (kitchenUnitsAll && kitchenUnitsAll.length > 0) {
+    const menuSet = new Set((weekMenus || []).map((m: any) => `${m.unidade_id}|${m.data}`));
+    const dayLabels = ["Seg", "Ter", "Qua", "Qui", "Sex"];
+    for (const unit of kitchenUnitsAll) {
+      const missingDays: string[] = [];
+      for (let i = 0; i < 5; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        const dateStr = fmt(d);
+        if (!menuSet.has(`${unit.id}|${dateStr}`)) {
+          missingDays.push(dayLabels[i]);
+        }
+      }
+      if (missingDays.length > 0) {
+        items.push({
+          id: `card-${unit.id}`,
+          type: "cardapio",
+          title: `Cardápio incompleto — ${unit.name}`,
+          description: `Dias sem cardápio nesta semana: ${missingDays.join(", ")}`,
+          route: "/cardapio-semanal",
+        });
+      }
+    }
+  }
+
+  // 5. Radar financeiro — prejuízo ou margem crítica
   const { data: kitchenUnits } = await supabase
     .from("units")
     .select("id, name, contract_value, numero_colaboradores, type")
@@ -110,13 +190,11 @@ async function fetchAlerts(companyId: string): Promise<AlertItem[]> {
   if (kitchenUnits) {
     const unitsWithContract = kitchenUnits.filter(u => u.contract_value && Number(u.contract_value) > 0);
     if (unitsWithContract.length > 0) {
-      // Get meal cost data for each unit
       const { data: mealCostRows } = await supabase
         .from("meal_cost_daily")
         .select("unit_id, real_meal_cost, meals_served");
 
       if (mealCostRows) {
-        // Aggregate per unit
         const unitAgg: Record<string, { totalCost: number; totalMeals: number }> = {};
         for (const row of mealCostRows) {
           if (!row.unit_id) continue;
@@ -157,14 +235,25 @@ async function fetchAlerts(companyId: string): Promise<AlertItem[]> {
     }
   }
 
-  // 5. Previsão de ruptura — consumo médio 30d vs estoque atual
-  const { data: activeProducts } = await supabase
-    .from("products")
-    .select("id, nome, estoque_atual")
-    .eq("ativo", true)
-    .gt("estoque_atual", 0);
+  // 6. Previsão de ruptura — consumo médio 30d vs saldo real (lotes)
+  const productsWithSaldo = (allProducts || [])
+    .map((p) => ({ id: p.id, nome: p.nome, saldo: saldoMap[p.id] || 0 }))
+    .filter((p) => p.saldo > 0);
 
-  if (activeProducts && activeProducts.length > 0) {
+  // Include products without estoque_minimo too — fetch any remaining active products
+  const { data: extraProducts } = await supabase
+    .from("products")
+    .select("id, nome")
+    .eq("ativo", true);
+  const knownIds = new Set(productsWithSaldo.map((p) => p.id));
+  const allActive = [
+    ...productsWithSaldo,
+    ...((extraProducts || [])
+      .filter((p) => !knownIds.has(p.id) && (saldoMap[p.id] || 0) > 0)
+      .map((p) => ({ id: p.id, nome: p.nome, saldo: saldoMap[p.id] || 0 }))),
+  ];
+
+  if (allActive.length > 0) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -180,11 +269,11 @@ async function fetchAlerts(companyId: string): Promise<AlertItem[]> {
         consumoMap[m.product_id] = (consumoMap[m.product_id] || 0) + Number(m.quantidade);
       });
 
-      for (const p of activeProducts) {
+      for (const p of allActive) {
         const consumoTotal = consumoMap[p.id];
         if (!consumoTotal || consumoTotal <= 0) continue;
         const mediaDiaria = consumoTotal / 30;
-        const diasRestantes = Number(p.estoque_atual) / mediaDiaria;
+        const diasRestantes = p.saldo / mediaDiaria;
         if (diasRestantes <= 3) {
           items.push({
             id: `prev-${p.id}`,
@@ -198,7 +287,7 @@ async function fetchAlerts(companyId: string): Promise<AlertItem[]> {
     }
   }
 
-  // 6. Divergências de peso (últimas 48h) — visível apenas para CEO/admin
+  // 7. Divergências de peso (últimas 48h) — visível apenas para CEO/admin via RLS
   const twoDaysAgo = new Date();
   twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
