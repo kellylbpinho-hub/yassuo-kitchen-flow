@@ -35,6 +35,7 @@ import { ImportProductsDialog } from "@/components/ImportProductsDialog";
 import { EstoqueHeroKpi } from "@/components/estoque/EstoqueHeroKpi";
 import { EstoqueItemRow, type EstoqueItemLote } from "@/components/estoque/EstoqueItemRow";
 import { EstoqueEmptyState } from "@/components/estoque/EstoqueEmptyState";
+import { ManualEntryDialog } from "@/components/estoque/ManualEntryDialog";
 
 interface Category {
   id: string;
