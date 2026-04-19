@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScanBarcode, Keyboard, Package, FileText } from "lucide-react";
+import { Package, ArrowLeft, ScanLine } from "lucide-react";
 import { parseGS1Barcode, type GS1Data } from "@/lib/gs1Parser";
 import { ProductSearch } from "@/components/recebimento/ProductSearch";
 import { RegisterProductForm } from "@/components/recebimento/RegisterProductForm";
@@ -12,6 +12,9 @@ import { ReceiptForm } from "@/components/recebimento/ReceiptForm";
 import { ReceiptSuccess } from "@/components/recebimento/ReceiptSuccess";
 import { RecentReceipts } from "@/components/recebimento/RecentReceipts";
 import { NFeImport } from "@/components/recebimento/NFeImport";
+import { RecebimentoHeroKpi } from "@/components/recebimento/RecebimentoHeroKpi";
+import { ScannerLauncher } from "@/components/recebimento/ScannerLauncher";
+import { RecebimentoEmptyState } from "@/components/recebimento/RecebimentoEmptyState";
 import type { Product, Unit, PurchaseUnit, Step } from "@/components/recebimento/types";
 
 export default function RecebimentoDigital() {
