@@ -345,9 +345,12 @@ export default function Estoque() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Estoque</h1>
-          <p className="text-xs text-muted-foreground mt-1">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground leading-tight">
+            Estoque
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 flex items-center gap-1.5">
+            <Layers className="h-3.5 w-3.5 text-primary" />
             Controle por lotes com prioridade FEFO — primeiro a vencer, primeiro a sair
           </p>
         </div>
@@ -622,7 +625,7 @@ export default function Estoque() {
 
       {/* Critical ruptura banner */}
       {kpis.critico > 0 && (
-        <div className="relative overflow-hidden rounded-xl border border-destructive/35 bg-destructive/[0.07] p-4">
+        <div className="relative overflow-hidden rounded-xl border border-destructive/35 bg-destructive/[0.07] p-4 ring-1 ring-destructive/20 shadow-[0_0_24px_-12px_hsl(var(--destructive)/0.4)]">
           <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full blur-3xl bg-destructive/30" />
           <div className="relative flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-destructive/40 bg-destructive/10">
@@ -632,7 +635,7 @@ export default function Estoque() {
               <p className="text-sm font-display font-semibold text-destructive">
                 {kpis.critico} {kpis.critico === 1 ? "item em ruptura" : "itens em ruptura"}
               </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-foreground/70 mt-0.5">
                 Itens abaixo do estoque mínimo definido. Considere reabastecer via Recebimento ou
                 Pedido Interno.
               </p>
@@ -730,8 +733,10 @@ export default function Estoque() {
           onImport={() => setImportOpen(true)}
         />
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-border/60 bg-surface-1 p-10 text-center">
-          <Package className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+        <div className="rounded-xl border border-border/60 bg-surface-1 p-8 sm:p-10 text-center">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-muted/40 ring-1 ring-border">
+            <Package className="h-5 w-5 text-muted-foreground" />
+          </div>
           <p className="text-sm font-medium text-foreground">Nenhum item encontrado</p>
           <p className="text-xs text-muted-foreground mt-1">
             Ajuste os filtros ou tente outra busca.
