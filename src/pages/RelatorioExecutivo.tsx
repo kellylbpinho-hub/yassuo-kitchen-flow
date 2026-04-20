@@ -474,15 +474,14 @@ export default function RelatorioExecutivo() {
           </p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              { emoji: "🗑️", label: "Registrar desperdício" },
-              { emoji: "📋", label: "Fazer pedido interno" },
-              { emoji: "📦", label: "Consultar estoque" },
-              { emoji: "📥", label: "Registrar recebimento" },
-              { emoji: "🛒", label: "Criar compra" },
-              { emoji: "💰", label: "Dashboard financeiro" },
+              { label: "Registrar desperdicio" },
+              { label: "Fazer pedido interno" },
+              { label: "Consultar estoque" },
+              { label: "Registrar recebimento" },
+              { label: "Criar compra" },
+              { label: "Dashboard financeiro" },
             ].map((t) => (
               <div key={t.label} className="flex items-center gap-3 rounded-lg border border-border p-3">
-                <span className="text-lg">{t.emoji}</span>
                 <span className="text-sm text-foreground font-medium">{t.label}</span>
               </div>
             ))}

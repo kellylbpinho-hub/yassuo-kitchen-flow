@@ -40,8 +40,8 @@ export interface GuidedTask {
 export const guidedTasks: GuidedTask[] = [
   {
     id: "registrar-desperdicio",
-    label: "Registrar desperdício",
-    emoji: "🗑️",
+    label: "Registrar desperdicio",
+    emoji: "",
     route: "/desperdicio",
     blockedRoles: ["comprador", "gerente_financeiro"],
     steps: [
@@ -82,7 +82,7 @@ export const guidedTasks: GuidedTask[] = [
   {
     id: "pedido-interno",
     label: "Fazer pedido interno",
-    emoji: "📋",
+    emoji: "",
     route: "/pedido-interno",
     blockedRoles: ["comprador", "gerente_financeiro"],
     steps: [
@@ -132,7 +132,7 @@ export const guidedTasks: GuidedTask[] = [
   {
     id: "consultar-estoque",
     label: "Consultar estoque",
-    emoji: "📦",
+    emoji: "",
     route: "/estoque",
     steps: [
       {
@@ -172,7 +172,7 @@ export const guidedTasks: GuidedTask[] = [
   {
     id: "registrar-recebimento",
     label: "Registrar recebimento",
-    emoji: "📥",
+    emoji: "",
     route: "/recebimento-digital",
     blockedRoles: ["gerente_financeiro", "comprador", "nutricionista"],
     steps: [
@@ -213,7 +213,7 @@ export const guidedTasks: GuidedTask[] = [
   {
     id: "criar-compra",
     label: "Criar compra",
-    emoji: "🛒",
+    emoji: "",
     route: "/compras",
     blockedRoles: ["estoquista", "funcionario", "gerente_financeiro"],
     steps: [
@@ -241,7 +241,7 @@ export const guidedTasks: GuidedTask[] = [
   {
     id: "ver-dashboard-financeiro",
     label: "Ver dashboard financeiro",
-    emoji: "💰",
+    emoji: "",
     route: "/dashboard-financeiro",
     allowedRoles: ["ceo", "gerente_financeiro", "gerente_operacional"],
     steps: [
@@ -283,8 +283,8 @@ export const guidedTasks: GuidedTask[] = [
   // ──────────── Nutrition Module Tasks ────────────
   {
     id: "montar-cardapio",
-    label: "Montar cardápio semanal",
-    emoji: "📅",
+    label: "Montar cardapio semanal",
+    emoji: "",
     route: "/cardapio-semanal",
     blockedRoles: ["comprador", "gerente_financeiro", "estoquista"],
     steps: [
@@ -318,8 +318,8 @@ export const guidedTasks: GuidedTask[] = [
   },
   {
     id: "ficha-tecnica",
-    label: "Criar ficha técnica",
-    emoji: "📋",
+    label: "Criar ficha tecnica",
+    emoji: "",
     route: "/cardapio-semanal",
     blockedRoles: ["comprador", "gerente_financeiro", "estoquista"],
     steps: [
@@ -340,7 +340,7 @@ export const guidedTasks: GuidedTask[] = [
   {
     id: "planejar-insumos",
     label: "Planejar insumos da semana",
-    emoji: "🧮",
+    emoji: "",
     route: "/planejamento-insumos",
     blockedRoles: ["comprador", "gerente_financeiro", "estoquista", "funcionario"],
     steps: [
@@ -376,8 +376,8 @@ export const guidedTasks: GuidedTask[] = [
   },
   {
     id: "exportar-cardapio-tecnico",
-    label: "Exportar cardápio técnico",
-    emoji: "📄",
+    label: "Exportar cardapio tecnico",
+    emoji: "",
     route: "/cardapio-semanal",
     blockedRoles: ["comprador", "estoquista", "funcionario"],
     steps: [
