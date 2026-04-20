@@ -2,7 +2,8 @@ import {
   LayoutDashboard, Package, ShoppingCart, Trash2, BarChart3,
   Users, Building2, Shield, ScanBarcode, Bell, ClipboardList,
   ClipboardCheck, FileText, UtensilsCrossed, DollarSign,
-  CalendarDays, Calculator, Radar, Crown, FileSearch, Truck,
+  CalendarDays, Calculator, Radar, Sparkles, FileSearch, Truck,
+  Utensils,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -24,8 +25,8 @@ export function useSidebarNavigation(): NavGroup[] {
   if (isNutricionista) {
     return [
       {
-        label: "🍎 Nutrição",
-        icon: UtensilsCrossed,
+        label: "NUTRIÇÃO",
+        icon: Utensils,
         items: [
           { to: "/cardapio-semanal", icon: CalendarDays, label: "Cardápio Semanal" },
           { to: "/painel-nutri", icon: LayoutDashboard, label: "Painel da Nutri" },
@@ -35,7 +36,7 @@ export function useSidebarNavigation(): NavGroup[] {
         ],
       },
       {
-        label: "📦 Suprimentos",
+        label: "SUPRIMENTOS",
         icon: Package,
         items: [
           { to: "/pedido-interno", icon: ClipboardList, label: "Pedido Interno" },
@@ -85,7 +86,7 @@ export function useSidebarNavigation(): NavGroup[] {
   const showDashFinanceiro = isCeo || isFinanceiroRole || isGerenteOperacional;
   const adminItems: NavItem[] = [];
   if (isCeo) {
-    adminItems.push({ to: "/painel-ceo", icon: Crown, label: "Painel do CEO" });
+    adminItems.push({ to: "/painel-ceo", icon: Sparkles, label: "Painel do CEO" });
   }
   if (showDashFinanceiro) {
     adminItems.push({ to: "/dashboard-financeiro", icon: DollarSign, label: "Dash Financeiro" });
@@ -108,8 +109,8 @@ export function useSidebarNavigation(): NavGroup[] {
   }
 
   return [
-    { label: "📦 Suprimentos", icon: Package, items: suprimentosItems },
-    { label: "🍎 Nutrição", icon: UtensilsCrossed, items: nutricaoItems },
-    { label: "💰 Administração", icon: DollarSign, items: adminItems },
+    { label: "SUPRIMENTOS", icon: Package, items: suprimentosItems },
+    { label: "NUTRIÇÃO", icon: Utensils, items: nutricaoItems },
+    { label: "ADMINISTRAÇÃO", icon: DollarSign, items: adminItems },
   ];
 }
