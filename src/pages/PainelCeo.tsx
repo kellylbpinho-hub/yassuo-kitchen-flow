@@ -477,7 +477,7 @@ function HeroKpi({ tone, statusLabel, StatusIcon, label, value, sub, onClick }: 
   return (
     <button
       onClick={onClick}
-      className={`stat-card lg:col-span-2 ${accent} text-left p-5 lg:p-6 group`}
+      className={`stat-card kpi-card-gold lg:col-span-2 ${accent} text-left p-5 lg:p-6 group`}
     >
       <div className="flex items-start justify-between gap-3 relative z-10">
         <div className="space-y-1">
@@ -516,14 +516,14 @@ function CompactKpi({ icon: Icon, label, value, tone = "primary", onClick }: {
     : "bg-primary/12 text-primary";
 
   return (
-    <button onClick={onClick} className={`stat-card ${accent} text-left p-5 group`}>
+    <button onClick={onClick} className={`stat-card kpi-card-gold ${accent} text-left p-5 group`}>
       <div className="relative z-10 flex items-center justify-between mb-3">
         <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${iconBg} ring-1 ring-inset ring-current/10`}>
           <Icon className="h-4 w-4" />
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
       </div>
-      <p className="kpi-value text-foreground">{value}</p>
+      <p className={`kpi-value text-foreground ${tone === "danger" ? "kpi-glow-danger" : "kpi-glow-primary"}`}>{value}</p>
       <p className="text-eyebrow mt-1.5 relative z-10">{label}</p>
     </button>
   );
