@@ -40,11 +40,11 @@ export default function PainelNutri() {
     data.weekMenu.length < 5;
 
   return (
-    <div className="space-y-6 animate-fade-in pb-6">
+    <div className="space-y-6 animate-fade-in pb-6 nutri-page -mx-3 -my-3 px-3 py-3 lg:-mx-5 lg:-my-5 lg:px-5 lg:py-5">
       {/* ============ HERO BANNER FULL-WIDTH ============ */}
       <div className="relative -mx-3 -mt-3 lg:-mx-5 lg:-mt-5 overflow-hidden border-b border-amber/30">
         {/* Background layers */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(222_18%_4%)] via-[hsl(222_14%_7%)] to-[hsl(222_12%_9%)]" />
+        <div className="absolute inset-0 bg-[#0A0A0A]" />
         <div className="absolute inset-0 opacity-[0.07] bg-[radial-gradient(circle_at_15%_20%,hsl(38_95%_58%)_0%,transparent_45%),radial-gradient(circle_at_85%_80%,hsl(38_95%_58%)_0%,transparent_50%)]" />
         <div className="pointer-events-none absolute -top-32 -right-20 h-80 w-80 rounded-full bg-amber/[0.10] blur-3xl" />
 
@@ -58,7 +58,7 @@ export default function PainelNutri() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-amber">
                   Yassuo · Nutrição
                 </p>
-                <h1 className="mt-1.5 font-display font-black tracking-tight leading-[0.95] text-foreground text-4xl sm:text-5xl lg:text-6xl">
+                <h1 className="nutri-hero-title mt-1.5 text-foreground text-4xl sm:text-5xl lg:text-6xl">
                   Comando da Cozinha
                 </h1>
                 <p className="mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">
@@ -113,7 +113,7 @@ export default function PainelNutri() {
           <div className="relative mt-6 flex flex-wrap gap-2">
             <Button
               size="sm"
-              className="h-9 gap-1.5 text-xs bg-amber text-amber-foreground hover:bg-amber/90 font-semibold"
+              className="btn-amber-solid h-9 gap-1.5 text-xs"
               onClick={() => navigate("/cardapio-semanal")}
             >
               <Sparkles className="h-3.5 w-3.5" />

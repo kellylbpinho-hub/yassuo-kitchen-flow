@@ -120,19 +120,19 @@ export function DishCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm",
-        "transition-all duration-200 hover:border-amber/40 hover:bg-card/80",
+        "group relative overflow-hidden rounded-xl border border-white/5 bg-[#111]",
+        "transition-all duration-200 hover:border-amber/40",
         "hover:shadow-[0_0_0_1px_hsl(38_95%_58%/0.18),0_12px_28px_-12px_hsl(38_95%_58%/0.3)]",
         !dish.ativo && "opacity-60",
       )}
     >
-      {/* === Hero image (restaurant menu style) === */}
+      {/* === Hero image (~60% of card) === */}
       <div
-        className="relative h-40 w-full overflow-hidden"
+        className="relative aspect-[5/3] w-full overflow-hidden"
         style={{ background: dishGradient(dish.id) }}
       >
         <img
-          src={dishImageUrl(dish.nome, dish.id, { w: 600, h: 320 })}
+          src={dishImageUrl(dish.nome, dish.id, { w: 600, h: 360 })}
           alt={dish.nome}
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -140,8 +140,8 @@ export function DishCard({
             (e.currentTarget as HTMLImageElement).style.display = "none";
           }}
         />
-        {/* Bottom-up dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
+        {/* Strong bottom-up dark overlay for text legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
 
         {/* Top-right actions */}
         {!isFinanceiro && (
@@ -151,7 +151,7 @@ export function DishCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/60 hover:text-white"
+                  className="h-8 w-8 rounded-full bg-black/50 text-white backdrop-blur-md hover:bg-black/70 hover:text-white"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
@@ -186,25 +186,25 @@ export function DishCard({
         {dish.is_padrao && (
           <Badge
             variant="secondary"
-            className="absolute left-2 top-2 h-5 px-2 text-[10px] uppercase tracking-wider bg-black/40 text-white backdrop-blur-md border-white/10"
+            className="absolute left-2 top-2 h-5 px-2 text-[10px] uppercase tracking-wider bg-black/50 text-white backdrop-blur-md border-white/10"
           >
             Padrão
           </Badge>
         )}
-      </div>
 
-      <div className="p-4 space-y-3">
-        {/* Name + category */}
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-amber font-semibold mb-1 flex items-center gap-1.5">
+        {/* Dish name + category overlay on photo */}
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <p className="text-amber text-xs uppercase tracking-widest font-semibold mb-1 flex items-center gap-1.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
             <CategoryIcon className="h-3 w-3" />
             <span className="truncate">{dish.category_name || "Sem categoria"}</span>
           </p>
-          <h3 className="text-lg font-bold leading-tight text-foreground line-clamp-2">
+          <h3 className="text-xl font-bold leading-tight text-white line-clamp-2 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
             {dish.nome}
           </h3>
         </div>
+      </div>
 
+      <div className="p-4 space-y-3">
         {/* Description */}
         {dish.descricao && (
           <p className="text-xs text-muted-foreground/80 line-clamp-2 leading-relaxed">
