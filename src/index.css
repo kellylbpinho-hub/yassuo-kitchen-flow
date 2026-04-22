@@ -284,6 +284,43 @@
     box-shadow: 0 0 12px hsl(var(--primary) / 0.6);
   }
 
+  /* === Nutri module — restaurant style === */
+  .bg-nutri {
+    background-color: #0A0A0A;
+  }
+  .nutri-page {
+    background-color: #0A0A0A;
+    min-height: 100%;
+  }
+  .nutri-hero-title {
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .btn-amber-solid {
+    background-color: hsl(38 95% 58%) !important;
+    color: #000 !important;
+    font-weight: 700 !important;
+    border: none !important;
+  }
+  .btn-amber-solid:hover {
+    background-color: hsl(38 95% 50%) !important;
+  }
+  .nutri-day-card {
+    background-color: #111;
+    border: 1px solid hsl(0 0% 18%);
+    transition: border-color 200ms var(--ease-out), box-shadow 200ms var(--ease-out);
+  }
+  .nutri-day-card:hover {
+    border-color: hsl(38 95% 58% / 0.4);
+    box-shadow: 0 0 0 1px hsl(38 95% 58% / 0.2), 0 12px 28px -12px hsl(38 95% 58% / 0.25);
+  }
+  .nutri-day-card.is-today {
+    border-color: hsl(38 95% 58% / 0.5);
+    box-shadow: 0 0 0 1px hsl(38 95% 58% / 0.25);
+  }
+
   /* === Pill / badge === */
   .pill {
     @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold
