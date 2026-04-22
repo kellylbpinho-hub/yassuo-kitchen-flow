@@ -338,7 +338,7 @@ export function WeekDayRow({
                         key={`${cat}-${i}`}
                         className="inline-flex items-center gap-1.5 rounded-md border border-border/50 bg-surface-2 px-2.5 py-1 text-xs text-foreground/90"
                       >
-                        <UtensilsCrossed className="h-3 w-3 text-primary/70" />
+                        <UtensilsCrossed className="h-3 w-3 text-amber/80" />
                         {n}
                       </span>
                     ))}
