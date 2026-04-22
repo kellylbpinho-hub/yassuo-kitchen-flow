@@ -13,6 +13,7 @@ import {
 import {
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart,
+  RadialBarChart, RadialBar, PolarAngleAxis,
 } from "recharts";
 import { LastUpdated } from "@/components/LastUpdated";
 import { generateCeoPDF, generateCeoExcel, type CeoExportData } from "@/lib/ceoExport";
@@ -70,7 +71,7 @@ export default function PainelCeo() {
   }
 
   return (
-    <div className="space-y-6 lg:space-y-8 pb-8">
+    <div className="space-y-6 lg:space-y-8 pb-8 page-bg-executive p-1 -m-1">
       {/* ============ HERO HEADER ============ */}
       <section className="surface-hero relative overflow-hidden p-5 lg:p-7 animate-rise">
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
@@ -181,8 +182,8 @@ export default function PainelCeo() {
                   <AreaChart data={consumptionData} margin={{ top: 8, right: 14, left: -10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorConsumo" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(354 78% 52%)" stopOpacity={0.45} />
-                        <stop offset="100%" stopColor="hsl(354 78% 52%)" stopOpacity={0} />
+                        <stop offset="0%" stopColor="hsl(38 95% 58%)" stopOpacity={0.5} />
+                        <stop offset="100%" stopColor="hsl(38 95% 58%)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(222 9% 18%)" vertical={false} />
@@ -190,7 +191,7 @@ export default function PainelCeo() {
                     <YAxis tick={{ fill: "hsl(220 8% 62%)", fontSize: 11 }} axisLine={false} tickLine={false} />
                     <RechartsTooltip
                       contentStyle={{
-                        backgroundColor: "hsl(222 12% 9%)",
+                        backgroundColor: "hsl(220 15% 7%)",
                         border: "1px solid hsl(222 9% 22%)",
                         borderRadius: 10,
                         fontSize: 12,
@@ -198,7 +199,7 @@ export default function PainelCeo() {
                         boxShadow: "0 8px 24px -8px hsl(222 14% 2% / 0.7)",
                       }}
                     />
-                    <Area type="monotone" dataKey="quantidade" stroke="hsl(354 78% 52%)" strokeWidth={2.2} fill="url(#colorConsumo)" />
+                    <Area type="monotone" dataKey="quantidade" stroke="hsl(38 95% 58%)" strokeWidth={2.2} fill="url(#colorConsumo)" />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
