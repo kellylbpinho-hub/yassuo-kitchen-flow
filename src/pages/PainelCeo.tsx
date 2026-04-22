@@ -82,7 +82,7 @@ export default function PainelCeo() {
             </div>
             <div className="flex items-center gap-3.5">
               <div className="h-11 w-11 rounded-xl bg-gradient-primary-soft flex items-center justify-center ring-1 ring-primary/30 shadow-glow-primary">
-                <Zap className="h-5 w-5 text-primary" />
+                <Zap className="h-5 w-5 text-amber" />
               </div>
               <div>
                 <h1 className="text-2xl lg:text-[28px] font-bold text-foreground tracking-[-0.025em] leading-tight">
@@ -489,7 +489,7 @@ function HeroKpi({ tone, statusLabel, StatusIcon, label, value, sub, onClick }: 
         </span>
       </div>
       <div className="flex items-end justify-between gap-3 mt-4 relative z-10">
-        <p className="text-display text-[44px] lg:text-[52px] text-foreground text-numeric">{value}</p>
+        <p className={`kpi-value text-foreground ${tone === "danger" ? "kpi-glow-danger" : tone === "success" ? "kpi-glow-success" : "kpi-glow-primary"}`}>{value}</p>
         <ArrowUpRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
       </div>
       <p className="text-xs text-muted-foreground mt-2 relative z-10">{sub}</p>
@@ -523,7 +523,7 @@ function CompactKpi({ icon: Icon, label, value, tone = "primary", onClick }: {
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
       </div>
-      <p className="text-display text-3xl text-foreground text-numeric relative z-10">{value}</p>
+      <p className="kpi-value text-foreground">{value}</p>
       <p className="text-eyebrow mt-1.5 relative z-10">{label}</p>
     </button>
   );

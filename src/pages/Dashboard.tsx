@@ -206,7 +206,7 @@ export default function Dashboard() {
             <Package className="h-5 w-5 text-primary" />
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Estoque</span>
           </div>
-          <p className="text-2xl font-bold font-display text-foreground">{data.totalProdutos}</p>
+          <p className="kpi-value text-foreground">{data.totalProdutos}</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">produtos cadastrados</p>
           {data.itensAbaixoMinimo > 0 && (
             <div className="mt-2 flex items-center gap-1">
@@ -226,7 +226,7 @@ export default function Dashboard() {
             <ShoppingCart className="h-5 w-5 text-chart-4" />
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Pedidos</span>
           </div>
-          <p className="text-2xl font-bold font-display text-foreground">{data.totalPedidos}</p>
+          <p className="kpi-value text-foreground">{data.totalPedidos}</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">pedidos de compra</p>
           {data.pedidosPendentes > 0 && (
             <div className="mt-2 flex items-center gap-1">
@@ -246,7 +246,7 @@ export default function Dashboard() {
             <AlertTriangle className="h-5 w-5 text-warning" />
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Alertas</span>
           </div>
-          <p className="text-2xl font-bold font-display text-foreground">{data.lotesVencendo + data.lotesVencidos}</p>
+          <p className="kpi-value text-foreground">{data.lotesVencendo + data.lotesVencidos}</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">lotes com atenção</p>
           {data.lotesVencidos > 0 && (
             <div className="mt-2 flex items-center gap-1">
@@ -263,7 +263,7 @@ export default function Dashboard() {
             <TrendingDown className="h-5 w-5 text-destructive" />
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Perdas</span>
           </div>
-          <p className="text-2xl font-bold font-display text-foreground">{data.perdasMes.kg.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
+          <p className="kpi-value text-foreground">{data.perdasMes.kg.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
           <p className="text-[11px] text-muted-foreground mt-0.5">no mês corrente</p>
         </div>
       </div>
@@ -275,9 +275,9 @@ export default function Dashboard() {
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-success rounded-l-xl" />
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-muted-foreground">Valor em Estoque</span>
-              <DollarSign className="h-4 w-4 text-success" />
+              <DollarSign className="h-4 w-4 text-amber" />
             </div>
-            <p className="text-xl font-bold font-display text-success">
+            <p className="kpi-value kpi-glow-success text-5xl text-success">
               R$ {data.totalEstoqueValor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </p>
           </div>
@@ -285,9 +285,9 @@ export default function Dashboard() {
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-chart-5 rounded-l-xl" />
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-muted-foreground">Custo Médio / Refeição</span>
-              <DollarSign className="h-4 w-4 text-chart-5" />
+              <DollarSign className="h-4 w-4 text-amber" />
             </div>
-            <p className="text-xl font-bold font-display text-chart-5">
+            <p className="kpi-value text-4xl text-chart-5">
               R$ {data.custoMedioRefeicao.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
