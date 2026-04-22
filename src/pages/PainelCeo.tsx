@@ -13,6 +13,7 @@ import {
 import {
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart,
+  RadialBarChart, RadialBar, PolarAngleAxis,
 } from "recharts";
 import { LastUpdated } from "@/components/LastUpdated";
 import { generateCeoPDF, generateCeoExcel, type CeoExportData } from "@/lib/ceoExport";
@@ -70,7 +71,7 @@ export default function PainelCeo() {
   }
 
   return (
-    <div className="space-y-6 lg:space-y-8 pb-8">
+    <div className="space-y-6 lg:space-y-8 pb-8 page-bg-executive p-1 -m-1">
       {/* ============ HERO HEADER ============ */}
       <section className="surface-hero relative overflow-hidden p-5 lg:p-7 animate-rise">
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
@@ -181,8 +182,8 @@ export default function PainelCeo() {
                   <AreaChart data={consumptionData} margin={{ top: 8, right: 14, left: -10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorConsumo" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(354 78% 52%)" stopOpacity={0.45} />
-                        <stop offset="100%" stopColor="hsl(354 78% 52%)" stopOpacity={0} />
+                        <stop offset="0%" stopColor="hsl(38 95% 58%)" stopOpacity={0.5} />
+                        <stop offset="100%" stopColor="hsl(38 95% 58%)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(222 9% 18%)" vertical={false} />
@@ -190,7 +191,7 @@ export default function PainelCeo() {
                     <YAxis tick={{ fill: "hsl(220 8% 62%)", fontSize: 11 }} axisLine={false} tickLine={false} />
                     <RechartsTooltip
                       contentStyle={{
-                        backgroundColor: "hsl(222 12% 9%)",
+                        backgroundColor: "hsl(220 15% 7%)",
                         border: "1px solid hsl(222 9% 22%)",
                         borderRadius: 10,
                         fontSize: 12,
@@ -198,7 +199,7 @@ export default function PainelCeo() {
                         boxShadow: "0 8px 24px -8px hsl(222 14% 2% / 0.7)",
                       }}
                     />
-                    <Area type="monotone" dataKey="quantidade" stroke="hsl(354 78% 52%)" strokeWidth={2.2} fill="url(#colorConsumo)" />
+                    <Area type="monotone" dataKey="quantidade" stroke="hsl(38 95% 58%)" strokeWidth={2.2} fill="url(#colorConsumo)" />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
@@ -213,57 +214,56 @@ export default function PainelCeo() {
           <div className="grid md:grid-cols-2 gap-5 lg:gap-6">
             <Card className="surface-card overflow-hidden animate-rise">
               <CardHeader className="pb-2 px-5 pt-5">
-                <CardTitle className="text-sm font-semibold text-foreground">Consumo por categoria</CardTitle>
+                <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-amber" />
+                  Eficiência operacional
+                </CardTitle>
               </CardHeader>
-              <CardContent className="h-[230px] px-3">
-                {chartsLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
-                ) : categoryData.length > 0 ? (
-                  <>
-                    <ResponsiveContainer width="100%" height="80%">
-                      <PieChart>
-                        <Pie
-                          data={categoryData}
-                          cx="50%" cy="50%"
-                          innerRadius={48}
-                          outerRadius={78}
-                          paddingAngle={3}
-                          dataKey="value"
-                          nameKey="name"
-                          stroke="hsl(222 11% 10%)"
-                          strokeWidth={2}
+              <CardContent className="h-[230px] px-3 relative">
+                {(() => {
+                  const totalUnits = kpis.healthyUnits + kpis.marginCriticalUnits + kpis.lossUnits;
+                  const efficiency = totalUnits > 0
+                    ? Math.round((kpis.healthyUnits / totalUnits) * 100)
+                    : 0;
+                  const gaugeColor = efficiency >= 70
+                    ? "hsl(38 95% 58%)"
+                    : efficiency >= 40
+                    ? "hsl(38 95% 55%)"
+                    : "hsl(4 80% 56%)";
+                  const gaugeData = [{ name: "eff", value: efficiency, fill: gaugeColor }];
+                  return (
+                    <>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadialBarChart
+                          innerRadius="70%"
+                          outerRadius="100%"
+                          data={gaugeData}
+                          startAngle={210}
+                          endAngle={-30}
                         >
-                          {categoryData.map((_, i) => (
-                            <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <RechartsTooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(222 12% 9%)",
-                            border: "1px solid hsl(222 9% 22%)",
-                            borderRadius: 10,
-                            fontSize: 12,
-                            color: "hsl(220 12% 96%)",
+                          <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+                          <RadialBar
+                            background={{ fill: "hsl(220 15% 12%)" }}
+                            dataKey="value"
+                            cornerRadius={20}
+                          />
+                        </RadialBarChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span
+                          className="text-4xl font-display font-black text-numeric"
+                          style={{
+                            color: gaugeColor,
+                            textShadow: `0 0 24px ${gaugeColor}66`,
                           }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1.5 px-1 mt-1">
-                      {categoryData.slice(0, 5).map((c, i) => (
-                        <div key={c.name} className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
-                          <div className="h-2 w-2 rounded-sm" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                          {c.name}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                    Sem dados de categoria
-                  </div>
-                )}
+                        >
+                          {efficiency}%
+                        </span>
+                        <span className="text-eyebrow mt-1">{kpis.healthyUnits}/{totalUnits} saudáveis</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </CardContent>
             </Card>
 
@@ -477,7 +477,7 @@ function HeroKpi({ tone, statusLabel, StatusIcon, label, value, sub, onClick }: 
   return (
     <button
       onClick={onClick}
-      className={`stat-card lg:col-span-2 ${accent} text-left p-5 lg:p-6 group`}
+      className={`stat-card kpi-card-gold lg:col-span-2 ${accent} text-left p-5 lg:p-6 group`}
     >
       <div className="flex items-start justify-between gap-3 relative z-10">
         <div className="space-y-1">
@@ -516,14 +516,14 @@ function CompactKpi({ icon: Icon, label, value, tone = "primary", onClick }: {
     : "bg-primary/12 text-primary";
 
   return (
-    <button onClick={onClick} className={`stat-card ${accent} text-left p-5 group`}>
+    <button onClick={onClick} className={`stat-card kpi-card-gold ${accent} text-left p-5 group`}>
       <div className="relative z-10 flex items-center justify-between mb-3">
         <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${iconBg} ring-1 ring-inset ring-current/10`}>
           <Icon className="h-4 w-4" />
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
       </div>
-      <p className="kpi-value text-foreground">{value}</p>
+      <p className={`kpi-value text-foreground ${tone === "danger" ? "kpi-glow-danger" : "kpi-glow-primary"}`}>{value}</p>
       <p className="text-eyebrow mt-1.5 relative z-10">{label}</p>
     </button>
   );
