@@ -259,7 +259,7 @@ export function WeekDayRow({
               "h-8 gap-1.5 px-3 text-xs font-medium",
               !hasDishes &&
                 !isSpecialDay &&
-                "bg-primary text-primary-foreground hover:bg-primary/90",
+                "bg-amber text-amber-foreground hover:bg-amber/90",
             )}
           >
             {hasDishes ? (
