@@ -68,9 +68,9 @@ const STATUS_META: Record<
   },
   completo: {
     label: "Cardápio definido",
-    tone: "text-primary bg-primary/10 border-primary/30",
-    ring: "border-primary/30",
-    dot: "bg-primary",
+    tone: "text-amber bg-amber/10 border-amber/30",
+    ring: "border-amber/30",
+    dot: "bg-amber",
     icon: CheckCircle2,
   },
   folga: {
@@ -134,6 +134,14 @@ export function WeekDayRow({
   const dishCount = dishes.length;
   const hasDishes = dishCount > 0;
   const isSpecialDay = ["folga", "feriado", "sem_producao"].includes(status);
+
+  // Featured dish (first one) for hero image when menu has dishes
+  const featuredDish = hasDishes
+    ? allDishes.find((d) => d.id === dishes[0]?.dish_id)
+    : null;
+  const featuredImage = featuredDish
+    ? dishImageUrl(featuredDish.nome, featuredDish.id, { w: 800, h: 200 })
+    : null;
 
   return (
     <div
