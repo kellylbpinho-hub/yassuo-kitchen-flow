@@ -5,16 +5,33 @@ import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Database } from "lucide-react";
+import { runSeed } from "@/lib/seedDemo";
+import { toast } from "sonner";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [seedLoading, setSeedLoading] = useState(false);
   const [error, setError] = useState("");
   const { signIn } = useAuth();
   const navigate = useNavigate();
+
+  const handleLoadDemo = async () => {
+    setSeedLoading(true);
+    const result = await runSeed();
+    setSeedLoading(false);
+    if (result.success) {
+      const summary = result.details
+        ? Object.entries(result.details).map(([k, v]) => `${k}: ${v}`).join(", ")
+        : "";
+      toast.success("Demo carregada!", { description: summary });
+    } else {
+      toast.error("Falha ao carregar demo", { description: result.message });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,6 +172,28 @@ export default function Login() {
             </Link>
           </div>
         </div>
+
+        {import.meta.env.DEV && (
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-dashed border-amber/40 text-amber hover:bg-amber/10"
+              onClick={handleLoadDemo}
+              disabled={seedLoading}
+            >
+              {seedLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Database className="h-4 w-4 mr-2" />
+              )}
+              Carregar Demo (DEV)
+            </Button>
+            <p className="text-[10px] text-muted-foreground text-center mt-2">
+              Faça login como CEO antes de clicar
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
