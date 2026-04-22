@@ -530,7 +530,7 @@ export function GuidedModeOverlay() {
         <div className={`flex items-start justify-between gap-2 ${compactMode ? "mb-2" : "mb-3"}`}>
           <div>
             <p className="text-xs font-semibold text-primary">
-              {activeTask.emoji} {activeTask.label}
+              {activeTask.label}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               Passo {currentStepIndex + 1} de {totalSteps}

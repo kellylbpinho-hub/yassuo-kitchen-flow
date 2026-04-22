@@ -390,9 +390,9 @@ export default function RelatorioExecutivo() {
             refeição e dias ativos, fornecendo visibilidade para decisões de gestão.
           </p>
           <div className="grid gap-3 sm:grid-cols-3">
-            <KpiBlock label="Ranking por contrato" value="📊" />
-            <KpiBlock label="% Desperdício / Custo" value="📉" />
-            <KpiBlock label="Tendência mensal" value="📈" />
+            <KpiBlock label="Ranking por contrato" value="Top 5" />
+            <KpiBlock label="% Desperdício / Custo" value="< 5%" />
+            <KpiBlock label="Tendência mensal" value="12m" />
           </div>
         </div>
       </section>
