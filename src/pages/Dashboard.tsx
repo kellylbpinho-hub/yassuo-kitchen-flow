@@ -338,7 +338,7 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0">
-                <Table>
+                <Table className="table-striped">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-xs">Produto</TableHead>
@@ -399,7 +399,7 @@ export default function Dashboard() {
               <CardTitle className="text-sm">Últimas Movimentações</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <Table>
+              <Table className="table-striped">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-xs">Produto</TableHead>
