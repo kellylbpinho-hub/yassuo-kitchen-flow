@@ -142,7 +142,7 @@
 @layer utilities {
   /* === Surfaces premium === */
   .surface-card {
-    background: var(--gradient-surface);
+    background: linear-gradient(180deg, hsl(222 12% 11%) 0%, hsl(222 12% 9%) 100%);
     @apply border border-border/60 rounded-[var(--radius)];
     box-shadow: var(--shadow-md);
   }
