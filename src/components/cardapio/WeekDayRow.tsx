@@ -154,7 +154,36 @@ export function WeekDayRow({
     >
       {/* Active accent bar (today) */}
       {today && (
-        <span className="absolute left-0 top-0 h-full w-[3px] bg-primary shadow-[0_0_12px_hsl(var(--primary)/0.6)]" />
+        <span className="absolute left-0 top-0 h-full w-[3px] bg-amber shadow-[0_0_12px_hsl(38_95%_58%/0.6)]" />
+      )}
+
+      {/* Featured dish photo strip (when menu has dishes) */}
+      {hasDishes && featuredImage && featuredDish && (
+        <div
+          className="relative h-24 w-full overflow-hidden border-b border-border/40 sm:h-28"
+          style={{ background: dishGradient(featuredDish.id) }}
+        >
+          <img
+            src={featuredImage}
+            alt={featuredDish.nome}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover opacity-90"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+          {/* Bottom-up dark overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-surface-2 via-surface-2/70 to-surface-2/20" />
+          {/* Featured name overlay */}
+          <div className="absolute bottom-2 left-4 right-4 sm:bottom-3 sm:left-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber/90">
+              Prato em destaque
+            </p>
+            <p className="mt-0.5 truncate text-base font-bold text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)] sm:text-lg">
+              {featuredDish.nome}
+            </p>
+          </div>
+        </div>
       )}
 
       {/* Row header */}
