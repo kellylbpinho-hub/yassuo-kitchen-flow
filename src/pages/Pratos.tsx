@@ -310,16 +310,20 @@ export default function Pratos() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Hero header */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card/80 via-card/60 to-background/40 backdrop-blur-sm p-5 sm:p-6">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,hsl(var(--primary)/0.08),transparent_50%)] pointer-events-none" />
+      {/* Hero header — restaurant menu style */}
+      <div className="relative overflow-hidden rounded-2xl border border-amber/20 bg-gradient-to-br from-card/80 via-card/60 to-background/40 backdrop-blur-sm p-5 sm:p-6">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,hsl(38_95%_58%/0.10),transparent_55%)] pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber/50 to-transparent" />
         <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30">
-              <BookOpen className="h-5 w-5 text-primary" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber/20 to-amber/5 border border-amber/30">
+              <BookOpen className="h-5 w-5 text-amber" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground leading-tight">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-amber mb-1">
+                Cozinha · Receituário
+              </p>
+              <h1 className="text-2xl sm:text-3xl font-display font-black tracking-tight text-foreground leading-tight">
                 Biblioteca de Pratos
               </h1>
               <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
@@ -336,7 +340,7 @@ export default function Pratos() {
               }}
             >
               <DialogTrigger asChild>
-                <Button className="gap-2 shadow-lg shadow-primary/20">
+                <Button className="gap-2 shadow-lg shadow-amber/20 bg-amber text-amber-foreground hover:bg-amber/90 font-semibold">
                   <Plus className="h-4 w-4" />
                   Novo Prato
                 </Button>

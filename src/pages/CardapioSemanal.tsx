@@ -218,15 +218,16 @@ export default function CardapioSemanal() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Hero header */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-surface-2 via-surface-1 to-surface-2 p-5 sm:p-7">
-        <div className="absolute right-0 top-0 h-48 w-48 -translate-y-1/3 translate-x-1/4 rounded-full bg-primary/[0.07] blur-3xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-amber/20 bg-gradient-to-br from-surface-2 via-surface-1 to-surface-2 p-5 sm:p-7">
+        <div className="absolute right-0 top-0 h-48 w-48 -translate-y-1/3 translate-x-1/4 rounded-full bg-amber/[0.10] blur-3xl" />
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber/50 to-transparent" />
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-primary">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber">
               <CalendarDays className="h-3.5 w-3.5" />
               Planejamento da semana
             </div>
-            <h1 className="font-display text-2xl font-bold leading-tight text-foreground sm:text-3xl">
+            <h1 className="font-display text-3xl font-black tracking-tight leading-tight text-foreground sm:text-4xl">
               Cardápio Semanal
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -391,11 +392,11 @@ function SummaryChip({
 }) {
   const toneCls =
     tone === "primary"
-      ? "border-primary/30 bg-primary/[0.06] text-primary"
+      ? "border-amber/30 bg-amber/[0.06] text-amber"
       : tone === "warning"
         ? "border-warning/30 bg-warning/15/[0.06] text-warning"
         : tone === "accent"
-          ? "border-border/60 bg-surface-3/60 text-foreground"
+          ? "border-amber/20 bg-amber/[0.04] text-foreground"
           : "border-border/60 bg-surface-1/60 text-muted-foreground";
 
   return (

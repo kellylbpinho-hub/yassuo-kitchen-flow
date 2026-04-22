@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { dishImageUrl, dishGradient } from "@/lib/dishImage";
 
 export type DayStatus =
   | "sem_cardapio"
@@ -67,9 +68,9 @@ const STATUS_META: Record<
   },
   completo: {
     label: "Cardápio definido",
-    tone: "text-primary bg-primary/10 border-primary/30",
-    ring: "border-primary/30",
-    dot: "bg-primary",
+    tone: "text-amber bg-amber/10 border-amber/30",
+    ring: "border-amber/30",
+    dot: "bg-amber",
     icon: CheckCircle2,
   },
   folga: {
@@ -134,18 +135,55 @@ export function WeekDayRow({
   const hasDishes = dishCount > 0;
   const isSpecialDay = ["folga", "feriado", "sem_producao"].includes(status);
 
+  // Featured dish (first one) for hero image when menu has dishes
+  const featuredDish = hasDishes
+    ? allDishes.find((d) => d.id === dishes[0]?.dish_id)
+    : null;
+  const featuredImage = featuredDish
+    ? dishImageUrl(featuredDish.nome, featuredDish.id, { w: 800, h: 200 })
+    : null;
+
   return (
     <div
       className={cn(
         "group relative overflow-hidden rounded-xl border bg-surface-2/60 backdrop-blur-sm transition-all duration-300",
         "hover:bg-surface-2 hover:border-border",
         meta.ring,
-        today && "border-primary/50 bg-primary/[0.04] shadow-[0_0_0_1px_hsl(var(--primary)/0.2)]",
+        today && "border-amber/50 bg-amber/[0.04] shadow-[0_0_0_1px_hsl(38_95%_58%/0.2)]",
       )}
     >
       {/* Active accent bar (today) */}
       {today && (
-        <span className="absolute left-0 top-0 h-full w-[3px] bg-primary shadow-[0_0_12px_hsl(var(--primary)/0.6)]" />
+        <span className="absolute left-0 top-0 h-full w-[3px] bg-amber shadow-[0_0_12px_hsl(38_95%_58%/0.6)]" />
+      )}
+
+      {/* Featured dish photo strip (when menu has dishes) */}
+      {hasDishes && featuredImage && featuredDish && (
+        <div
+          className="relative h-24 w-full overflow-hidden border-b border-border/40 sm:h-28"
+          style={{ background: dishGradient(featuredDish.id) }}
+        >
+          <img
+            src={featuredImage}
+            alt={featuredDish.nome}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover opacity-90"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+          {/* Bottom-up dark overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-surface-2 via-surface-2/70 to-surface-2/20" />
+          {/* Featured name overlay */}
+          <div className="absolute bottom-2 left-4 right-4 sm:bottom-3 sm:left-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber/90">
+              Prato em destaque
+            </p>
+            <p className="mt-0.5 truncate text-base font-bold text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)] sm:text-lg">
+              {featuredDish.nome}
+            </p>
+          </div>
+        </div>
       )}
 
       {/* Row header */}
@@ -160,7 +198,7 @@ export function WeekDayRow({
             className={cn(
               "flex h-12 w-12 flex-col items-center justify-center rounded-lg border text-center transition-colors sm:h-14 sm:w-14",
               today
-                ? "border-primary/50 bg-primary/10 text-primary"
+                ? "border-amber/50 bg-amber/10 text-amber"
                 : past
                   ? "border-border/40 bg-surface-1/60 text-muted-foreground"
                   : "border-border/60 bg-surface-1 text-foreground",
@@ -175,7 +213,7 @@ export function WeekDayRow({
             <p
               className={cn(
                 "text-sm font-semibold capitalize sm:text-base",
-                today ? "text-primary" : "text-foreground",
+                today ? "text-amber" : "text-foreground",
               )}
             >
               {dayLong}
@@ -221,7 +259,7 @@ export function WeekDayRow({
               "h-8 gap-1.5 px-3 text-xs font-medium",
               !hasDishes &&
                 !isSpecialDay &&
-                "bg-primary text-primary-foreground hover:bg-primary/90",
+                "bg-amber text-amber-foreground hover:bg-amber/90",
             )}
           >
             {hasDishes ? (
@@ -300,7 +338,7 @@ export function WeekDayRow({
                         key={`${cat}-${i}`}
                         className="inline-flex items-center gap-1.5 rounded-md border border-border/50 bg-surface-2 px-2.5 py-1 text-xs text-foreground/90"
                       >
-                        <UtensilsCrossed className="h-3 w-3 text-primary/70" />
+                        <UtensilsCrossed className="h-3 w-3 text-amber/80" />
                         {n}
                       </span>
                     ))}
