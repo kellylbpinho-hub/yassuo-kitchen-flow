@@ -224,11 +224,38 @@
     @apply text-4xl md:text-5xl font-display font-black tracking-tight text-numeric;
     line-height: 1;
   }
-  .kpi-glow-primary { text-shadow: 0 0 24px hsl(354 78% 48% / 0.45); }
-  .kpi-glow-success { text-shadow: 0 0 24px hsl(152 60% 44% / 0.45); }
-  .kpi-glow-warning { text-shadow: 0 0 24px hsl(38 95% 55% / 0.45); }
-  .kpi-glow-danger  { text-shadow: 0 0 24px hsl(4 80% 56% / 0.45); }
-  .kpi-glow-amber   { text-shadow: 0 0 24px hsl(38 95% 58% / 0.5); }
+  .kpi-glow-primary { text-shadow: 0 0 20px hsl(38 95% 58% / 0.4); }
+  .kpi-glow-success { text-shadow: 0 0 20px hsl(38 95% 58% / 0.4); }
+  .kpi-glow-warning { text-shadow: 0 0 20px hsl(38 95% 58% / 0.4); }
+  .kpi-glow-danger  { text-shadow: 0 0 20px hsl(4 80% 56% / 0.45); }
+  .kpi-glow-amber   { text-shadow: 0 0 20px hsl(38 95% 58% / 0.5); }
+
+  /* Premium executive page background */
+  .page-bg-executive {
+    background:
+      radial-gradient(1200px 600px at 0% -10%, hsl(38 95% 58% / 0.04), transparent 60%),
+      radial-gradient(800px 500px at 100% 0%, hsl(354 78% 48% / 0.04), transparent 55%),
+      hsl(220 15% 7%);
+    min-height: 100%;
+  }
+
+  /* Top gold border for premium KPI cards */
+  .kpi-card-gold {
+    position: relative;
+  }
+  .kpi-card-gold::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, hsl(38 95% 58% / 0.4) 0%, transparent 100%);
+    border-radius: var(--radius) var(--radius) 0 0;
+    pointer-events: none;
+  }
+
+  /* Striped data table rows */
+  .table-striped tbody tr:nth-child(odd) { background: hsl(220 15% 9%); }
+  .table-striped tbody tr:nth-child(even) { background: hsl(220 15% 7%); }
 
   /* === Page titles premium === */
   .page-title {
