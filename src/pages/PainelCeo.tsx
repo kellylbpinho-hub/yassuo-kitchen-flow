@@ -430,7 +430,7 @@ export default function PainelCeo() {
           <Card className="surface-card overflow-hidden animate-rise">
             <CardHeader className="pb-3 px-5 pt-5">
               <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
-                <DollarSign className="h-4 w-4 text-primary" />
+                <DollarSign className="h-4 w-4 text-amber" />
                 Radar financeiro
               </CardTitle>
             </CardHeader>

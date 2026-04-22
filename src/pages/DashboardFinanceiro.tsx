@@ -433,7 +433,7 @@ export default function DashboardFinanceiro() {
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-chart-4 rounded-l-xl" />
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <DollarSign className="h-5 w-5 text-chart-4" />
+              <DollarSign className="h-5 w-5 text-amber" />
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Custo Total</span>
             </div>
             <p className="text-2xl font-bold font-display text-foreground">
