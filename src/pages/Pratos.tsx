@@ -309,7 +309,7 @@ export default function Pratos() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in nutri-page -mx-3 -my-3 px-3 py-3 lg:-mx-5 lg:-my-5 lg:px-5 lg:py-5">
       {/* Hero header — restaurant menu style */}
       <div className="relative overflow-hidden rounded-2xl border border-amber/20 bg-gradient-to-br from-card/80 via-card/60 to-background/40 backdrop-blur-sm p-5 sm:p-6">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,hsl(38_95%_58%/0.10),transparent_55%)] pointer-events-none" />
@@ -340,7 +340,7 @@ export default function Pratos() {
               }}
             >
               <DialogTrigger asChild>
-                <Button className="gap-2 shadow-lg shadow-amber/20 bg-amber text-amber-foreground hover:bg-amber/90 font-semibold">
+                <Button className="btn-amber-solid gap-2 shadow-lg shadow-amber/20">
                   <Plus className="h-4 w-4" />
                   Novo Prato
                 </Button>

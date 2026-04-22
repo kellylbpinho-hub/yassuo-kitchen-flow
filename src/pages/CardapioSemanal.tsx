@@ -216,7 +216,7 @@ export default function CardapioSemanal() {
   const allEmpty = summary.completos === 0 && summary.emMontagem === 0 && summary.especiais === 0;
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in nutri-page -mx-3 -my-3 px-3 py-3 lg:-mx-5 lg:-my-5 lg:px-5 lg:py-5">
       {/* Hero header */}
       <div className="relative overflow-hidden rounded-2xl border border-amber/20 bg-gradient-to-br from-surface-2 via-surface-1 to-surface-2 p-5 sm:p-7">
         <div className="absolute right-0 top-0 h-48 w-48 -translate-y-1/3 translate-x-1/4 rounded-full bg-amber/[0.10] blur-3xl" />
