@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { dishImageUrl, dishGradient } from "@/lib/dishImage";
 
 export type DayStatus =
   | "sem_cardapio"
