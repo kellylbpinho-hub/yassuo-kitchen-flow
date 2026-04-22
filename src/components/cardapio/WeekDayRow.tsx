@@ -149,7 +149,7 @@ export function WeekDayRow({
         "group relative overflow-hidden rounded-xl border bg-surface-2/60 backdrop-blur-sm transition-all duration-300",
         "hover:bg-surface-2 hover:border-border",
         meta.ring,
-        today && "border-primary/50 bg-primary/[0.04] shadow-[0_0_0_1px_hsl(var(--primary)/0.2)]",
+        today && "border-amber/50 bg-amber/[0.04] shadow-[0_0_0_1px_hsl(38_95%_58%/0.2)]",
       )}
     >
       {/* Active accent bar (today) */}
