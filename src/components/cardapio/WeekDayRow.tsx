@@ -146,10 +146,8 @@ export function WeekDayRow({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-xl border bg-surface-2/60 backdrop-blur-sm transition-all duration-300",
-        "hover:bg-surface-2 hover:border-border",
-        meta.ring,
-        today && "border-amber/50 bg-amber/[0.04] shadow-[0_0_0_1px_hsl(38_95%_58%/0.2)]",
+        "nutri-day-card group relative overflow-hidden rounded-xl transition-all duration-300",
+        today && "is-today",
       )}
     >
       {/* Active accent bar (today) */}
@@ -257,9 +255,7 @@ export function WeekDayRow({
             disabled={readOnly}
             className={cn(
               "h-8 gap-1.5 px-3 text-xs font-medium",
-              !hasDishes &&
-                !isSpecialDay &&
-                "bg-amber text-amber-foreground hover:bg-amber/90",
+              !hasDishes && !isSpecialDay && "btn-amber-solid",
             )}
           >
             {hasDishes ? (
