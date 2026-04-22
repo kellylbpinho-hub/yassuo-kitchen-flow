@@ -198,7 +198,7 @@ export function WeekDayRow({
             className={cn(
               "flex h-12 w-12 flex-col items-center justify-center rounded-lg border text-center transition-colors sm:h-14 sm:w-14",
               today
-                ? "border-primary/50 bg-primary/10 text-primary"
+                ? "border-amber/50 bg-amber/10 text-amber"
                 : past
                   ? "border-border/40 bg-surface-1/60 text-muted-foreground"
                   : "border-border/60 bg-surface-1 text-foreground",
@@ -213,7 +213,7 @@ export function WeekDayRow({
             <p
               className={cn(
                 "text-sm font-semibold capitalize sm:text-base",
-                today ? "text-primary" : "text-foreground",
+                today ? "text-amber" : "text-foreground",
               )}
             >
               {dayLong}
