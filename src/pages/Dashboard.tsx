@@ -184,7 +184,7 @@ export default function Dashboard() {
   const tipoLabels: Record<string, string> = { entrada: "Entrada", saida: "Saída", perda: "Perda", ajuste: "Ajuste", consumo: "Consumo" };
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="space-y-5 animate-fade-in page-bg-executive p-1 -m-1">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -198,15 +198,15 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Estoque */}
         <div
-          className="relative overflow-hidden rounded-xl bg-card border border-border p-4 cursor-pointer hover:border-primary/30 transition-colors"
+          className="kpi-card-gold relative overflow-hidden rounded-xl bg-card border border-border p-4 cursor-pointer hover:border-amber/40 transition-colors"
           onClick={() => navigate("/estoque")}
         >
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl" />
           <div className="flex items-center justify-between mb-2">
-            <Package className="h-5 w-5 text-primary" />
+            <Package className="h-5 w-5 text-amber" />
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Estoque</span>
           </div>
-          <p className="kpi-value text-foreground">{data.totalProdutos}</p>
+          <p className="kpi-value kpi-glow-primary text-foreground">{data.totalProdutos}</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">produtos cadastrados</p>
           {data.itensAbaixoMinimo > 0 && (
             <div className="mt-2 flex items-center gap-1">
@@ -218,15 +218,15 @@ export default function Dashboard() {
 
         {/* Pedidos */}
         <div
-          className="relative overflow-hidden rounded-xl bg-card border border-border p-4 cursor-pointer hover:border-chart-4/30 transition-colors"
+          className="kpi-card-gold relative overflow-hidden rounded-xl bg-card border border-border p-4 cursor-pointer hover:border-amber/40 transition-colors"
           onClick={() => navigate("/compras")}
         >
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-chart-4 rounded-l-xl" />
           <div className="flex items-center justify-between mb-2">
-            <ShoppingCart className="h-5 w-5 text-chart-4" />
+            <ShoppingCart className="h-5 w-5 text-amber" />
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Pedidos</span>
           </div>
-          <p className="kpi-value text-foreground">{data.totalPedidos}</p>
+          <p className="kpi-value kpi-glow-primary text-foreground">{data.totalPedidos}</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">pedidos de compra</p>
           {data.pedidosPendentes > 0 && (
             <div className="mt-2 flex items-center gap-1">
@@ -238,7 +238,7 @@ export default function Dashboard() {
 
         {/* Alertas */}
         <div
-          className="relative overflow-hidden rounded-xl bg-card border border-border p-4 cursor-pointer hover:border-warning/30 transition-colors"
+          className="kpi-card-gold relative overflow-hidden rounded-xl bg-card border border-border p-4 cursor-pointer hover:border-amber/40 transition-colors"
           onClick={() => navigate("/alertas")}
         >
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-warning rounded-l-xl" />
@@ -246,7 +246,7 @@ export default function Dashboard() {
             <AlertTriangle className="h-5 w-5 text-warning" />
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Alertas</span>
           </div>
-          <p className="kpi-value text-foreground">{data.lotesVencendo + data.lotesVencidos}</p>
+          <p className="kpi-value kpi-glow-warning text-foreground">{data.lotesVencendo + data.lotesVencidos}</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">lotes com atenção</p>
           {data.lotesVencidos > 0 && (
             <div className="mt-2 flex items-center gap-1">
@@ -257,13 +257,13 @@ export default function Dashboard() {
         </div>
 
         {/* Perdas */}
-        <div className="relative overflow-hidden rounded-xl bg-card border border-border p-4">
+        <div className="kpi-card-gold relative overflow-hidden rounded-xl bg-card border border-border p-4">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-destructive rounded-l-xl" />
           <div className="flex items-center justify-between mb-2">
             <TrendingDown className="h-5 w-5 text-destructive" />
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Perdas</span>
           </div>
-          <p className="kpi-value text-foreground">{data.perdasMes.kg.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
+          <p className="kpi-value kpi-glow-danger text-foreground">{data.perdasMes.kg.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
           <p className="text-[11px] text-muted-foreground mt-0.5">no mês corrente</p>
         </div>
       </div>
@@ -271,23 +271,23 @@ export default function Dashboard() {
       {/* Cost row (CEO/Financeiro only) */}
       {canSeeCosts && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="relative overflow-hidden rounded-xl bg-card border border-border p-4">
+          <div className="kpi-card-gold relative overflow-hidden rounded-xl bg-card border border-border p-4">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-success rounded-l-xl" />
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-muted-foreground">Valor em Estoque</span>
               <DollarSign className="h-4 w-4 text-amber" />
             </div>
-            <p className="kpi-value kpi-glow-success text-5xl text-success">
+            <p className="kpi-value kpi-glow-success text-5xl text-amber">
               R$ {data.totalEstoqueValor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </p>
           </div>
-          <div className="relative overflow-hidden rounded-xl bg-card border border-border p-4">
+          <div className="kpi-card-gold relative overflow-hidden rounded-xl bg-card border border-border p-4">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-chart-5 rounded-l-xl" />
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-muted-foreground">Custo Médio / Refeição</span>
               <DollarSign className="h-4 w-4 text-amber" />
             </div>
-            <p className="kpi-value text-4xl text-chart-5">
+            <p className="kpi-value kpi-glow-primary text-4xl text-amber">
               R$ {data.custoMedioRefeicao.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
@@ -466,7 +466,7 @@ export default function Dashboard() {
                       <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
                       <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
                       <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} />
-                      <Bar dataKey="valor" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="valor" fill="hsl(38 95% 58%)" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
@@ -487,7 +487,7 @@ export default function Dashboard() {
                       <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
                       <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
                       <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} />
-                      <Bar dataKey="desperdicio" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="desperdicio" fill="hsl(38 95% 58%)" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
