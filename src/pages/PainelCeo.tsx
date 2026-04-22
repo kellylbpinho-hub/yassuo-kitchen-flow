@@ -489,7 +489,7 @@ function HeroKpi({ tone, statusLabel, StatusIcon, label, value, sub, onClick }: 
         </span>
       </div>
       <div className="flex items-end justify-between gap-3 mt-4 relative z-10">
-        <p className="kpi-value text-foreground">{value}</p>
+        <p className={`kpi-value text-foreground ${tone === "danger" ? "kpi-glow-danger" : tone === "success" ? "kpi-glow-success" : "kpi-glow-primary"}`}>{value}</p>
         <ArrowUpRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
       </div>
       <p className="text-xs text-muted-foreground mt-2 relative z-10">{sub}</p>
