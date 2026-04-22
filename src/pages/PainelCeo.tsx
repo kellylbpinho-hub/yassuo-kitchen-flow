@@ -214,57 +214,56 @@ export default function PainelCeo() {
           <div className="grid md:grid-cols-2 gap-5 lg:gap-6">
             <Card className="surface-card overflow-hidden animate-rise">
               <CardHeader className="pb-2 px-5 pt-5">
-                <CardTitle className="text-sm font-semibold text-foreground">Consumo por categoria</CardTitle>
+                <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-amber" />
+                  Eficiência operacional
+                </CardTitle>
               </CardHeader>
-              <CardContent className="h-[230px] px-3">
-                {chartsLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
-                ) : categoryData.length > 0 ? (
-                  <>
-                    <ResponsiveContainer width="100%" height="80%">
-                      <PieChart>
-                        <Pie
-                          data={categoryData}
-                          cx="50%" cy="50%"
-                          innerRadius={48}
-                          outerRadius={78}
-                          paddingAngle={3}
-                          dataKey="value"
-                          nameKey="name"
-                          stroke="hsl(222 11% 10%)"
-                          strokeWidth={2}
+              <CardContent className="h-[230px] px-3 relative">
+                {(() => {
+                  const totalUnits = kpis.healthyUnits + kpis.marginCriticalUnits + kpis.lossUnits;
+                  const efficiency = totalUnits > 0
+                    ? Math.round((kpis.healthyUnits / totalUnits) * 100)
+                    : 0;
+                  const gaugeColor = efficiency >= 70
+                    ? "hsl(38 95% 58%)"
+                    : efficiency >= 40
+                    ? "hsl(38 95% 55%)"
+                    : "hsl(4 80% 56%)";
+                  const gaugeData = [{ name: "eff", value: efficiency, fill: gaugeColor }];
+                  return (
+                    <>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadialBarChart
+                          innerRadius="70%"
+                          outerRadius="100%"
+                          data={gaugeData}
+                          startAngle={210}
+                          endAngle={-30}
                         >
-                          {categoryData.map((_, i) => (
-                            <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <RechartsTooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(222 12% 9%)",
-                            border: "1px solid hsl(222 9% 22%)",
-                            borderRadius: 10,
-                            fontSize: 12,
-                            color: "hsl(220 12% 96%)",
+                          <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+                          <RadialBar
+                            background={{ fill: "hsl(220 15% 12%)" }}
+                            dataKey="value"
+                            cornerRadius={20}
+                          />
+                        </RadialBarChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span
+                          className="text-4xl font-display font-black text-numeric"
+                          style={{
+                            color: gaugeColor,
+                            textShadow: `0 0 24px ${gaugeColor}66`,
                           }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1.5 px-1 mt-1">
-                      {categoryData.slice(0, 5).map((c, i) => (
-                        <div key={c.name} className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
-                          <div className="h-2 w-2 rounded-sm" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                          {c.name}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                    Sem dados de categoria
-                  </div>
-                )}
+                        >
+                          {efficiency}%
+                        </span>
+                        <span className="text-eyebrow mt-1">{kpis.healthyUnits}/{totalUnits} saudáveis</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </CardContent>
             </Card>
 
