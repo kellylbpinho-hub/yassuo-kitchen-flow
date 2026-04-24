@@ -184,112 +184,117 @@ export default function Dashboard() {
   const tipoLabels: Record<string, string> = { entrada: "Entrada", saida: "Saída", perda: "Perda", ajuste: "Ajuste", consumo: "Consumo" };
 
   return (
-    <div className="space-y-5 animate-fade-in page-bg-executive p-1 -m-1">
+    <div className="space-y-5 animate-fade-in page-bg-deep p-1 -m-1">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-xl font-display font-bold text-foreground">Painel de Controle</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Yassuo Alimentação — Visão consolidada</p>
+          <h1 className="exec-page-title">Painel de Controle</h1>
+          <p className="text-[11px] text-muted-foreground mt-1">Yassuo Alimentação — Visão consolidada</p>
         </div>
         <LastUpdated timestamp={lastUpdated} />
       </div>
 
-      {/* KPI Cards Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* KPI Cards Row — horizontal layout (número + info) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         {/* Estoque */}
         <div
-          className="kpi-card-gold relative overflow-hidden rounded-xl bg-card border border-border p-4 cursor-pointer hover:border-amber/40 transition-colors"
+          className="exec-card exec-acc-red flex items-center gap-3 cursor-pointer"
           onClick={() => navigate("/estoque")}
         >
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl" />
-          <div className="flex items-center justify-between mb-2">
-            <Package className="h-5 w-5 text-amber" />
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Estoque</span>
+          <p className="exec-num">{data.totalProdutos}</p>
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <span className="exec-tag">ESTOQUE</span>
+            <span className="exec-lbl truncate">produtos cadastrados</span>
+            {data.itensAbaixoMinimo > 0 && (
+              <span className="exec-sub" style={{ color: "hsl(28 90% 62%)" }}>
+                <AlertTriangle className="h-2.5 w-2.5" />
+                {data.itensAbaixoMinimo} abaixo do mínimo
+              </span>
+            )}
           </div>
-          <p className="kpi-value kpi-glow-primary text-foreground">{data.totalProdutos}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">produtos cadastrados</p>
-          {data.itensAbaixoMinimo > 0 && (
-            <div className="mt-2 flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3 text-warning" />
-              <span className="text-[10px] text-warning font-medium">{data.itensAbaixoMinimo} abaixo do mínimo</span>
-            </div>
-          )}
         </div>
 
         {/* Pedidos */}
         <div
-          className="kpi-card-gold relative overflow-hidden rounded-xl bg-card border border-border p-4 cursor-pointer hover:border-amber/40 transition-colors"
+          className="exec-card exec-acc-gold flex items-center gap-3 cursor-pointer"
           onClick={() => navigate("/compras")}
         >
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-chart-4 rounded-l-xl" />
-          <div className="flex items-center justify-between mb-2">
-            <ShoppingCart className="h-5 w-5 text-amber" />
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Pedidos</span>
+          <p className="exec-num">{data.totalPedidos}</p>
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <span className="exec-tag">PEDIDOS</span>
+            <span className="exec-lbl truncate">pedidos de compra</span>
+            {data.pedidosPendentes > 0 && (
+              <span className="exec-sub" style={{ color: "hsl(220 5% 55%)" }}>
+                <Clock className="h-2.5 w-2.5" />
+                {data.pedidosPendentes} pendente{data.pedidosPendentes > 1 ? "s" : ""}
+              </span>
+            )}
           </div>
-          <p className="kpi-value kpi-glow-primary text-foreground">{data.totalPedidos}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">pedidos de compra</p>
-          {data.pedidosPendentes > 0 && (
-            <div className="mt-2 flex items-center gap-1">
-              <Clock className="h-3 w-3 text-chart-4" />
-              <span className="text-[10px] text-chart-4 font-medium">{data.pedidosPendentes} pendentes</span>
-            </div>
-          )}
         </div>
 
         {/* Alertas */}
         <div
-          className="kpi-card-gold relative overflow-hidden rounded-xl bg-card border border-border p-4 cursor-pointer hover:border-amber/40 transition-colors"
+          className="exec-card exec-acc-orange flex items-center gap-3 cursor-pointer"
           onClick={() => navigate("/alertas")}
         >
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-warning rounded-l-xl" />
-          <div className="flex items-center justify-between mb-2">
-            <AlertTriangle className="h-5 w-5 text-warning" />
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Alertas</span>
+          <p className="exec-num exec-num-orange">{data.lotesVencendo + data.lotesVencidos + data.estoquesZerados}</p>
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <span className="exec-tag">ALERTAS</span>
+            <span className="exec-lbl truncate">lotes com atenção</span>
+            {data.estoquesZerados > 0 && (
+              <span className="exec-sub" style={{ color: "hsl(220 5% 55%)" }}>
+                {data.estoquesZerados} estoque zerado
+              </span>
+            )}
           </div>
-          <p className="kpi-value kpi-glow-warning text-foreground">{data.lotesVencendo + data.lotesVencidos}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">lotes com atenção</p>
-          {data.lotesVencidos > 0 && (
-            <div className="mt-2 flex items-center gap-1">
-              <ShieldAlert className="h-3 w-3 text-destructive" />
-              <span className="text-[10px] text-destructive font-medium">{data.lotesVencidos} vencidos</span>
-            </div>
-          )}
         </div>
 
-        {/* Perdas */}
-        <div className="kpi-card-gold relative overflow-hidden rounded-xl bg-card border border-border p-4">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-destructive rounded-l-xl" />
-          <div className="flex items-center justify-between mb-2">
-            <TrendingDown className="h-5 w-5 text-destructive" />
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Perdas</span>
+        {/* Valor / Perdas */}
+        {canSeeCosts ? (
+          <div className="exec-card exec-acc-gold flex items-center gap-3">
+            <p className="exec-num exec-num-gold">
+              <span className="text-[14px] font-medium align-top mr-1" style={{ color: "hsl(220 5% 55%)" }}>R$</span>
+              {Math.round(data.totalEstoqueValor).toLocaleString("pt-BR")}
+            </p>
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="exec-tag">VALOR EM ESTOQUE</span>
+              <span className="exec-lbl truncate">total cadastrado</span>
+              <span className="exec-sub" style={{ color: "hsl(152 60% 55%)" }}>
+                ↑ atualizado agora
+              </span>
+            </div>
           </div>
-          <p className="kpi-value kpi-glow-danger text-foreground">{data.perdasMes.kg.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">no mês corrente</p>
-        </div>
+        ) : (
+          <div className="exec-card exec-acc-red flex items-center gap-3">
+            <p className="exec-num exec-num-red">{data.perdasMes.kg.toFixed(1)}</p>
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="exec-tag">PERDAS</span>
+              <span className="exec-lbl truncate">no mês corrente</span>
+              <span className="exec-sub" style={{ color: "hsl(220 5% 55%)" }}>kg perdidos</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Cost row (CEO/Financeiro only) */}
+      {/* Cost row (CEO/Financeiro only) — Custo médio destacado */}
       {canSeeCosts && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="kpi-card-gold relative overflow-hidden rounded-xl bg-card border border-border p-4">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-success rounded-l-xl" />
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-muted-foreground">Valor em Estoque</span>
-              <DollarSign className="h-4 w-4 text-amber" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div className="exec-card exec-acc-red flex items-center gap-3">
+            <p className="exec-num exec-num-red">{data.perdasMes.kg.toFixed(1)} <span className="text-[14px] font-medium" style={{ color: "hsl(220 5% 55%)" }}>kg</span></p>
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="exec-tag">PERDAS DO MÊS</span>
+              <span className="exec-lbl truncate">total operacional</span>
             </div>
-            <p className="kpi-value kpi-glow-success text-5xl text-amber">
-              R$ {data.totalEstoqueValor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </p>
           </div>
-          <div className="kpi-card-gold relative overflow-hidden rounded-xl bg-card border border-border p-4">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-chart-5 rounded-l-xl" />
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-muted-foreground">Custo Médio / Refeição</span>
-              <DollarSign className="h-4 w-4 text-amber" />
-            </div>
-            <p className="kpi-value kpi-glow-primary text-4xl text-amber">
-              R$ {data.custoMedioRefeicao.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <div className="exec-card exec-acc-gold flex items-center gap-3">
+            <p className="exec-num exec-num-gold">
+              <span className="text-[14px] font-medium align-top mr-1" style={{ color: "hsl(220 5% 55%)" }}>R$</span>
+              {data.custoMedioRefeicao.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="exec-tag">CUSTO MÉDIO / REFEIÇÃO</span>
+              <span className="exec-lbl truncate">mês corrente</span>
+            </div>
           </div>
         </div>
       )}
